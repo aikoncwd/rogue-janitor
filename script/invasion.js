@@ -3,7 +3,77 @@
 // adventurer/monster code, keeps stats, bodies and hit flashes, and hands over
 // to the player when the hero leaves.
 var Invasion = {
-    instant: false,
+    instant: false, // run every hero turn without delay (tests)
+    BASE_DELAY_MS: 90,
+    BORING_DELAY_MS: 25,
+    FAST_FACTOR: 4,
+    fast: false,
+    skipping: false,
+    timer: null,
+    engineStarted: false,
+    eventful: false,
+
+    // Hands control to the hero: called when the intro screen is dismissed (day 1)
+    // or when a new day's dungeon is generated (the player's pending unlock resumes it).
+    start: function () {
+        Game.phase = 'invasion';
+        Game.drawMap();
+        if (!this.engineStarted) {
+            this.engineStarted = true;
+            Game.engine.start();
+        }
+    },
+
+    // Delay before the next hero turn; quiet walking turns go by faster.
+    delay: function (eventful) {
+        let ms = eventful ? this.BASE_DELAY_MS : this.BORING_DELAY_MS;
+        return this.fast ? ms / this.FAST_FACTOR : ms;
+    },
+
+    // Called after every active hero turn: pause the engine and resume on a timer.
+    afterHeroTurn: function () {
+        if (this.instant || this.skipping || Game.phase != 'invasion') {
+            return;
+        }
+        let eventful = this.eventful || Game.adventurer.targets.length > 0;
+        this.eventful = false;
+        Game.engine.lock();
+        Game.drawMap();
+        this.timer = setTimeout(function () {
+            Invasion.timer = null;
+            Game.engine.unlock();
+        }, this.delay(eventful));
+    },
+
+    // Run the rest of the invasion instantly.
+    skip: function () {
+        this.skipping = true;
+        if (this.timer != null) {
+            clearTimeout(this.timer);
+            this.timer = null;
+            Game.engine.unlock();
+        }
+    },
+
+    handleKey: function (code) {
+        if (Game.phase == 'intro') {
+            this.start();
+            return true;
+        }
+        if (Game.phase == 'invasion') {
+            if (code == 32) {
+                this.fast = !this.fast;
+                Game.drawMap();
+                return true;
+            }
+            if (code == 27) {
+                this.skip();
+                return true;
+            }
+        }
+        return false;
+    },
+
     hero: { short: 'The hero', full: 'The hero' },
     roster: [],
     stats: {},
@@ -61,6 +131,9 @@ var Invasion = {
 
     event: function (type, data) {
         data = data || {};
+        if (type != 'turn') {
+            this.eventful = true;
+        }
         switch (type) {
             case 'turn':
                 this.turn++;
@@ -141,6 +214,12 @@ var Invasion = {
     },
 
     finish: function () {
+        this.skipping = false;
+        this.fast = false;
+        if (this.timer != null) {
+            clearTimeout(this.timer);
+            this.timer = null;
+        }
         this.say('heroExit');
         this.say('monstersGetUp');
         this.say('shiftBegins');

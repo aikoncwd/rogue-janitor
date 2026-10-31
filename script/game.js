@@ -46,18 +46,44 @@ var Game = {
         this.display = new ROT.Display({fontSize:16});
         this.getSize(false);
         this.screen.appendChild(this.display.getContainer());
+        this.setup();
+        this.begin();
+    },
+
+    // Everything init does that does not need the DOM. The engine is created but
+    // only started by Invasion.start() once the intro screen is dismissed.
+    setup: function() {
         this.scheduler = new ROT.Scheduler.Simple();
         this.player = new Player(-1,-1,-1);
-        //this.scheduler.add(this.player);
-        this.generateDungeon();
-        //this.generateDiner();
         this.fov = new ROT.FOV.PreciseShadowcasting(function(x,y){
             return Game.lightPasses(x,y);
         });
-        //this.drawMap();
-
         this.engine = new ROT.Engine(this.scheduler);
-        this.engine.start();
+        window.addEventListener("keydown", function(e) { Game.onKey(e); });
+    },
+
+    begin: function() {
+        this.generateDungeon();
+        this.phase = 'intro';
+        this.drawMap();
+    },
+
+    // Global keys, active in every phase. Player/conversation keys are handled by
+    // their own listeners.
+    onKey: function(e) {
+        Sfx.unlock();
+        if (e.keyCode == 86) { // V
+            Sfx.toggle();
+            if (this.phase != 'cleaning' || this.player.talking == null) {
+                this.drawMap();
+            }
+            return;
+        }
+        if (this.phase == 'intro' || this.phase == 'invasion') {
+            if (Invasion.handleKey(e.keyCode) && e.preventDefault) {
+                e.preventDefault();
+            }
+        }
     },
 
     getSize: function(redraw=true) {
@@ -103,25 +129,37 @@ var Game = {
             return;
         }
 
-        for (let i=-this.offset[0]+this.player.x;i<=this.offset[0]+this.player.x;i++) {
-            for (let j=-this.offset[1]+this.player.y;j<=this.offset[1]+this.player.y;j++) {
+        if (this.phase == 'intro') {
+            let intro = Flavor.pools.introText;
+            let top = this.offset[1] - Math.floor(intro.length/2);
+            for (let i=0;i<intro.length;i++) {
+                let plain = intro[i].replace(/%c\{[^}]*\}/g, '');
+                this.display.drawText(Math.max(0, this.offset[0]-Math.floor(plain.length/2)), top+i, intro[i]);
+            }
+            return;
+        }
+
+        let cam = this.cameraTarget();
+        for (let i=-this.offset[0]+cam.x;i<=this.offset[0]+cam.x;i++) {
+            for (let j=-this.offset[1]+cam.y;j<=this.offset[1]+cam.y;j++) {
                 let key=i+','+j;
-                //console.log(key);
                 if (key in this.map) {
                     let art = this.map[key].getMemoryArt();
-                    this.display.draw(i+this.offset[0]-this.player.x,j+this.offset[1]-this.player.y,art[0],art[1],art[2]);
+                    this.display.draw(i+this.offset[0]-cam.x,j+this.offset[1]-cam.y,art[0],art[1],art[2]);
                 }
             }
         }
-        this.fov.compute(Game.player.x,Game.player.y,50,function(x,y,r,visibility) {
+        this.fov.compute(cam.x,cam.y,50,function(x,y,r,visibility) {
             let key=x+','+y;
             if (key in Game.map) {
                 let art = Game.map[key].getArt();
-                Game.display.draw(x+Game.offset[0]-Game.player.x,y+Game.offset[1]-Game.player.y,art[0],art[1],art[2]);
+                Game.display.draw(x+Game.offset[0]-cam.x,y+Game.offset[1]-cam.y,art[0],art[1],art[2]);
             }
         });
 
-        this.display.drawText(1,1,"Cleanliness: " + this.cleanPercent() + "%");
+        if (this.phase == 'cleaning') {
+            this.display.drawText(1,1,"Cleanliness: " + this.cleanPercent() + "%");
+        }
         var dayCounter="Day: "+this.day;
         //var pointCounter = "Points: "+(this.yendorPoints+this.cleanPercent());
         this.display.drawText(2*this.offset[0]-dayCounter.length-2,1,dayCounter);
@@ -280,6 +318,9 @@ var Game = {
         this.populateRooms();
         this.addDoors(thetheme);
         Invasion.reset(this.adventurer);
+        if (this.day > 1) {
+            Invasion.start();
+        }
     },
 
     cameraTarget: function() {

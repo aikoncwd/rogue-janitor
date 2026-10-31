@@ -109,9 +109,15 @@ Adventurer.prototype.damage = function() {
 
 }
 
-// How does the brave and noble adventurer proceed?
 Adventurer.prototype.act = function () {
-    //console.log(this.turns);
+    this.takeTurn();
+    if (this.active) {
+        Invasion.afterHeroTurn();
+    }
+}
+
+// How does the brave and noble adventurer proceed?
+Adventurer.prototype.takeTurn = function () {
     if (!this.active) {
         return;
     }

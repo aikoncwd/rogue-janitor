@@ -44,6 +44,13 @@ function Player(x,y) {
 }
 
 Player.prototype.getArt = function() {
+    if (Game.phase != 'cleaning') {
+        // The janitor hasn't clocked in yet: draw the floor underneath instead.
+        let tile = Game.map[this.x+','+this.y];
+        if (tile) {
+            return [tile.char,tile.color,tile.bgColor];
+        }
+    }
     return [this.char,this.color,this.bgcolor];
 }
 
@@ -195,7 +202,7 @@ Player.prototype.doExamine = function(code) {
 }
 
 Player.prototype.handleEvent = function(e) {
-    if (this.paused) {
+    if (this.paused || Game.phase != 'cleaning') {
         return;
     }
     let code = e.keyCode;

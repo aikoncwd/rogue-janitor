@@ -98,22 +98,20 @@ function stubDisplay(ctx) {
     };
 }
 
-// Boots the game without a DOM: same as Game.init but no dungeon generation.
-function bootHeadless({ seed = 1234, files = DEFAULT_FILES, game = true } = {}) {
+// Boots the game without a DOM: Game.init minus the canvas. With begin=false no
+// dungeon is generated (tests call Game.generateDungeon themselves); with
+// begin=true it runs Game.begin() like the browser does (day 1 intro screen).
+function bootHeadless({ seed = 1234, files = DEFAULT_FILES, game = true, begin = false } = {}) {
     const ctx = makeContext();
     load(ctx, 'tests/vendor/rot.js');
     ctx.ROT.RNG.setSeed(seed);
     for (const f of files) load(ctx, f);
     if (game && ctx.Game) {
-        vm.runInContext(`
-            Game.screen = document.getElementById('gameContainer');
-            Game.scheduler = new ROT.Scheduler.Simple();
-            Game.player = new Player(-1,-1,-1);
-            Game.fov = new ROT.FOV.PreciseShadowcasting(function(x,y){ return Game.lightPasses(x,y); });
-            Game.engine = new ROT.Engine(Game.scheduler);
-        `, ctx);
+        ctx.Game.screen = ctx.document.getElementById('gameContainer');
         ctx.Game.display = stubDisplay(ctx);
         ctx.Game.getSize(false);
+        ctx.Game.setup();
+        if (begin) ctx.Game.begin();
     }
     return ctx;
 }
