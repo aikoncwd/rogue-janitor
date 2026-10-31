@@ -97,8 +97,8 @@ Pet.prototype.recenter = function(x,y) {
     let dx=0;
     let dy=0;
     this.playerTalkedToday=false;
-    while (!this.moveTo(x+dx,y+dy)) {
-        let r=0;
+    let r=0; // search radius grows until a free tile is found
+    while (!this.moveTo(x+dx,y+dy) && r<100) {
         r++;
         for (let i=-r;i<=r;i++) {
             for (let j=-r;j<=r;j++) {
@@ -346,15 +346,16 @@ function FoodBowl(x,y) {
     this.color='#fff';
     //let key = (x+dx)+','+(y+dy);
     let testKey=x+','+y;
-    while (!(testKey in Game.map) || !Game.map[testKey].passThrough()) {
-        let r=-1;
+    let r=0; // search radius grows until a free tile is found
+    while ((!(testKey in Game.map) || !Game.map[testKey].passThrough()) && r<100) {
         r++;
         for (let i=-r;i<=r;i++) {
             for (let j=-r;j<=r;j++) {
-                testKey=(i+x)+','+(j+y);
-                if (testKey in Game.map && Game.map[testKey].passThrough()) {
+                let candidate=(i+x)+','+(j+y);
+                if (candidate in Game.map && Game.map[candidate].passThrough()) {
                     dx=i;
                     dy=j;
+                    testKey=candidate;
                 }
             }
         }

@@ -60,6 +60,10 @@ var Invasion = {
             this.start();
             return true;
         }
+        if (this.stage != null) {
+            this.clockIn(); // any key hurries the hand-over along
+            return true;
+        }
         if (Game.player.talking != null) {
             return false; // a conversation owns the keys (e.g. the night screen before day 2)
         }
@@ -88,7 +92,10 @@ var Invasion = {
     reset: function (adventurer) {
         this.hero = Flavor.heroName();
         this.roster = Game.monsterList.filter(function (m) { return m.alive && !m.retired; });
-        this.stats = { fainted: 0, hits: 0, lootSmashed: 0, snacks: 0, potions: 0, doors: 0, heroHurt: 0 };
+        this.stats = { fainted: 0, hits: 0, lootSmashed: 0, snacks: 0, potions: 0, doors: 0, heroHurt: 0, graffiti: 0, specials: 0 };
+        if (adventurer && adventurer.setClass) {
+            adventurer.setClass(this.hero.cls);
+        }
         this.bodies = [];
         this.flashes = {};
         this.turn = 0;
@@ -111,7 +118,7 @@ var Invasion = {
             this.optionalLogged = true;
         }
         vars = vars || {};
-        vars.hero = '%c{#0ff}' + this.hero.short + '%c{}';
+        vars.hero = '%c{' + this.heroColor() + '}' + this.hero.short + '%c{}';
         let line = Flavor.line(pool, vars);
         if (line != "") {
             Game.log.push(line);
@@ -192,6 +199,16 @@ var Invasion = {
                 this.say('potion');
                 this.sound('gulp');
                 break;
+            case 'special':
+                this.stats.specials++;
+                this.say('special_' + data.cls);
+                this.sound('spray');
+                break;
+            case 'graffiti':
+                this.stats.graffiti++;
+                this.say('graffiti', { item: ROT.RNG.getItem(Flavor.pools.graffitiTags) });
+                this.sound('spray');
+                break;
             case 'heroHurt':
                 this.stats.heroHurt++;
                 this.flash(Game.adventurer.x, Game.adventurer.y);
@@ -204,11 +221,12 @@ var Invasion = {
     reportCutscene: function () {
         let s = this.stats;
         let lines = [
-            '%c{#ff0}Invasion report:%c{} %c{#0ff}' + this.hero.full + '%c{} has left the building.',
+            '%c{#ff0}Invasion report:%c{} %c{' + this.heroColor() + '}' + this.hero.full + '%c{} has left the building.',
             'Monsters fainted (theatrically): ' + s.fainted,
             'Loot smashed: ' + s.lootSmashed + '   Doors kicked: ' + s.doors,
             'Snacks eaten on duty: ' + s.snacks + '   Potions quaffed: ' + s.potions,
-            'Blood puddles (fake): ' + s.bloodPuddles,
+            'Blood puddles (fake): ' + s.bloodPuddles + '   Walls vandalised: ' + s.graffiti,
+            this.classStat() + ': ' + s.specials,
         ];
         let scene = [];
         for (let i = 0; i < lines.length; i++) {
@@ -218,6 +236,128 @@ var Invasion = {
         return scene;
     },
 
+    // --- Hand-over: the pause between the hero leaving and the shift starting ---
+    // 'linger'  the camera stays on the empty stairs for a moment,
+    // 'curtain' the screen closes from the top and bottom,
+    // 'card'    a title card for the night shift,
+    // then clockIn() moves everyone to the lounge and the player takes over.
+    LINGER_MS: 1300,
+    SKIP_LINGER_MS: 400,
+    CURTAIN_MS: 700,
+    CARD_MS: 2200,
+    TICK_MS: 40,
+    stage: null,
+    stageStart: 0,
+    stageEnd: 0,
+    exitSpot: null,
+    cardLines: [],
+    handoverTimer: null,
+
+    now: function () {
+        return Date.now();
+    },
+
+    handover: function (x, y) {
+        let skipped = this.skipping;
+        this.skipping = false; // the exit line and sound play even after a skip
+        this.say('heroExit');
+        this.sound('fanfareOut');
+        if (this.instant) {
+            this.clockIn();
+            return;
+        }
+        this.exitSpot = { x: x, y: y };
+        Game.engine.lock();
+        this.setStage('linger', skipped ? this.SKIP_LINGER_MS : this.LINGER_MS);
+    },
+
+    setStage: function (stage, ms) {
+        this.stage = stage;
+        this.stageStart = this.now();
+        this.stageEnd = this.stageStart + ms;
+        Game.drawMap();
+        this.tick();
+    },
+
+    // Fraction of the current stage that has gone by (0..1).
+    stageProgress: function () {
+        let len = this.stageEnd - this.stageStart;
+        return len > 0 ? Math.max(0, Math.min(1, (this.now() - this.stageStart) / len)) : 1;
+    },
+
+    tick: function () {
+        let self = this;
+        this.handoverTimer = setTimeout(function () {
+            self.handoverTimer = null;
+            if (self.stage == null) {
+                return;
+            }
+            if (self.now() < self.stageEnd) {
+                if (self.stage == 'curtain') {
+                    Game.drawMap();
+                }
+                self.tick();
+                return;
+            }
+            if (self.stage == 'linger') {
+                self.setStage('curtain', self.CURTAIN_MS);
+            }
+            else if (self.stage == 'curtain') {
+                self.cardLines = self.makeCard();
+                self.setStage('card', self.CARD_MS);
+            }
+            else {
+                self.clockIn();
+            }
+        }, this.TICK_MS);
+    },
+
+    makeCard: function () {
+        return [
+            '%c{#777}~ ~ ~%c{}',
+            '',
+            '%c{#ff0}' + Flavor.line('cardTitle', {}).replace('{day}', Game.day) + '%c{}',
+            '',
+            Flavor.line('cardLine', {}),
+            '',
+            '%c{#777}~ ~ ~%c{}',
+        ];
+    },
+
+    // Rows of the map area hidden by the closing curtain, counted from each edge.
+    curtainRows: function (mapRows) {
+        if (this.stage != 'curtain') {
+            return 0;
+        }
+        return Math.ceil(this.stageProgress() * Math.ceil(mapRows / 2));
+    },
+
+    clockIn: function () {
+        let locked = this.stage != null;
+        if (this.handoverTimer != null) {
+            clearTimeout(this.handoverTimer);
+            this.handoverTimer = null;
+        }
+        this.stage = null;
+        this.exitSpot = null;
+        Game.moveMonstersToLounge();
+        Game.scheduler.add(Game.player, true);
+        this.finish();
+        if (locked) {
+            Game.engine.unlock();
+        }
+    },
+
+    classStat: function () {
+        let a = Game.adventurer;
+        let def = a && a.heroClass ? Adventurer.classes[a.heroClass] : null;
+        return def ? def.stat : 'Heroic deeds';
+    },
+
+    heroColor: function () {
+        return Game.adventurer ? Game.adventurer.color : '#0ff';
+    },
+
     finish: function () {
         this.skipping = false;
         this.fast = false;
@@ -225,10 +365,8 @@ var Invasion = {
             clearTimeout(this.timer);
             this.timer = null;
         }
-        this.say('heroExit');
         this.say('monstersGetUp');
         this.say('shiftBegins');
-        this.sound('fanfareOut');
         this.bodies = [];
         this.flashes = {};
         Game.forgetMap();

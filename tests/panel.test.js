@@ -39,7 +39,7 @@ test('messCategories counts', () => {
     place(0, 'BloodPool'); place(1, 'BloodPrints'); place(2, 'MudPrints'); place(3, 'Wrapper');
     place(4, 'BrokenTable'); place(5, 'Water'); place(6, 'EmptyMug');
     const c = ctx.Panel.messCategories();
-    assert.deepEqual(JSON.parse(JSON.stringify(c)), { blood: 1, prints: 2, spills: 1, litter: 2, broken: 1, other: 0 });
+    assert.deepEqual(JSON.parse(JSON.stringify(c)), { blood: 1, prints: 2, spills: 1, litter: 2, broken: 1, graffiti: 0, dust: 0, other: 0 });
 });
 
 test('invasion panel shows hero, statuses and truncation', () => {
@@ -122,7 +122,7 @@ test('bodies and flashes are drawn during the invasion', () => {
     assert.equal(body.ch, 'g');
     assert.equal(body.fg, '#555');
     const heroCell = ctx.__drawn.filter(d => d.x === o[0] && d.y === o[1] && d.ch !== undefined).pop();
-    assert.equal(heroCell.ch, 'H');
+    assert.equal(heroCell.ch, '@');
     assert.equal(heroCell.bg, '#a00');
 });
 

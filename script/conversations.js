@@ -50,6 +50,12 @@ var ConversationBuilder = {
             newConversation.push(partyRoomDiscovery);
         }
 
+        delete speaker.convoTags.request;
+        delete speaker.convoTags.requestThanked;
+        if (!party) {
+            Requests.offer(speaker, newConversation);
+        }
+
         if (!speaker.metPlayer) {
             newConversation.push(this.meetingPlayer(speaker));
         }
@@ -258,6 +264,71 @@ var ConversationBuilder = {
             ]);
             possibilities.push([
                 "This dungeon is full of little nooks and crannies. I love trying to fit into them."
+            ]);
+        }
+        if (speaker.species=='Myconid') {
+            possibilities.push([
+                "Sorry about the spores. When I get excited I just... puff.",
+                "And heroes make me VERY excited.",
+                "Don't worry, they're the friendly kind of spores. Mostly."
+            ]);
+            possibilities.push([
+                "I'm a fungus, so technically I'm a fun guy.",
+                "...",
+                "Nobody ever laughs at that one."
+            ]);
+        }
+        if (speaker.species=='Harpy') {
+            possibilities.push([
+                "Did the hero get any feathers on you? Sorry, I moult when I'm stressed.",
+                "And throwing feathers at adventurers is VERY stressful.",
+                "Honestly it's mostly for the drama."
+            ]);
+            possibilities.push([
+                "I sing in the dungeon choir on weekends!",
+                "Adventurers say our singing is 'deadly'. I choose to take that as a compliment."
+            ]);
+        }
+        if (speaker.species=='Mimic') {
+            possibilities.push([
+                "Please don't tell anyone I'm not actually a treasure chest.",
+                "Oh. You already knew? Was it the drool?",
+                "It's always the drool."
+            ]);
+            possibilities.push([
+                "Being a mimic is all about patience. You wait, and wait, and wait...",
+                "And then the hero opens you and you go BLAAAH and they scream!",
+                "Best part of my day, every day."
+            ]);
+        }
+        if (speaker.species=='Skeleton') {
+            possibilities.push([
+                "Have you seen my left femur? I think the hero knocked it loose.",
+                "It's fine, I have a spare. Somewhere.",
+                "Being a skeleton means you're never really missing anything for long."
+            ]);
+            possibilities.push([
+                "People think skeletons are spooky, but I'm really just a big softie.",
+                "Well. A big hardie. I have no soft parts at all, actually.",
+                "But emotionally! Emotionally I'm soft."
+            ]);
+        }
+        if (speaker.species=='Ghost') {
+            possibilities.push([
+                "Ectoplasm is SO hard to get out of carpets. Sorry in advance.",
+                "Good thing the dungeon has stone floors!",
+                "...you might need a few goes at it, though."
+            ]);
+            possibilities.push([
+                "I haunted this dungeon before it was cool.",
+                "Now I'm in the union! Ghosts get dental, too. Not that I need it."
+            ]);
+        }
+        if (speaker.species=='Slime') {
+            possibilities.push([
+                "Sorry about the trail. I can't help it, I'm about 90% goo.",
+                "I tried wearing socks once. It did not go well.",
+                "Watch your step around my puddles, they're slippery!"
             ]);
         }
         if (speaker.species=='Hydra') {
@@ -531,6 +602,14 @@ var ConversationBuilder = {
                 openPhrases.push("Gosh darn I just LOVE toasting adventurers.");
                 openPhrases.push("Fire's good. Fire from me is even better :)");
             }
+            else if (speaker.tags.rangeMess == 'Ectoplasm') {
+                openPhrases.push("I slimed that adventurer good! Ectoplasm everywhere!");
+                openPhrases.push("Boo! That's all it took. They jumped SO high.");
+            }
+            else if (speaker.tags.rangeMess == 'Feathers') {
+                openPhrases.push("I dive-bombed that adventurer like six times!");
+                openPhrases.push("They sneezed every time I flew past. Feathers!");
+            }
             else if (speaker.tags.rangeMess == 'AcidPool') {
                 openPhrases.push("That adventurer was pretty drenched in acid when I was through with them.");
                 openPhrases.push("I love melting adventurers with acid!");
@@ -781,6 +860,7 @@ var ConversationBuilder = {
         if ('animal' in Game.convoTags && Game.convoTags.animal != 'none') {
             messages.push("You have a really happy dream about "+Game.convoTags.animal+"s!");
         }
+        messages.splice(2, 0, Game.shiftReport());
         messages.push("In the morning, you wake up, and have a delicious breakfast.");
         messages.push("Time for another day of work!");
         for (let i=0;i<messages.length;i++) {
@@ -912,3 +992,133 @@ var ConversationBuilder = {
         speaker.convos=newConversation;
     },
 }
+
+// Favours your comrades ask of you: clear every last bit of one kind of mess.
+var Requests = {
+    MAX_PER_DAY: 3,
+    CHANCE: 0.35,
+    REWARD: 40,
+    types: [
+        {key:'slime', label:'Slime', species:'Slime', test:function(m){ return /^(Slime |Slimy )/.test(m.name); },
+            ask:"Sorry about all my slime... Could you mop up every last bit of it? It's embarrassing."},
+        {key:'feathers', label:'Feathers', species:'Harpy', test:function(m){ return m.name == 'Loose Feathers'; },
+            ask:"I moulted all over the dungeon. Could you pick up all my feathers? I'd do it but... wings."},
+        {key:'bones', label:'Bones', species:'Skeleton', test:function(m){ return m.name == 'Loose Bone' || m.name == 'Bone Dust'; },
+            ask:"Bits of me are all over the place! Could you collect my bones and sweep up the bone dust?"},
+        {key:'ecto', label:'Ectoplasm', species:'Ghost', test:function(m){ return m.name == 'Ectoplasm'; },
+            ask:"I may have... leaked. Could you scrub up all the ectoplasm? It's stubborn stuff."},
+        {key:'spores', label:'Spores', species:'Myconid', test:function(m){ return m.name == 'Spores'; },
+            ask:"I got a bit puffy today. Could you clean up all my spores before someone sneezes?"},
+        {key:'drool', label:'Drool', species:'Mimic', test:function(m){ return m.name == 'Mimic Drool'; },
+            ask:"Could you mop up all my drool? If the next hero sees it they'll know I'm not a real chest."},
+        {key:'graffiti', label:'Graffiti', test:function(m){ return m.name == 'Graffiti'; },
+            ask:"The hero wrote rude things about me on the walls! Could you scrub off all the graffiti?"},
+        {key:'coins', label:'Gold coins', test:function(m){ return m.name == 'Scattered Gold Coins'; },
+            ask:"That's our payroll scattered all over the floor! Could you pick up all the gold coins?"},
+        {key:'pages', label:'Loose pages', test:function(m){ return m.name == 'Loose Pages'; },
+            ask:"The book club's books got shredded! Could you gather up all the loose pages?"},
+        {key:'cobwebs', label:'Cobwebs', test:function(m){ return m.name == 'Cobweb'; },
+            ask:"Cobwebs give me the creeps. Could you clear every single one out?"},
+        {key:'swords', label:'Swords', test:function(m){ return m.name == 'Dropped Sword' || m.name == 'Stray Arrow'; },
+            ask:"Someone's going to trip on all those dropped weapons! Could you pick them all up?"},
+        {key:'litter', label:'Mugs & bottles', test:function(m){ return /^Empty (Coffee Mug|Bottle)$/.test(m.name); },
+            ask:"Okay, I admit it, we leave mugs and bottles everywhere. Could you round them all up?"},
+    ],
+    rewards: [
+        "hands you a cookie they were saving.",
+        "gives you a big, slightly crushing hug.",
+        "promises to put in a good word at the next co-op meeting.",
+        "gives you a hand-drawn 'Employee of the Day' certificate.",
+        "high-fives you. It stings a little, in a good way.",
+    ],
+
+    type: function(key) {
+        for (let i=0;i<this.types.length;i++) {
+            if (this.types[i].key == key) {
+                return this.types[i];
+            }
+        }
+        return null;
+    },
+
+    remaining: function(key) {
+        let t = this.type(key);
+        if (t == null) {
+            return 0;
+        }
+        let n = 0;
+        for (let k in Game.map) {
+            let m = Game.map[k].mess;
+            if (m != null && t.test(m)) {
+                n++;
+            }
+        }
+        return n;
+    },
+
+    // Species-specific favours come first; anyone can ask the generic ones.
+    pick: function(speaker) {
+        let mine = [], generic = [];
+        for (let i=0;i<this.types.length;i++) {
+            let t = this.types[i];
+            let n = this.remaining(t.key);
+            if (n < 1 || n > 30) {
+                continue;
+            }
+            if (t.species == speaker.species) {
+                mine.push(t);
+            }
+            else if (t.species == null) {
+                generic.push(t);
+            }
+        }
+        if (mine.length > 0) {
+            return ROT.RNG.getItem(mine);
+        }
+        return generic.length > 0 ? ROT.RNG.getItem(generic) : null;
+    },
+
+    offer: function(speaker, convos) {
+        if (Game.requestsOffered >= this.MAX_PER_DAY || ROT.RNG.getUniform() >= this.CHANCE) {
+            return false;
+        }
+        let t = this.pick(speaker);
+        if (t == null) {
+            return false;
+        }
+        Game.requestsOffered++;
+        convos.push([
+            {text:t.ask, y:1, n:2},
+            {text:"You're the best! Come find me when it's done.", any:-1, tags:{request:t.key}},
+            {text:"No worries! Forget I asked :)", any:-1},
+        ]);
+        convos.push([
+            {text:"You did it! Not a trace of "+t.label.toLowerCase()+" left anywhere. Thank you!", any:1,
+                conditions:{requestDone:true}, tags:{requestThanked:true}, globalTags:{yendorPoints:this.REWARD}},
+            {action:ROT.RNG.getItem(this.rewards), any:-1},
+        ]);
+        return true;
+    },
+
+    isDone: function(speaker) {
+        let key = speaker.convoTags.request;
+        return key != null && !speaker.convoTags.requestThanked && this.remaining(key) == 0;
+    },
+
+    // Open favours for the side panel: [{who, label, left}]
+    active: function() {
+        let out = [];
+        for (let i=0;i<Game.monsterList.length;i++) {
+            let m = Game.monsterList[i];
+            if (m.alive && m.convoTags.request && !m.convoTags.requestThanked) {
+                let t = this.type(m.convoTags.request);
+                if (t) {
+                    out.push({who:m, label:t.label, left:this.remaining(t.key)});
+                }
+            }
+        }
+        return out;
+    },
+};
+
+if (typeof module !== 'undefined') module.exports = Requests;

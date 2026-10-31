@@ -29,7 +29,7 @@ function messNextToPlayer(ctx, type) {
 
 test('mopping plays the mop sound', () => {
     const { ctx, played } = cleaningDay();
-    messNextToPlayer(ctx, 'BloodPool');
+    messNextToPlayer(ctx, 'Water');
     ctx.Game.player.clean('mop');
     assert.deepEqual(played, ['mop']);
 });

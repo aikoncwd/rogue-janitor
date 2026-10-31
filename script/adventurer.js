@@ -6,8 +6,10 @@ function Adventurer(x,y) {
     this.blood=0;
     this.dmg=1;
     this.hp=5;
-    this.char='H';
+    this.char='@';
     this.color='#0ff';
+    this.heroClass=null;
+    this.specials=0;
     this.moveTo(x,y);
     this.roomsToExplore=[];
     this.destinationIndex=0;
@@ -17,6 +19,7 @@ function Adventurer(x,y) {
     this.active=true;
     this.path=[];
     this.recalculate=true;
+    this.graffiti=0;
     this.spreading="MudPrints";
     this.spreadCount=10;
     this.fov = new ROT.FOV.PreciseShadowcasting(function(x,y){
@@ -59,17 +62,17 @@ Adventurer.prototype.nextDestination = function() {
 
 Adventurer.prototype.maxTurns = 1500; // fail-safe: a normal invasion takes ~500 turns; give up and leave if stuck
 
-// The hero exits the dungeon; the fainted monsters get up and the player's shift starts.
+// The hero exits the dungeon. Invasion.handover() lets the moment breathe, then the
+// fainted monsters get up and the player's shift starts.
 Adventurer.prototype.leave = function() {
     let key=this.x+','+this.y;
     if (key in Game.map && Game.map[key].entity==this) {
         Game.map[key].entity=null;
     }
+    let exit=[this.x,this.y];
     this.x=-10000;this.y=-100000;
     this.active=false;
-    Game.moveMonstersToLounge();
-    Game.scheduler.add(Game.player,true);
-    Invasion.finish();
+    Invasion.handover(exit[0],exit[1]);
 }
 
 Adventurer.prototype.look = function() {
@@ -84,7 +87,7 @@ Adventurer.prototype.look = function() {
                 Game.map[key].entity.active=true;
                 Game.adventurer.targets.push(Game.map[key].entity);
             }
-            else if ('loot' in Game.map[key].entity.tags) {
+            else if ('loot' in Game.map[key].entity.tags && !('wall' in Game.map[key].entity.tags)) {
                 //console.log('loot identified');
                 
                 Game.adventurer.destinations.push([x,y]);
@@ -97,6 +100,128 @@ Adventurer.prototype.look = function() {
     if (this.newDestinationFound) {
         this.nextDestination();
     }
+}
+
+Adventurer.prototype.maxGraffiti = 6;
+
+// Every hero class makes its own kind of mess. `every` is the average number of
+// turns between specials; `special` is the method called.
+Adventurer.classes = {
+    Paladin:      { color:'#ff8', hp:6, dmg:1, every:30, special:'holyWater', stat:'Rooms blessed' },
+    Barbarian:    { color:'#f84', hp:6, dmg:2, every:35, special:'drumstick', stat:'Drumsticks devoured' },
+    Wizard:       { color:'#c8f', hp:4, dmg:1, every:25, special:'fireball', stat:'Fireballs cast' },
+    Ranger:       { color:'#8f8', hp:5, dmg:1, every:12, special:'arrow', stat:'Arrows loosed' },
+    Rogue:        { color:'#aaa', hp:5, dmg:1, every:40, special:'smokeBomb', stat:'Smoke bombs thrown' },
+    Bard:         { color:'#f8f', hp:5, dmg:1, every:25, special:'song', stat:'Songs performed' },
+    Archeologist: { color:'#da6', hp:5, dmg:1, every:30, special:'dig', stat:'Holes dug' },
+    Alchemist:    { color:'#6fc', hp:5, dmg:1, every:20, special:'potionSplash', stat:'Potions spilled' },
+};
+
+Adventurer.prototype.setClass = function(cls) {
+    let def = Adventurer.classes[cls] || Adventurer.classes.Paladin;
+    this.heroClass = (cls in Adventurer.classes) ? cls : 'Paladin';
+    this.color = def.color;
+    this.hp = def.hp;
+    this.maxHp = def.hp;
+    this.dmg = def.dmg;
+    this.specials = 0;
+    return this;
+}
+
+// Floor tiles around the hero (within `radius`) where a mess could go.
+Adventurer.prototype.floorAround = function(radius) {
+    let spots=[];
+    for (let i=-radius;i<=radius;i++) {
+        for (let j=-radius;j<=radius;j++) {
+            let tile=Game.map[(this.x+i)+','+(this.y+j)];
+            if (tile && tile.passable && !tile.important && tile.door == null) {
+                spots.push([this.x+i,this.y+j]);
+            }
+        }
+    }
+    return spots;
+}
+
+Adventurer.prototype.splat = function(type, radius, count) {
+    let spots=this.floorAround(radius);
+    let made=0;
+    for (let k=0;k<count && spots.length>0;k++) {
+        let i=Math.floor(ROT.RNG.getUniform()*spots.length);
+        let spot=spots.splice(i,1)[0];
+        makeMess(spot[0],spot[1],type);
+        made++;
+    }
+    return made;
+}
+
+Adventurer.prototype.trySpecial = function() {
+    let def = Adventurer.classes[this.heroClass];
+    if (!def || ROT.RNG.getUniform() >= 1/def.every) {
+        return false;
+    }
+    if (this[def.special]()) {
+        this.specials++;
+        Invasion.event('special', {cls:this.heroClass});
+        return true;
+    }
+    return false;
+}
+
+Adventurer.prototype.holyWater = function() { return this.splat('HolyWater', 2, 3) > 0; }
+Adventurer.prototype.drumstick = function() { return this.splat('Drumstick', 1, 1) > 0; }
+Adventurer.prototype.fireball = function() {
+    let made = this.splat('Scorch', 2, 5);
+    this.splat('SpentScroll', 1, 1);
+    return made > 0;
+}
+Adventurer.prototype.arrow = function() { return this.splat('StrayArrow', 4, 1) > 0; }
+Adventurer.prototype.smokeBomb = function() { return this.splat('Soot', 1, 3) > 0; }
+Adventurer.prototype.song = function() { return this.splat('SheetMusic', 2, 2) > 0; }
+Adventurer.prototype.dig = function() {
+    let made = this.splat('DugHole', 1, 1);
+    this.splat('SpilledSoil', 1, 2);
+    return made > 0;
+}
+Adventurer.prototype.potionSplash = function() {
+    let made = this.splat('PotionSplash', 1, 2);
+    this.splat('BrokenFlask', 1, 1);
+    return made > 0;
+}
+
+// Banners and torches hang on walls the hero cannot walk onto: wreck them in passing.
+Adventurer.prototype.smashWallDecor = function() {
+    for (let i=-1;i<2;i++) {
+        for (let j=-1;j<2;j++) {
+            let tile=Game.map[(this.x+i)+','+(this.y+j)];
+            if (tile && tile.entity instanceof Entity && 'wall' in tile.entity.tags && ROT.RNG.getUniform() < 0.6) {
+                tile.entity.adventurerAct();
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Heroes cannot resist writing their name on things.
+Adventurer.prototype.tagWall = function() {
+    let walls=[];
+    for (let i=-1;i<2;i++) {
+        for (let j=-1;j<2;j++) {
+            let key=(this.x+i)+','+(this.y+j);
+            let tile=Game.map[key];
+            if (tile && !tile.passable && tile.door == null && tile.secretDoor == null && tile.mess == null && (tile.char == '#' || tile.char == '\u266F')) {
+                walls.push([this.x+i,this.y+j]);
+            }
+        }
+    }
+    if (walls.length == 0) {
+        return false;
+    }
+    let spot=ROT.RNG.getItem(walls);
+    makeMess(spot[0],spot[1],'Graffiti');
+    this.graffiti++;
+    Invasion.event('graffiti', {x:spot[0], y:spot[1]});
+    return true;
 }
 
 Adventurer.prototype.damage = function() {
@@ -149,6 +274,11 @@ Adventurer.prototype.takeTurn = function () {
         let newMess = makeMess(this.x,this.y,"Wrapper");
         Invasion.event('snack', {});
         this.hunger += Math.floor(15*ROT.RNG.getUniform())+20;
+    }
+    this.smashWallDecor();
+    this.trySpecial();
+    if (this.graffiti < this.maxGraffiti && ROT.RNG.getUniform() < 0.025) {
+        this.tagWall();
     }
     this.turns++;
     if (this.blood>0) {

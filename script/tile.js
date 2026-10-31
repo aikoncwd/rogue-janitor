@@ -80,5 +80,8 @@ Tile.prototype.openSecretDoor = function() {
         this.passable=true;
         this.seeThrough=true;
         this.secretDoor=null;
+        if (this.entity != null && this.entity.tags && 'wall' in this.entity.tags) {
+            this.entity=null; // a banner or torch hung on the hidden door comes down with it
+        }
     }
 }

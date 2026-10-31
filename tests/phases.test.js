@@ -54,7 +54,11 @@ test('esc skips to cleaning with no double unlock', () => {
     ctx.__press(KEY.ENTER);
     for (let i = 0; i < 3; i++) ctx.__runTimers();
     ctx.__press(KEY.ESC);
+    assert.equal(ctx.Game.phase, 'invasion', 'the hand-over pause comes first');
+    assert.equal(ctx.Invasion.stage, 'linger');
+    ctx.__press(KEY.ENTER); // any key hurries the hand-over
     assert.equal(ctx.Game.phase, 'cleaning');
+    assert.equal(ctx.Invasion.stage, null);
     assert.equal(ctx.Game.adventurer.active, false);
     assert.equal(ctx.__timers.length, 0, 'no stray timer left to unlock the engine again');
     assert.equal(ctx.Game.engine._lock, 1, 'engine held by the player only');
@@ -107,6 +111,8 @@ test('camera follows the hero during the invasion and the player after', () => {
     ctx.__press(KEY.ENTER);
     assert.equal(ctx.Game.cameraTarget(), ctx.Game.adventurer);
     ctx.__press(KEY.ESC);
+    assert.equal(ctx.Game.cameraTarget(), ctx.Invasion.exitSpot, 'lingers on the stairs the hero left by');
+    ctx.__press(KEY.ENTER);
     assert.equal(ctx.Game.cameraTarget(), ctx.Game.player);
 });
 
@@ -115,6 +121,6 @@ test('player glyph not drawn during invasion', () => {
     ctx.__press(KEY.ENTER);
     for (let i = 0; i < 5; i++) ctx.__runTimers();
     ctx.Game.drawMap();
-    assert.ok(!ctx.__drawn.some(d => d.ch === '@'));
-    assert.ok(ctx.__drawn.some(d => d.ch === 'H'), 'hero is drawn');
+    assert.ok(!ctx.__drawn.some(d => d.ch === '@' && d.fg === ctx.Game.player.color), 'the janitor is not drawn');
+    assert.ok(ctx.__drawn.some(d => d.ch === '@' && d.fg === ctx.Game.adventurer.color), 'hero is drawn');
 });

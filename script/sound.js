@@ -1,7 +1,7 @@
 // Tiny synthesized sound effects (Web Audio API, no audio files).
 var Sfx = {
     names: ['hit', 'yelp', 'faint', 'door', 'smash', 'gulp', 'munch', 'fanfareIn', 'fanfareOut',
-        'mop', 'pickup', 'fix', 'secret', 'blip', 'heroHurt'],
+        'mop', 'pickup', 'fix', 'secret', 'blip', 'heroHurt', 'slip', 'coins', 'spray', 'scrub'],
     minGapMs: 70,
     maxPerSecond: 12,
     volume: 0.15,
@@ -148,6 +148,10 @@ var Sfx = {
         },
         blip: function (t) { this.tone(t, 880, 0.04, 'square', 0.25); },
         heroHurt: function (t) { this.tone(t, 300, 0.15, 'sawtooth', 0.4, 150); },
+        slip: function (t) { this.tone(t, 300, 0.25, 'sine', 0.6, 1200); this.noise(t + 0.2, 0.12, 0.5, 500); },
+        coins: function (t) { this.tone(t, 1319, 0.06, 'square', 0.3); this.tone(t + 0.07, 1760, 0.12, 'square', 0.3); },
+        scrub: function (t) { this.noise(t, 0.1, 0.5, 900, 'bandpass'); this.noise(t + 0.12, 0.1, 0.5, 1100, 'bandpass'); },
+        spray: function (t) { this.noise(t, 0.35, 0.5, 5000, 'highpass'); },
     },
 };
 

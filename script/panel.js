@@ -23,7 +23,7 @@ var Panel = {
     },
 
     messCategories: function () {
-        let c = { blood: 0, prints: 0, spills: 0, litter: 0, broken: 0, other: 0 };
+        let c = { blood: 0, prints: 0, spills: 0, litter: 0, broken: 0, graffiti: 0, dust: 0, other: 0 };
         for (let key in Game.map) {
             let mess = Game.map[key].mess;
             if (mess == null) {
@@ -39,8 +39,14 @@ var Panel = {
             else if (/Blood/.test(name)) {
                 c.blood++;
             }
-            else if (/^(Water|Acid Pool|Scorch Mark|Splinters)$/.test(name)) {
+            else if (/^(Water|Acid Pool|Scorch Mark|Splinters|Spilled Ale|Slime Puddle|Slime Trail|Spilled Soil|Gravel|Dripped Wax|Spores|Mimic Drool|Bone Dust|Ectoplasm|Holy Water|Soot|Bubbling Potion)$/.test(name)) {
                 c.spills++;
+            }
+            else if (name == 'Graffiti') {
+                c.graffiti++;
+            }
+            else if (name == 'Cobweb') {
+                c.dust++;
             }
             else if (mess.cleanMethod == 'get' && !mess.unique) {
                 c.litter++;
@@ -94,6 +100,74 @@ var Panel = {
         return entries.slice(0, shown).concat(['%c{#777}+' + (entries.length - shown) + ' more%c{}']);
     },
 
+    // A scaled-down map of what you have seen: '@' you, red/orange blocks for
+    // mess you have spotted, dots for explored floor. Returns colour-coded lines.
+    MINIMAP_ROWS: 9,
+    minimap: function (width, rows) {
+        let c = Game.corners;
+        let W = c[1][0] - c[0][0] + 1, H = c[1][1] - c[0][1] + 1;
+        if (W < 1 || H < 1) {
+            return [];
+        }
+        let s = Math.max(1, Math.ceil(W / width), Math.ceil(H / rows));
+        let cols = Math.min(width, Math.ceil(W / s)), lines = Math.min(rows, Math.ceil(H / s));
+        let out = [];
+        for (let r = 0; r < lines; r++) {
+            let line = '';
+            for (let q = 0; q < cols; q++) {
+                let seen = false, mess = 0, me = false, exit = false;
+                for (let x = c[0][0] + q * s; x < c[0][0] + (q + 1) * s; x++) {
+                    for (let y = c[0][1] + r * s; y < c[0][1] + (r + 1) * s; y++) {
+                        if (x == Game.player.x && y == Game.player.y) {
+                            me = true;
+                        }
+                        let t = Game.map[x + ',' + y];
+                        if (!t || t.lastSeen == ' ') {
+                            continue;
+                        }
+                        if (t.passable) {
+                            seen = true;
+                        }
+                        if (t.mess != null) {
+                            mess++;
+                        }
+                        if (t.entity != null && t.entity.tags && 'exit' in t.entity.tags) {
+                            exit = true;
+                        }
+                    }
+                }
+                if (me) {
+                    line += '%c{#ff0}@';
+                }
+                else if (exit) {
+                    line += '%c{#c33}X';
+                }
+                else if (mess > 0) {
+                    line += (mess >= 3 ? '%c{#e33}' : '%c{#c80}') + '\u25AA';
+                }
+                else if (seen) {
+                    line += '%c{#555}\u00B7';
+                }
+                else {
+                    line += ' ';
+                }
+            }
+            out.push(line + '%c{}');
+        }
+        return out;
+    },
+
+    requestLines: function (w) {
+        let self = this;
+        return Requests.active().map(function (r) {
+            let status = r.left > 0 ? String(r.left) + ' left' : '%c{#0c0}done!%c{}';
+            let plainStatus = r.left > 0 ? String(r.left) + ' left' : 'done!';
+            let label = self.fit(r.label, w - 3 - plainStatus.length);
+            let pad = ' '.repeat(Math.max(1, w - 2 - label.length - plainStatus.length));
+            return '%c{' + r.who.color + '}' + r.who.char + '%c{} ' + label + pad + status;
+        });
+    },
+
     monsterStatus: function (m) {
         if (!m.alive) {
             return ['fainted', '#555'];
@@ -112,7 +186,7 @@ var Panel = {
             let hp = hero ? Math.max(0, Math.min(hero.hp, this.HERO_HP_MAX)) : 0;
             head = [
                 '%c{#fff}── INVASION ──%c{}',
-                '%c{#0ff}' + this.fit(Invasion.hero.full, w) + '%c{}',
+                '%c{' + Invasion.heroColor() + '}' + this.fit(Invasion.hero.full, w) + '%c{}',
                 'HP ' + this.bar(hp, this.HERO_HP_MAX, '#0c0') + ' ' + hp + '/' + this.HERO_HP_MAX,
                 'Turn ' + Invasion.turn,
                 '',
@@ -135,18 +209,25 @@ var Panel = {
                 '%c{#777}[Space] fast: ' + (Invasion.fast ? 'on' : 'off') + '%c{}',
                 '%c{#777}[Esc] skip%c{}',
                 '%c{#777}[V] sound: ' + (Sfx.enabled ? 'on' : 'off') + '%c{}',
+                '%c{#777}[T] music: ' + (Music.enabled ? 'on' : 'off') + '%c{}',
                 '%c{#777}[+/-] zoom  [0] auto%c{}',
             ];
         }
         else {
             let pct = Game.messNumbers[1] > 0 ? Game.cleanPercent() : 100;
+            let near = Game.nearestMess();
             head = [
                 '%c{#fff}── SHIFT ──%c{}',
                 'Day ' + Game.day,
                 'Clean ' + this.bar(pct, 100, '#0c0') + ' ' + pct + '%',
+                near ? 'Nearest mess %c{#ff0}' + near.arrow + '%c{} ' + near.d : '%c{#0c0}No mess left!%c{}',
                 '',
-                '%c{#fff}── STAFF LOUNGE ──%c{}',
             ];
+            let requests = this.requestLines(w);
+            if (requests.length > 0) {
+                head = head.concat(['%c{#fff}── REQUESTS ──%c{}']).concat(requests).concat(['']);
+            }
+            head.push('%c{#fff}── STAFF LOUNGE ──%c{}');
             let self = this;
             list = Game.monsterList.filter(function (m) { return m.alive && m.retired && !m.partying; })
                 .map(function (m) { return '%c{' + m.color + '}' + m.char + '%c{} ' + self.fit(m.name, w - 2); });
@@ -155,7 +236,8 @@ var Panel = {
             }
             let c = this.messCategories();
             let labels = [['blood', '"Blood"'], ['prints', 'Footprints'], ['spills', 'Spills'],
-                ['litter', 'Litter'], ['broken', 'Broken stuff'], ['other', 'Other']];
+                ['litter', 'Litter'], ['broken', 'Broken stuff'], ['graffiti', 'Graffiti'], ['dust', 'Cobwebs'],
+                ['other', 'Other']];
             let messLines = [];
             for (let i = 0; i < labels.length; i++) {
                 if (c[labels[i][0]] > 0) {
@@ -167,12 +249,21 @@ var Panel = {
             if (messLines.length == 0) {
                 messLines = ['%c{#0c0}Spotless!%c{}'];
             }
-            tail = ['', '%c{#fff}── MESS LEFT ──%c{}'].concat(messLines).concat([
+            let hints = [
                 '',
                 '%c{#777}[?] help%c{}',
                 '%c{#777}[V] sound: ' + (Sfx.enabled ? 'on' : 'off') + '%c{}',
+                '%c{#777}[T] music: ' + (Music.enabled ? 'on' : 'off') + '%c{}',
                 '%c{#777}[+/-] zoom  [0] auto%c{}',
-            ]);
+            ];
+            tail = ['', '%c{#fff}── MESS LEFT ──%c{}'].concat(messLines);
+            // the minimap only takes the room left after the lounge list (up to 8 names)
+            let spare = maxRows - head.length - tail.length - hints.length - 2 - Math.min(list.length, 8);
+            let map = spare >= 4 ? this.minimap(w, Math.min(this.MINIMAP_ROWS, spare)) : [];
+            if (map.length > 0) {
+                tail = tail.concat(['', '%c{#fff}── MAP ──%c{}']).concat(map);
+            }
+            tail = tail.concat(hints);
         }
         let room = maxRows - head.length - tail.length;
         if (room < 1) {

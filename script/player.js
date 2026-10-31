@@ -110,6 +110,7 @@ Player.prototype.openClose=function(openclose) {
 
 Player.prototype.clean = function(verb) {
     let doSelf=null;
+    let tool = verb;
     let sound = {mop:'mop', get:'pickup', fix:'fix'}[verb];
     for (let i=-this.reach;i<=this.reach;i++) {
         for (let j=-this.reach;j<=this.reach;j++) {
@@ -121,7 +122,19 @@ Player.prototype.clean = function(verb) {
                 continue;
             }
             if (key in Game.map && Game.map[key].mess != null && Game.map[key].mess.cleanMethod == verb) {
-                if (verb=='fix') {
+                let stain = Game.map[key].mess;
+                if (verb=='mop' && !stain.scrub()) {
+                    let left = stain.passes;
+                    Game.sendMessage("You scrub the "+stain.name.toLowerCase()+". "+(left > 1 ? "It's stubborn! ("+left+" more passes)" : "It's fading... one more pass!"));
+                    Game.shift.passes++;
+                    Sfx.play('scrub');
+                    Effects.clean(tool, this.x+i, this.y+j, stain.color);
+                    return;
+                }
+                if (verb=='fix' && Game.map[key].mess.parent == null) {
+                    Game.sendMessage("You patch up the "+Game.map[key].mess.name.toLowerCase()+".");
+                }
+                else if (verb=='fix') {
                     if (Game.map[key].entity==null) {
                         Game.map[key].entity = Game.map[key].mess.parent;
                         Game.sendMessage("You fix the "+Game.map[key].entity.name.toLowerCase()+".");
@@ -142,17 +155,24 @@ Player.prototype.clean = function(verb) {
                         Game.sendMessage("You "+verb+" the "+Game.map[key].mess.name.toLowerCase()+".");
                     }
                 }
-                if (Game.map[key].mess.droppedBy != null) {
-                    ConversationBuilder.cleanConvo(Game.map[key].mess);
+                let cleaned = Game.map[key].mess;
+                if (cleaned.droppedBy != null) {
+                    ConversationBuilder.cleanConvo(cleaned);
                 }
-                Game.map[key].mess.pickedUp=true;
+                if (cleaned.bonusPoints) {
+                    Game.yendorPoints += cleaned.bonusPoints;
+                }
+                Game.shift.cleaned++;
+                cleaned.pickedUp=true;
                 Game.map[key].mess=null;
                 Game.messNumbers[0]--;
-                Sfx.play(sound);
+                Sfx.play(cleaned.sound || sound);
+                Effects.clean(tool, this.x+i, this.y+j, cleaned.color);
                 return;
             }
             else if (key in Game.map && Game.map[key].mess == null && Game.map[key].entity==null && Game.map[key].secretDoor != null) {
                 Game.map[key].openSecretDoor();
+                Effects.add(this.x+i, this.y+j, Effects.framesFor('sparkle'));
                 Game.yendorPoints+=10;
                 Game.sendMessage("%c{#ff0}You found a secret passageway!%c{}");
                 return;
@@ -286,7 +306,7 @@ Player.prototype.handleEvent = function(e) {
     let parts = testKey.split(',');
 
     if (this.moveTo(Math.round(parseInt(parts[0])), Math.round(parseInt(parts[1])))) {
-        //console.log(this.x+','+this.y);
+        this.slide(diff);
         Game.drawMap();
         window.removeEventListener("keydown", this);
         Game.engine.unlock();
@@ -297,6 +317,23 @@ Player.prototype.handleEvent = function(e) {
             Game.map[testKey].entity.cleanerAct();
         }
     }
+}
+
+// Stepping onto something slippery carries you one more tile the same way.
+Player.prototype.slide = function(diff) {
+    let here = Game.map[this.x+','+this.y];
+    if (!here || here.mess == null || !here.mess.slippery) {
+        return false;
+    }
+    let nextKey = (this.x+diff[0])+','+(this.y+diff[1]);
+    let next = Game.map[nextKey];
+    if (!next || next.door != null || next.secretDoor != null || !next.passThrough()) {
+        return false;
+    }
+    this.moveTo(this.x+diff[0], this.y+diff[1]);
+    Game.sendMessage("Whoa! You slip on the "+here.mess.name.toLowerCase()+" and slide!");
+    Sfx.play('slip');
+    return true;
 }
 
 Player.prototype.wait = function(milliseconds) {
@@ -319,6 +356,7 @@ Player.prototype.moveTo = function(x,y) {
 
     if (newKey in Game.map && Game.map[newKey].secretDoor != null && Game.map[newKey].mess==null) {
         Game.map[newKey].openSecretDoor();
+        Game.yendorPoints+=10;
         Game.sendMessage("%c{#ff0}You found a secret passageway!%c{}");
         return true;
     }

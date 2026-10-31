@@ -46,13 +46,16 @@ test('all required pools exist with enough lines', () => {
     assert.ok(intro.length >= 6 && intro.length <= 10, 'introText ' + intro.length);
 });
 
-test('heroName full = short + " the " + class', () => {
+test('heroName full = short + " the " + class, or ", " + class when the epithet already has "the"/"of"', () => {
     const ctx = boot();
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 40; i++) {
         const h = ctx.Flavor.heroName();
         assert.ok(h.short.length > 0);
-        const cls = h.full.slice((h.short + ' the ').length);
-        assert.ok(h.full.startsWith(h.short + ' the '), h.full);
+        const joiner = / (the|of) /.test(h.short) ? ', ' : ' the ';
+        assert.ok(h.full.startsWith(h.short + joiner), h.full);
+        const cls = h.full.slice((h.short + joiner).length);
+        assert.equal(cls, h.cls);
         assert.ok(ctx.Flavor.pools.heroClass.includes(cls), cls);
+        assert.ok(!/ (the|of) .* the /.test(h.full), 'no doubled epithet: ' + h.full);
     }
 });

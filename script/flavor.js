@@ -150,6 +150,71 @@ var Flavor = {
             "Time to clean. Thank goodness it's a supportive work environment.",
         ],
 
+        graffiti: [
+            "{hero} scrawls \"{item}\" on the wall. In permanent marker.",
+            "{hero} pauses to carve \"{item}\" into the stonework.",
+            "{hero} spray-paints \"{item}\" on a wall. The monsters gasp.",
+            "{hero} writes \"{item}\" on the wall. The spelling is creative.",
+            "{hero} tags the wall: \"{item}\". Somebody will have to scrub that.",
+        ],
+        graffitiTags: [
+            "HERO WAS HERE", "LOOT OR DIE", "FIRST!", "MONSTERS STINK", "GLORY 4 EVER",
+            "CALL ME ;)", "DRAGONS R FAKE", "THIS WAY ->", "I CAME I SAW I LOOTED",
+        ],
+        special_Paladin: [
+            "{hero} blesses the room. Holy water splashes everywhere.",
+            "{hero} sprinkles holy water on the floor \"just in case\".",
+            "{hero} performs a purifying ritual. The floor is now soggy AND holy.",
+        ],
+        special_Barbarian: [
+            "{hero} tears into a turkey drumstick and tosses the bone.",
+            "{hero} eats a drumstick in three bites. The bone goes flying.",
+            "{hero} pauses for a mid-battle drumstick. \"RAAARGH. Delicious.\"",
+        ],
+        special_Wizard: [
+            "{hero} casts FIREBALL! At nothing in particular.",
+            "{hero} reads a scroll aloud and the room catches fire a little.",
+            "{hero} hurls a fireball. The scroll crumbles to the floor.",
+        ],
+        special_Ranger: [
+            "{hero} looses an arrow. It misses everything.",
+            "{hero} fires a warning shot into the wall.",
+            "{hero} shoots an arrow at a suspicious shadow. It was a coat rack.",
+        ],
+        special_Rogue: [
+            "{hero} throws a smoke bomb and vanishes! Then reappears, coughing.",
+            "{hero} drops a smoke bomb for dramatic effect. Soot everywhere.",
+            "{hero} tosses a smoke bomb. Nobody was looking.",
+        ],
+        special_Bard: [
+            "{hero} plays a rousing ballad. Sheet music flutters to the floor.",
+            "{hero} improvises a song about their own bravery.",
+            "{hero} strums a power chord. Pages of sheet music scatter.",
+        ],
+        special_Archeologist: [
+            "{hero} digs a hole looking for ancient artifacts. Finds a sock.",
+            "{hero} excavates the floor. \"This tile is at least a week old!\"",
+            "{hero} pulls out a tiny shovel and digs. Dirt everywhere.",
+        ],
+        special_Alchemist: [
+            "{hero} mixes two potions. They fizz, bubble and spill.",
+            "{hero} drops a flask. Something bubbly oozes out.",
+            "{hero} tries a new recipe. It explodes, but only a little.",
+        ],
+        cardTitle: [
+            "Night shift, day {day}",
+            "Day {day}: the night shift",
+            "After hours, day {day}",
+        ],
+        cardLine: [
+            "The dust settles. Somewhere, a mop bucket waits.",
+            "The monsters limp off to the staff lounge. You clock in.",
+            "The dungeon is quiet now. Quiet, and very, very sticky.",
+            "The hero is gone. The mess, sadly, is not.",
+            "You punch your time card. The machine goes 'ka-chunk'.",
+            "You tie your apron and roll up your sleeves.",
+        ],
+
         heroFirst: [
             "Sir Gleamington", "Brakka", "Lady Valoria", "Thrognar", "Percival", "Ser Shinyboots",
             "Elandriel", "Grimbold", "Dame Fortitude", "Chad", "Xandar", "Bartholomew",
@@ -159,8 +224,7 @@ var Flavor = {
             "the Unwashed", "Goblinbane", "the Mildly Famous", "Ironpants",
         ],
         heroClass: [
-            "Paladin", "Barbarian", "Valkyrie", "Rogue", "Wizard", "Ranger", "Knight",
-            "Samurai", "Archeologist", "Monk",
+            "Paladin", "Barbarian", "Wizard", "Ranger", "Rogue", "Bard", "Archeologist", "Alchemist",
         ],
     },
 
@@ -188,7 +252,8 @@ var Flavor = {
             short = first + " " + ROT.RNG.getItem(this.pools.heroLast);
         }
         let cls = ROT.RNG.getItem(this.pools.heroClass);
-        return { short: short, full: short + " the " + cls };
+        let joiner = / (the|of) /.test(short) ? ", " : " the ";
+        return { short: short, full: short + joiner + cls, cls: cls };
     },
 };
 

@@ -58,8 +58,8 @@ function Entity(x,y,char,color,species,hp=1,tags={},level=1,bgColor='#000',attac
     }
     let dx=0;
     let dy=0;
-    while (!this.moveTo(x+dx,y+dy)) {
-        let r=0;
+    let r=0; // search radius grows until a free tile is found
+    while (!this.moveTo(x+dx,y+dy) && r<100) {
         r++;
         for (let i=-r;i<=r;i++) {
             for (let j=-r;j<=r;j++) {
@@ -123,8 +123,8 @@ Entity.prototype.reset = function(x,y) {
     }
     let dx=0;
     let dy=0;
-    while (!this.moveTo(x+dx,y+dy)) {
-        let r=0;
+    let r=0; // search radius grows until a free tile is found
+    while (!this.moveTo(x+dx,y+dy) && r<100) {
         r++;
         for (let i=-r;i<=r;i++) {
             for (let j=-r;j<=r;j++) {
@@ -150,6 +150,18 @@ Entity.prototype.adventurerAct = function() {
             let newmess=makeMess(this.x,this.y,this.tags.mess);
             newmess.parent=this;
         }
+        if ('scatter' in this.tags) {
+            let made=0;
+            for (let tries=0;tries<20 && made<this.tags.scatter[1];tries++) {
+                let sx = this.x + Math.floor(5*ROT.RNG.getUniform())-2;
+                let sy = this.y + Math.floor(5*ROT.RNG.getUniform())-2;
+                let skey = sx+','+sy;
+                if (skey in Game.map && Game.map[skey].passable && !Game.map[skey].important && Game.map[skey].mess == null && (sx != this.x || sy != this.y)) {
+                    makeMess(sx,sy,this.tags.scatter[0]);
+                    made++;
+                }
+            }
+        }
         if ('splashes' in this.tags) {
             let dx;
             let dy;
@@ -165,8 +177,9 @@ Entity.prototype.adventurerAct = function() {
         Invasion.event('hit', {monster:this});
         let dx = Math.floor(3*ROT.RNG.getUniform())-1;
         let dy = Math.floor(3*ROT.RNG.getUniform())-1;
-        let newMess1=makeMess(this.x,this.y,"BloodPool");
-        let newMess2=makeMess(this.x+dx,this.y+dy,"BloodPool");
+        let bleeds = this.tags.bleeds || "BloodPool";
+        let newMess1=makeMess(this.x,this.y,bleeds);
+        let newMess2=makeMess(this.x+dx,this.y+dy,bleeds);
         if (this.bonusMess != null) {
             let testKey=(this.x+dy)+','+(this.y+dx);
             if (testKey in Game.map && Game.map[testKey].passable && !(Game.map[testKey].important)) {
@@ -230,6 +243,9 @@ Entity.prototype.doConvo = function() {
             if ('tags' in thisConvo) {
                 let newTags=Object.getOwnPropertyNames(thisConvo.tags);
                 for (let i=0;i<newTags.length;i++) {
+                    if (newTags[i]=='requestThanked' && !this.convoTags.requestThanked) {
+                        Game.shift.requestsDone++;
+                    }
                     if (newTags[i]=='wearingHat') {
                         this.addHat();
                     }
@@ -412,6 +428,10 @@ Entity.prototype.cleanerAct = function() {
         Game.drawMap();
 //        Game.display.drawText(2,2*Game.offset[1]-3,this.name+' : "Wow that was a good day in the dungeon :^)"');
     }
+    else if ('loot' in this.tags && ('wall' in this.tags || 'heavy' in this.tags)) {
+        Game.sendMessage("The "+this.name.toLowerCase()+" won't budge.");
+        Game.player.endTurn();
+    }
     else if ('loot' in this.tags) {
         // push stuff around?
         let diff=[this.x-Game.player.x , this.y-Game.player.y];
@@ -481,7 +501,7 @@ Entity.prototype.act = function() {
     this.drinking--;
     if (this.drinking==0) {
         this.drinking=Math.floor(300*ROT.RNG.getUniform())+100;
-        let options=["EmptyBottle","EmptyMug","AppleCore"];
+        let options=["EmptyBottle","EmptyMug","AppleCore","Crossword"];
         let newmess=makeMess(this.x,this.y,ROT.RNG.getItem(options));
         newmess.droppedBy=this;
     }
@@ -490,6 +510,13 @@ Entity.prototype.act = function() {
         this.spreadCount--;
         if (this.spreadCount==0 && newMess.spreads!=null && newMess.spreads!="") {
             newMess.spread(this);
+        }
+    }
+    if ('trail' in this.tags && ROT.RNG.getUniform()<0.15) {
+        let trailKey=this.x+','+this.y;
+        if (trailKey in Game.map && Game.map[trailKey].mess == null) {
+            let trail=makeMess(this.x,this.y,this.tags.trail);
+            trail.droppedBy=this;
         }
     }
     if (!this.active) {
@@ -691,17 +718,18 @@ Entity.prototype.addHat=function() {
 };
 
 function AddCollectible(x,y) {
-    var options=['Chest','Cauldron','Candleabra','Statue'];
+    var options=['Chest','Cauldron','Candleabra','Statue','Barrel','Bookshelf',
+        'Pot','Pot','WeaponRack','Fountain','Rock','Column','Table'];
     return GetEntity(ROT.RNG.getItem(options),x,y);
 }
 
 function AddMonster(x,y,level) {
-    var options=['Goblin','Kobold'];
+    var options=['Goblin','Kobold','Goblin','Kobold','Myconid'];
     if (level==2) {
-        options=['Ogre','Imp'];
+        options=['Ogre','Imp','Slime','Harpy','Mimic'];
     }
     else if (level==3) {
-        options=['Troll','Naga'];
+        options=['Troll','Naga','Ghost','Skeleton'];
     }
     else if (level>=4) {
         options=['Balor','Hydra','Dragon'];
@@ -738,6 +766,26 @@ function GetEntity(name,x,y) {
         newEntity = new Entity(x,y,"i",'#ff0',name,3,{monster:true,ranged:1,rangeMess:'Scorch',small:true});
         newEntity.hatChar='\u00EE';
         break;
+        case 'Myconid':
+        newEntity = new Entity(x,y,'m','#c6f',name,2,{monster:true,small:true,bleeds:'Spores',trail:'Spores'},1);
+        break;
+        case 'Harpy':
+        newEntity = new Entity(x,y,'Y','#db6',name,3,{monster:true,ranged:1,rangeMess:'Feathers'},2);
+        newEntity.bonusMess='Feathers';
+        break;
+        case 'Mimic':
+        newEntity = new Entity(x,y,'\u03C0','#fb3',name,4,{monster:true,bleeds:'MimicDrool'},2);
+        break;
+        case 'Skeleton':
+        newEntity = new Entity(x,y,'Z','#eee',name,5,{monster:true,bleeds:'BoneDust'},3);
+        newEntity.bonusMess='LooseBone';
+        break;
+        case 'Ghost':
+        newEntity = new Entity(x,y,'G','#7fd',name,5,{monster:true,ranged:1,rangeMess:'Ectoplasm',bleeds:'Ectoplasm'},3);
+        break;
+        case 'Slime':
+        newEntity = new Entity(x,y,'s','#4f9',name,3,{monster:true,small:true,bleeds:'SlimePool',trail:'SlimeTrail'},2);
+        break;
         case 'Troll':
         newEntity = new Entity(x,y,'T','#0c0',name,6,{monster:true,big:true},3);
         break;
@@ -759,13 +807,40 @@ function GetEntity(name,x,y) {
         newEntity = new Entity(x,y,'$','#ff0',name,1,{loot:true});
         break;
         case 'Chest':
-        newEntity = new Entity(x,y,'\u03C0','#fa0','Treasure Chest',1,{loot:true,mess:'BrokenChest'});
+        newEntity = new Entity(x,y,'\u03C0','#fa0','Treasure Chest',1,{loot:true,mess:'BrokenChest',scatter:['GoldCoins',2]});
         break;
         case 'Table':
         newEntity = new Entity(x,y,'\u2564','#fa0',"Table",1,{loot:true,mess:'BrokenTable'});
         break;
         case 'Cauldron':
         newEntity = new Entity(x,y,'U','#ccc','Cauldron',1,{loot:true,mess:'TippedCauldron',splashes:'Water'});
+        break;
+        case 'Barrel':
+        newEntity = new Entity(x,y,'o','#a62','Barrel',1,{loot:true,mess:'SmashedBarrel',splashes:'SpilledAle'});
+        break;
+        case 'Bookshelf':
+        newEntity = new Entity(x,y,'\u2261','#a62','Bookshelf',1,{loot:true,mess:'ToppledBookshelf',scatter:['LoosePages',2]});
+        break;
+        case 'Pot':
+        newEntity = new Entity(x,y,'\u00F6','#c84','Clay Pot',1,{loot:true,mess:'PotShards',splashes:'SpilledSoil'});
+        break;
+        case 'WeaponRack':
+        newEntity = new Entity(x,y,'\u2021','#aaa','Weapon Rack',1,{loot:true,mess:'BrokenRack',scatter:['DroppedSword',2]});
+        break;
+        case 'Fountain':
+        newEntity = new Entity(x,y,'{','#48f','Fountain',1,{loot:true,heavy:true,mess:'BrokenFountain',scatter:['Water',2]});
+        break;
+        case 'Rock':
+        newEntity = new Entity(x,y,'\u2022','#999','Rock',1,{loot:true,mess:'Gravel',scatter:['Gravel',1]});
+        break;
+        case 'Column':
+        newEntity = new Entity(x,y,'\u2551','#eee','Column',1,{loot:true,heavy:true,mess:'BrokenColumn',scatter:['Gravel',2]});
+        break;
+        case 'Banner':
+        newEntity = new Entity(x,y,'\u00B6','#d33','Banner',1,{loot:true,wall:true,mess:'TornBanner',scatter:['FabricScraps',2]},1,'#000',true);
+        break;
+        case 'Torch':
+        newEntity = new Entity(x,y,'\u00A1','#fd3','Wall Torch',1,{loot:true,wall:true,mess:'FallenTorch',splashes:'Scorch',scatter:['DrippedWax',1]},1,'#000',true);
         break;
         case 'Statue':
         newEntity = new Entity(x,y,'\u03A9','#ccc','Statue',1,{loot:true,mess:'SmashedStatue'});

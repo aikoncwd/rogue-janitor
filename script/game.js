@@ -27,6 +27,7 @@ var Game = {
     petList:[],
     playerPet:null,
     messNumbers:[0,0],
+    shift: {cleaned:0, passes:0, requestsDone:0, startPoints:0},
     screen: null,
     lastMessage: "",
     lastlastMessage: "",
@@ -84,6 +85,7 @@ var Game = {
             return;
         }
         Sfx.unlock();
+        Music.resume();
         // zoom: + / - (main keyboard or numpad), 0 = automatic size
         if (e.key == '+' || e.key == '=' || code == 107) {
             this.setFontSize(this.fontSize + this.FONT_STEP, true);
@@ -95,6 +97,13 @@ var Game = {
         }
         if (e.key == '0' || code == 96) { // main keyboard or numpad 0 (NumLock on or off)
             this.setFontSize(this.autoFontSize(), false);
+            return;
+        }
+        if (e.keyCode == 84 && !this.typingInConvo()) { // T: music on/off
+            Music.toggle();
+            if (this.phase != 'cleaning' || this.player.talking == null) {
+                this.drawMap();
+            }
             return;
         }
         if (e.keyCode == 86) { // V
@@ -160,7 +169,24 @@ var Game = {
         }
     },
 
+    // Conversations read letters (y/n/digits); T is never one of them, but stay safe.
+    typingInConvo: function() {
+        return false;
+    },
+
+    // Which tune fits what is on screen right now.
+    musicTrack: function() {
+        if (this.phase == 'intro') {
+            return 'night';
+        }
+        if (this.phase == 'invasion') {
+            return Invasion.stage == 'card' || Invasion.stage == 'curtain' ? 'night' : 'invasion';
+        }
+        return this.onBlackScreen() ? 'night' : 'cleaning';
+    },
+
     drawMap: function() {
+        Music.play(this.musicTrack());
         this.display.clear();
 
         if (Game.player.instructions) {
@@ -178,12 +204,13 @@ var Game = {
                 ["(%c{#ff0}F%c{})ix or (%c{#ff0}R%c{})epair broken furniture.",24],
                 ["All cleaning methods affect tiles you are next to.",0],
                 ["All cleaning methods can reveal hidden doors!",0],
+                ["Careful: slime puddles are slippery!",0],
                 ["",0],
                 ["--- Other ---",0],
                 ["(%c{#ff0}O%c{})pen or (%c{#ff0}C%c{})lose doors.",24],
                 ["(%c{#ff0}EX%c{})amine your surroundings.",12],
                 ["Walk into monsters and other objects to interact with them.",0],
-                ["Toggle sound with %c{#ff0}V%c{}",12],
+                ["Toggle sound with %c{#ff0}V%c{}, music with %c{#ff0}T%c{}",24],
                 ["Zoom with %c{#ff0}+%c{} and %c{#ff0}-%c{}, automatic size with %c{#ff0}0%c{}",36],
                 ["Display this help prompt with %c{#ff0}?%c{}",12]
             ];
@@ -196,12 +223,13 @@ var Game = {
         }
 
         if (this.phase == 'intro') {
-            let intro = Flavor.pools.introText;
-            let top = this.offset[1] - Math.floor(intro.length/2);
-            for (let i=0;i<intro.length;i++) {
-                let plain = intro[i].replace(/%c\{[^}]*\}/g, '');
-                this.display.drawText(Math.max(0, this.offset[0]-Math.floor(plain.length/2)), top+i, intro[i]);
-            }
+            this.drawCentered(Flavor.pools.introText);
+            return;
+        }
+
+        if (this.phase == 'invasion' && Invasion.stage == 'card') {
+            this.drawCentered(Invasion.cardLines);
+            this.drawChrome();
             return;
         }
 
@@ -232,6 +260,16 @@ var Game = {
                 if (tile && tile.visible && tile.entity == null) {
                     this.drawCell(b.x-cam.x,b.y-cam.y,b.char,'#555',tile.bgColor);
                 }
+            }
+        }
+        else {
+            Effects.draw(cam);
+        }
+        let curtain = invading ? Invasion.curtainRows(this.layoutInfo.mapRows) : 0;
+        for (let k=0;k<curtain;k++) {
+            for (let x=0;x<this.layoutInfo.mapCols;x++) {
+                this.display.draw(x,k,' ','#000','#000');
+                this.display.draw(x,this.layoutInfo.mapRows-1-k,' ','#000','#000');
             }
         }
 
@@ -283,6 +321,15 @@ var Game = {
             Game.player.talking.doConvo();
         }
         this.drawLog();
+    },
+
+    // Lines of text centred in the map area (intro screen, night-shift title card).
+    drawCentered: function(lines) {
+        let top = this.offset[1] - Math.floor(lines.length/2);
+        for (let i=0;i<lines.length;i++) {
+            let plain = lines[i].replace(/%c\{[^}]*\}/g, '');
+            this.display.drawText(Math.max(0, this.offset[0]-Math.floor(plain.length/2)), top+i, lines[i]);
+        }
     },
 
     onBlackScreen: function() {
@@ -408,6 +455,7 @@ var Game = {
 
     generateDungeon: function() {
         var thetheme=this.dungeonTheme;
+        this.shift = {cleaned:0, passes:0, requestsDone:0, startPoints:this.yendorPoints};
         this.coffeeThreshold = Math.floor(10*ROT.RNG.getUniform()+20*ROT.RNG.getUniform())+30;
         this.inviteOutThreshold =Math.floor(7*ROT.RNG.getUniform()+8*ROT.RNG.getUniform())+80;
         //thetheme=this.makeTheme(300.0/360);
@@ -447,6 +495,9 @@ var Game = {
     cameraTarget: function() {
         if (this.phase != 'cleaning' && this.adventurer != null && this.adventurer.active) {
             return this.adventurer;
+        }
+        if (this.phase == 'invasion' && Invasion.exitSpot != null) {
+            return Invasion.exitSpot; // the hero just left: linger on the stairs
         }
         return this.player;
     },
@@ -885,6 +936,12 @@ var Game = {
                 }
             }
 
+            if (validForItems.length > 0 && ROT.RNG.getUniform() < 0.7) {
+                let parts = ROT.RNG.getItem(validForItems).split(',');
+                GetEntity(ROT.RNG.getItem(['Banner','Torch']), parseInt(parts[0]), parseInt(parts[1]));
+            }
+            this.addCobwebs(i);
+
             let maxLevel = Math.floor(4*ROT.RNG.getUniform())+1;
             let danger = Math.max(1,Math.ceil(roomSize/40));
             if (this.rooms[i][4]<3) {
@@ -905,6 +962,22 @@ var Game = {
                 let level = Math.min(danger,Math.floor(ROT.RNG.getUniform()*maxLevel)+1);
                 let newMonster=AddMonster(center[0],center[1],level);
                 danger-=newMonster.level;
+            }
+        }
+    },
+
+    // The dungeon was never spotless to begin with: cobwebs in some room corners.
+    addCobwebs: function(roomID) {
+        let r = this.rooms[roomID];
+        let corners = [[r[0],r[1]],[r[2]-1,r[1]],[r[0],r[3]-1],[r[2]-1,r[3]-1]];
+        for (let k=0;k<corners.length;k++) {
+            if (ROT.RNG.getUniform() > 0.3) {
+                continue;
+            }
+            let key = corners[k][0]+','+corners[k][1];
+            let tile = this.map[key];
+            if (tile && tile.passable && !tile.important && tile.mess == null && tile.door == null) {
+                makeMess(corners[k][0],corners[k][1],'Cobweb');
             }
         }
     },
@@ -976,6 +1049,7 @@ var Game = {
         let validSpots=[];
         let validPartySpots=[];
         ConversationBuilder.usedGenericOptions=[];
+        this.requestsOffered=0;
 
         for (let x = this.rooms[this.partyRoomID][0]; x < this.rooms[this.partyRoomID][2]; x++) {
             for (let y = this.rooms[this.partyRoomID][1]; y < this.rooms[this.partyRoomID][3]; y++) {
@@ -1227,6 +1301,13 @@ var Game = {
             }
         }
 
+        if ('requestDone' in conditions) {
+            let done = speaker != null && Requests.isDone(speaker);
+            if (done != conditions.requestDone) {
+                success=false;
+            }
+        }
+
         if ('questItemGot' in conditions && speaker!=null) {
             console.log(conditions.questItemGot+','+speaker.questItem.pickedUp);
             if (speaker.questItem != null && conditions.questItemGot == speaker.questItem.pickedUp) {
@@ -1243,7 +1324,7 @@ var Game = {
             if (keys[i]=='cleanliness') {
                 continue;
             }
-            if (keys[i]=='questItemGot') {
+            if (keys[i]=='questItemGot' || keys[i]=='requestDone') {
                 continue;
             }
             if (keys[i] in Game.convoTags) {
@@ -1259,6 +1340,77 @@ var Game = {
             }
         }
         return success;
+    },
+
+    // Shift report shown when you head home: how today went, and your best day so far.
+    shiftReport: function() {
+        let pct = this.messNumbers[1] > 0 ? this.cleanPercent() : 100;
+        let grade = pct >= 95 ? 'S' : pct >= 85 ? 'A' : pct >= 70 ? 'B' : pct >= 50 ? 'C' : 'D';
+        let chatted = this.monsterList.filter(function(m) { return m.alive && m.playerTalkedToday; }).length;
+        let today = this.yendorPoints - this.shift.startPoints + pct;
+        let best = this.loadBest();
+        let bestLine;
+        if (pct > 0 && (best == null || pct > best.pct)) {
+            bestLine = "%c{#0c0}New personal best!%c{}";
+            this.saveBest({pct: pct, day: this.day});
+        }
+        else if (best != null) {
+            bestLine = "%c{#777}Best shift so far: " + best.pct + "% (day " + best.day + ")%c{}";
+        }
+        else {
+            bestLine = "%c{#777}Clean a bit more to set a personal best!%c{}";
+        }
+        return "%c{#ff0}Shift report, day " + this.day + "%c{}\n" +
+            "Dungeon cleaned: " + pct + "%   Grade: %c{#ff0}" + grade + "%c{}\n" +
+            "Messes cleaned: " + this.shift.cleaned + "   Stubborn scrubs: " + this.shift.passes + "\n" +
+            "Requests done: " + this.shift.requestsDone + "   Comrades chatted with: " + chatted + "\n" +
+            "Points today: +" + today + "   Total: " + (this.yendorPoints + pct) + " / " + this.targetPoints + " toward the Mop of Yendor\n" +
+            bestLine;
+    },
+
+    loadBest: function() {
+        try {
+            let b = JSON.parse(localStorage.getItem('rj-best'));
+            return (b && typeof b.pct == 'number') ? b : null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    saveBest: function(b) {
+        try {
+            localStorage.setItem('rj-best', JSON.stringify(b));
+        } catch (e) {
+            // storage unavailable
+        }
+    },
+
+    // Chebyshev distance and arrow towards the closest mess left in the dungeon.
+    nearestMess: function() {
+        let best = null;
+        for (let key in this.map) {
+            let m = this.map[key].mess;
+            if (m == null || m.pickedUp) {
+                continue;
+            }
+            let t = this.map[key];
+            let dx = t.mess.x - this.player.x;
+            let dy = t.mess.y - this.player.y;
+            let d = Math.max(Math.abs(dx), Math.abs(dy));
+            if (d > 0 && (best == null || d < best.d)) {
+                best = {d: d, dx: dx, dy: dy};
+            }
+        }
+        if (best == null) {
+            return null;
+        }
+        let sx = Math.sign(best.dx), sy = Math.sign(best.dy);
+        // only count a diagonal when it is roughly diagonal
+        if (Math.abs(best.dx) > 2*Math.abs(best.dy)) { sy = 0; }
+        if (Math.abs(best.dy) > 2*Math.abs(best.dx)) { sx = 0; }
+        let arrows = {'-1,-1':'\u2196','0,-1':'\u2191','1,-1':'\u2197','-1,0':'\u2190','1,0':'\u2192','-1,1':'\u2199','0,1':'\u2193','1,1':'\u2198','0,0':'\u00B7'};
+        best.arrow = arrows[sx+','+sy];
+        return best;
     },
 
     nextDay() {
