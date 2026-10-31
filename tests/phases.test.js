@@ -34,17 +34,20 @@ test('timer advances one hero turn', () => {
     assert.equal(ctx.__timers.length, 1);
 });
 
-test('turn delay: action turns use the base delay, space makes it 4x faster', () => {
+test('turn delay: quiet turns are quick, holds for the good bits, space makes it 4x faster', () => {
     const ctx = bootDay1();
     ctx.__press(KEY.ENTER);
     const inv = ctx.Invasion;
-    assert.equal(inv.delay(true), inv.BASE_DELAY_MS);
-    assert.equal(inv.delay(false), inv.BORING_DELAY_MS);
+    inv.hold = 0;
+    assert.equal(inv.turnDelay(), inv.BEATS.quiet);
+    inv.event('potion', {});
+    const held = inv.turnDelay();
+    assert.ok(held >= inv.BEATS.potion);
     ctx.__press(KEY.SPACE);
     assert.equal(inv.fast, true);
-    assert.equal(inv.delay(true), inv.BASE_DELAY_MS / inv.FAST_FACTOR);
+    assert.equal(inv.turnDelay(), held / inv.FAST_FACTOR);
     ctx.__runTimers();
-    assert.ok(ctx.__timers[0].ms <= inv.BASE_DELAY_MS / inv.FAST_FACTOR);
+    assert.ok(ctx.__timers[0].ms <= held / inv.FAST_FACTOR);
     ctx.__press(KEY.SPACE);
     assert.equal(inv.fast, false);
 });

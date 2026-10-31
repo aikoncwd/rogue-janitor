@@ -292,6 +292,14 @@ var Game = {
                     this.drawCell(b.x-cam.x,b.y-cam.y,b.char,'#555',tile.bgColor);
                 }
             }
+            // the hero is talking (or quaffing, or posing): a marker over their head
+            let hero = this.adventurer;
+            if (Invasion.speaking && Invasion.stage == null && hero != null && hero.active) {
+                let above = this.map[hero.x+','+(hero.y-1)];
+                if (above && above.visible && above.passable && above.entity == null) {
+                    this.drawCell(hero.x-cam.x,hero.y-1-cam.y,'!','#ff0',above.bgColor);
+                }
+            }
         }
         else {
             Effects.draw(cam);

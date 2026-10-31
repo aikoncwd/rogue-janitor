@@ -4,14 +4,21 @@
 // to the player when the hero leaves.
 var Invasion = {
     instant: false, // run every hero turn without delay (tests)
-    BASE_DELAY_MS: 200,
-    BORING_DELAY_MS: 90,
     FAST_FACTOR: 4,
+    // Rhythm of the replay (ms): quick through empty corridors, a beat when
+    // something comes into view, and holds long enough to read the good bits.
+    BEATS: { quiet: 50, spot: 400, hit: 200, combo: 150, faint: 700, loot: 450, door: 350, heroHurt: 250,
+        snack: 900, potion: 1100, special: 1100, graffiti: 1100, enter: 1200, cry: 900 },
+    SPEECH: ['snack', 'potion', 'special', 'graffiti', 'enter', 'cry'],
+    hold: 0,
+    combo: 0,
+    hitThisTurn: false,
+    speaking: false,
+    lastTargets: 0,
     fast: false,
     skipping: false,
     timer: null,
     engineStarted: false,
-    eventful: false,
 
     // Hands control to the hero: called when the intro screen is dismissed (day 1)
     // or when a new day's dungeon is generated (the player's pending unlock resumes it).
@@ -25,25 +32,48 @@ var Invasion = {
         }
     },
 
-    // Delay before the next hero turn; quiet walking turns go by faster.
-    delay: function (eventful) {
-        let ms = eventful ? this.BASE_DELAY_MS : this.BORING_DELAY_MS;
+    // Records a beat this turn: the turn waits for its longest beat, and a line
+    // to read adds a little time (capped).
+    beat: function (name, line) {
+        let plainLength = line ? line.replace(/%c\{[^}]*\}/g, '').length : 0;
+        let ms = this.BEATS[name] + Math.min(500, plainLength * 10);
+        this.hold = Math.max(this.hold, ms);
+        if (this.SPEECH.indexOf(name) >= 0) {
+            this.speaking = true;
+        }
+    },
+
+    // Delay before the next hero turn.
+    turnDelay: function () {
+        let ms = this.hold || this.BEATS.quiet;
         return this.fast ? ms / this.FAST_FACTOR : ms;
     },
 
     // Called after every active hero turn: pause the engine and resume on a timer.
+    // Beats are reset only after scheduling, so what monsters do between hero
+    // turns counts toward the next one.
     afterHeroTurn: function () {
+        let targets = Game.adventurer ? Game.adventurer.targets.length : 0;
+        if (targets > this.lastTargets) {
+            this.beat('spot');
+        }
+        this.lastTargets = targets;
+        this.combo = this.hitThisTurn ? this.combo + 1 : 0;
+        this.hitThisTurn = false;
         if (this.instant || this.skipping || Game.phase != 'invasion') {
+            this.hold = 0;
+            this.speaking = false;
             return;
         }
-        let eventful = this.eventful || Game.adventurer.targets.length > 0;
-        this.eventful = false;
+        let ms = this.turnDelay();
         Game.engine.lock();
         Game.drawMap();
+        this.hold = 0;
+        this.speaking = false;
         this.timer = setTimeout(function () {
             Invasion.timer = null;
             Game.engine.unlock();
-        }, this.delay(eventful));
+        }, ms);
     },
 
     // Run the rest of the invasion instantly.
@@ -108,6 +138,11 @@ var Invasion = {
         this.clockMinutes = 60 + Flavor.rng.getUniformInt(0, 90);
         this.camera = Flavor.rng.getUniformInt(1, 9);
         this.lastNag = -Infinity;
+        this.hold = 0;
+        this.combo = 0;
+        this.hitThisTurn = false;
+        this.speaking = false;
+        this.lastTargets = 0;
     },
 
     // --- Playback banner: the invasion is last night's security footage ---
@@ -163,11 +198,11 @@ var Invasion = {
 
     say: function (pool, vars, optional = false) {
         if (this.quiet()) {
-            return;
+            return '';
         }
         if (optional) {
             if (this.optionalLogged) {
-                return;
+                return '';
             }
             this.optionalLogged = true;
         }
@@ -177,6 +212,7 @@ var Invasion = {
         if (line != "") {
             Game.log.push(line);
         }
+        return line;
     },
 
     sound: function (name) {
@@ -195,9 +231,6 @@ var Invasion = {
 
     event: function (type, data) {
         data = data || {};
-        if (type != 'turn') {
-            this.eventful = true;
-        }
         switch (type) {
             case 'turn':
                 this.turn++;
@@ -211,15 +244,20 @@ var Invasion = {
                     }
                 }
                 if (Flavor.chance(0.04)) {
-                    this.say('heroCry', {}, true);
+                    let cry = this.say('heroCry', {}, true);
+                    if (cry) {
+                        this.beat('cry', cry);
+                    }
                 }
                 break;
             case 'enter':
-                this.say('heroEnter');
+                this.beat('enter', this.say('heroEnter'));
                 this.sound('fanfareIn');
                 break;
             case 'hit':
                 this.stats.hits++;
+                this.beat(this.combo >= 2 ? 'combo' : 'hit');
+                this.hitThisTurn = true;
                 this.flash(data.monster.x, data.monster.y);
                 this.say('heroHit', { monster: this.monsterName(data.monster) });
                 this.sound('hit');
@@ -231,43 +269,43 @@ var Invasion = {
             case 'faint':
                 this.stats.fainted++;
                 this.bodies.push({ x: data.monster.x, y: data.monster.y, char: data.monster.char });
-                this.say('monsterFaint', { monster: this.monsterName(data.monster) });
+                this.beat('faint', this.say('monsterFaint', { monster: this.monsterName(data.monster) }));
                 this.sound('faint');
                 break;
             case 'loot':
                 this.stats.lootSmashed++;
-                this.say('lootSmash', { item: data.entity.name.toLowerCase() });
+                this.beat('loot', this.say('lootSmash', { item: data.entity.name.toLowerCase() }));
                 this.sound('smash');
                 break;
             case 'door':
                 this.stats.doors++;
-                this.say('doorKick');
+                this.beat('door', this.say('doorKick'));
                 this.sound('door');
                 break;
             case 'snack':
                 this.stats.snacks++;
-                this.say('snack', {}, true);
+                this.beat('snack', this.say('snack', {}, true));
                 this.sound('munch');
                 break;
             case 'potion':
                 this.stats.potions++;
-                this.say('potion');
+                this.beat('potion', this.say('potion'));
                 this.sound('gulp');
                 break;
             case 'special':
                 this.stats.specials++;
-                this.say('special_' + data.cls);
+                this.beat('special', this.say('special_' + data.cls));
                 this.sound('spray');
                 break;
             case 'graffiti':
                 this.stats.graffiti++;
-                this.say('graffiti', { item: ROT.RNG.getItem(Flavor.pools.graffitiTags) });
+                this.beat('graffiti', this.say('graffiti', { item: ROT.RNG.getItem(Flavor.pools.graffitiTags) }));
                 this.sound('spray');
                 break;
             case 'heroHurt':
                 this.stats.heroHurt++;
                 this.flash(Game.adventurer.x, Game.adventurer.y);
-                this.say('heroHurt', {}, true);
+                this.beat('heroHurt', this.say('heroHurt', {}, true));
                 this.sound('heroHurt');
                 break;
         }
