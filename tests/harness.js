@@ -91,7 +91,7 @@ function load(ctx, file) {
 function stubDisplay(ctx) {
     return {
         draw(x, y, ch, fg, bg) { ctx.__drawn.push({ x, y, ch, fg, bg }); },
-        drawText(x, y, text) { ctx.__drawn.push({ x, y, text }); return 1; },
+        drawText(x, y, text, maxWidth) { ctx.__drawn.push({ x, y, text, maxWidth }); return 1; },
         clear() { ctx.__drawn.length = 0; },
         computeSize() { return [100, 40]; },
         setOptions() {},

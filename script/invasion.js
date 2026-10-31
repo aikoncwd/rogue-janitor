@@ -60,6 +60,9 @@ var Invasion = {
             this.start();
             return true;
         }
+        if (Game.player.talking != null) {
+            return false; // a conversation owns the keys (e.g. the night screen before day 2)
+        }
         if (Game.phase == 'invasion') {
             if (code == 32) {
                 this.fast = !this.fast;

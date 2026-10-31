@@ -71,6 +71,11 @@ var Game = {
     // Global keys, active in every phase. Player/conversation keys are handled by
     // their own listeners.
     onKey: function(e) {
+        let code = e.keyCode;
+        // leave browser shortcuts alone (reload, devtools, fullscreen, alt-tab...)
+        if (e.ctrlKey || e.metaKey || e.altKey || (code >= 112 && code <= 123) || [9,16,17,18,20,91,92,93].indexOf(code) >= 0) {
+            return;
+        }
         Sfx.unlock();
         if (e.keyCode == 86) { // V
             Sfx.toggle();
@@ -173,44 +178,45 @@ var Game = {
 
         this.drawChrome();
 
+        this.transientMessage = null;
         if (Game.player.examining != null) {
             this.display.draw(Game.player.examining[0]+Game.offset[0]-Game.player.x,Game.player.examining[1]+Game.offset[1]-Game.player.y,'X','#ff0');
             let lookKey=Game.player.examining[0]+','+Game.player.examining[1];
             if (lookKey in this.map && this.map[lookKey].visible) {
                 if (this.map[lookKey].entity != null) {
                     if (this.map[lookKey].entity == Game.player) {
-                        this.sendMessage("It's you!");
+                        this.showTransient("It's you!");
                     }
                     else {
-                        this.sendMessage(this.map[lookKey].entity.name+".");
+                        this.showTransient(this.map[lookKey].entity.name+".");
                     }
                 }
                 else if (this.map[lookKey].mess != null) {
-                    this.sendMessage(this.map[lookKey].mess.name+". "+this.map[lookKey].mess.getAction());
+                    this.showTransient(this.map[lookKey].mess.name+". "+this.map[lookKey].mess.getAction());
                 }
                 else if (this.map[lookKey].door != null) {
                     if (this.map[lookKey].open) {
-                        this.sendMessage("Open door.");
+                        this.showTransient("Open door.");
                     }
                     else {
-                        this.sendMessage("Closed door.");
+                        this.showTransient("Closed door.");
                     }
                 }
                 else if (!this.map[lookKey].passable) {
-                    this.sendMessage("Wall.");
+                    this.showTransient("Wall.");
                 }
                 else if (this.map[lookKey].char=='>') {
-                    this.sendMessage("Down staircase.");
+                    this.showTransient("Down staircase.");
                 }
                 else if (this.map[lookKey].char=='<') {
-                    this.sendMessage("Up staircase.");
+                    this.showTransient("Up staircase.");
                 }
                 else {
-                    this.sendMessage("Floor.");
+                    this.showTransient("Floor.");
                 }
             }
             else {
-                this.sendMessage("You can't see that area.");
+                this.showTransient("You can't see that area.");
             }
         }
 
@@ -238,9 +244,20 @@ var Game = {
         Panel.draw(this.display,info,this.screenSize[0],this.screenSize[1]);
     },
 
+    // Examine text: shown as the newest log row while examining, never stored in the log.
+    showTransient: function(msg) {
+        this.transientMessage = msg;
+    },
+
     drawLog: function() {
         let info = this.layoutInfo;
-        let lines = this.log.recent(Panel.LOG_ROWS);
+        let lines;
+        if (this.transientMessage) {
+            lines = this.log.recent(Panel.LOG_ROWS - 1).concat([{text: "%c{#ff0}>%c{} " + this.transientMessage, fresh: true}]);
+        }
+        else {
+            lines = this.log.recent(Panel.LOG_ROWS);
+        }
         for (let i=0;i<Panel.LOG_ROWS;i++) {
             let y = info.logY+i;
             for (let x=0;x<info.mapCols;x++) {

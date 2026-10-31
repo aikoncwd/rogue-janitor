@@ -270,16 +270,22 @@ Entity.prototype.doConvo = function() {
 
             this.convoOptions={};
             let linesNeeded;
+            // keep dialog inside the map area (the side panel is to the right)
+            let convoWidth = Math.max(10, Game.layoutInfo.mapCols - 4);
+            let drawConvoText = function(text) {
+                let height = ROT.Text.measure(text, convoWidth).height;
+                Game.display.drawText(2, Math.max(0, 2*Game.offset[1]-2-linesNeeded-height), text, convoWidth);
+            };
             if ('blackScreenMessage' in thisConvo) {
                 Game.display.clear();
             }
             // how to continue line
             if ('any' in thisConvo) {
-                Game.display.drawText(2,2*Game.offset[1]-2,"Press [enter] to continue.");
+                Game.display.drawText(2,2*Game.offset[1]-2,"Press [enter] to continue.",convoWidth);
                 linesNeeded=1;
             }
             else if ('y' in thisConvo && 'n' in thisConvo) {
-                Game.display.drawText(2,2*Game.offset[1]-2,"Say [y]es or [n]o?");
+                Game.display.drawText(2,2*Game.offset[1]-2,"Say [y]es or [n]o?",convoWidth);
                 this.convoOptions.y = thisConvo.y;
                 this.convoOptions.n = thisConvo.n;
                 linesNeeded=1;
@@ -301,20 +307,20 @@ Entity.prototype.doConvo = function() {
                     this.convoOptions[choiceNum.toString()]=thisConvo[options[i]];
                 }
                 outstring = "Options:\n"+outstring;
-                Game.display.drawText(2,2*Game.offset[1]-1-linesNeeded,outstring);
+                Game.display.drawText(2,2*Game.offset[1]-1-linesNeeded,outstring,convoWidth);
             }
 
             if ('text' in thisConvo) {
-                Game.display.drawText(2,2*Game.offset[1]-3-linesNeeded,"%c{#ff0}"+this.name+'%c{} : "' + thisConvo.text+'"'); 
+                drawConvoText("%c{#ff0}"+this.name+'%c{} : "' + thisConvo.text+'"');
             }
             else if ('action' in thisConvo) {
-                Game.display.drawText(2,2*Game.offset[1]-3-linesNeeded,"%c{#ff0}"+this.name+" "+thisConvo.action+'%c{}'); 
+                drawConvoText("%c{#ff0}"+this.name+" "+thisConvo.action+'%c{}');
             }
             else if ('message' in thisConvo) {
-                Game.display.drawText(2,2*Game.offset[1]-3-linesNeeded,thisConvo.message);
+                drawConvoText(thisConvo.message);
             }
             else {
-                Game.display.drawText(2,2*Game.offset[1]-3-linesNeeded,"%c{#ff0}"+this.name+" is vaping.%c{}"); 
+                drawConvoText("%c{#ff0}"+this.name+" is vaping.%c{}");
             }
             
         }
