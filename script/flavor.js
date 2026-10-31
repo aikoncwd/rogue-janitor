@@ -230,6 +230,15 @@ var Flavor = {
 
     lastLines: {},
 
+    // Presentation randomness (which funny line, banner clock, title animation...).
+    // Kept apart from ROT.RNG so that watching, fast-forwarding or skipping the
+    // invasion never changes the dungeon the player cleans.
+    rng: ROT.RNG.clone(),
+
+    chance: function (p) {
+        return this.rng.getUniform() < p;
+    },
+
     line: function (poolName, vars = {}) {
         let pool = this.pools[poolName];
         if (!pool || pool.length == 0) {
@@ -237,7 +246,7 @@ var Flavor = {
         }
         let choice;
         do {
-            choice = ROT.RNG.getItem(pool);
+            choice = this.rng.getItem(pool);
         } while (pool.length > 1 && choice == this.lastLines[poolName]);
         this.lastLines[poolName] = choice;
         return choice.replace(/\{(hero|monster|item)\}/g, function (m, key) {

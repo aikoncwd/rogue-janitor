@@ -156,7 +156,7 @@ var Invasion = {
                         delete this.flashes[key];
                     }
                 }
-                if (ROT.RNG.getUniform() < 0.04) {
+                if (Flavor.chance(0.04)) {
                     this.say('heroCry', {}, true);
                 }
                 break;
