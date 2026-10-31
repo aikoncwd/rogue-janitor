@@ -198,12 +198,13 @@ var Game = {
     // Which tune fits what is on screen right now.
     musicTrack: function() {
         if (this.phase == 'title' || this.phase == 'howto' || this.phase == 'intro') {
-            return 'night';
+            return 'title';
         }
+        let alt = this.day % 2 == 0 ? '2' : ''; // tunes rotate by day
         if (this.phase == 'invasion') {
-            return Invasion.stage == 'card' || Invasion.stage == 'curtain' ? 'night' : 'invasion';
+            return Invasion.stage == 'card' || Invasion.stage == 'curtain' ? 'night' : 'invasion' + alt;
         }
-        return this.onBlackScreen() ? 'night' : 'cleaning';
+        return this.onBlackScreen() ? 'night' : 'cleaning' + alt;
     },
 
     drawMap: function() {

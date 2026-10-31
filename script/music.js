@@ -390,6 +390,116 @@ var Music = {
             },
         },
 
+        // Calm, warm theme for the title, how-to and story screens. D major, 16 bars.
+        title: {
+            bpm: 84,
+            stepsPerBeat: 2,
+            voices: {
+                lead: {
+                    wave: 'triangle', vol: 0.28, attack: 0.06, sustain: 0.7, release: 0.25,
+                    pattern:
+                        'F#5 ~ ~ . E5 ~ D5 . | E5 ~ ~ ~ C#5 ~ A4 . | D5 ~ ~ . F#5 ~ B4 . | B4 ~ ~ ~ ~ ~ . . |' +
+                        'A4 ~ D5 ~ F#5 ~ A5 . | G5 ~ F#5 ~ E5 ~ ~ . | D5 ~ B4 ~ G4 ~ B4 . | C#5 ~ ~ ~ ~ ~ . . |' +
+                        'B4 ~ ~ . D5 ~ F#5 . | A5 ~ ~ . F#5 ~ C#5 . | D5 ~ ~ . B4 ~ G4 . | A4 ~ ~ ~ ~ ~ . . |' +
+                        'B4 ~ D5 ~ G5 ~ F#5 . | E5 ~ ~ . C#5 ~ E5 . | D5 ~ ~ ~ ~ ~ ~ . | . . . . . . . .',
+                },
+                arp: {
+                    wave: 'sine', vol: 0.1, attack: 0.02, sustain: 0.3, release: 0.2,
+                    pattern:
+                        'D4 F#4 A4 F#4 D4 F#4 A4 F#4 | C#4 E4 A4 E4 C#4 E4 A4 E4 | B3 D4 F#4 D4 B3 D4 F#4 D4 | B3 D4 G4 D4 B3 D4 G4 D4 |' +
+                        'D4 F#4 A4 F#4 D4 F#4 A4 F#4 | C#4 E4 A4 E4 C#4 E4 A4 E4 | B3 D4 G4 D4 B3 D4 G4 D4 | C#4 E4 A4 E4 C#4 E4 A4 E4 |' +
+                        'B3 D4 F#4 D4 B3 D4 F#4 D4 | C#4 F#4 A4 F#4 C#4 F#4 A4 F#4 | B3 D4 G4 D4 B3 D4 G4 D4 | D4 F#4 A4 F#4 D4 F#4 A4 F#4 |' +
+                        'B3 D4 G4 D4 B3 D4 G4 D4 | C#4 E4 A4 E4 C#4 E4 A4 E4 | D4 F#4 A4 F#4 D4 F#4 A4 F#4 | D4 F#4 A4 D5 ~ ~ . .',
+                },
+                bass: {
+                    wave: 'triangle', vol: 0.4, attack: 0.05, sustain: 0.8, release: 0.3,
+                    pattern:
+                        'D3 ~ ~ . A2 ~ ~ . | A2 ~ ~ . E3 ~ ~ . | B2 ~ ~ . F#2 ~ ~ . | G2 ~ ~ . D3 ~ ~ . |' +
+                        'D3 ~ ~ . A2 ~ ~ . | A2 ~ ~ . E3 ~ ~ . | G2 ~ ~ . D3 ~ ~ . | A2 ~ ~ . E3 ~ ~ . |' +
+                        'B2 ~ ~ . F#2 ~ ~ . | F#2 ~ ~ . C#3 ~ ~ . | G2 ~ ~ . D3 ~ ~ . | D3 ~ ~ . A2 ~ ~ . |' +
+                        'G2 ~ ~ . D3 ~ ~ . | A2 ~ ~ . E3 ~ ~ . | D3 ~ ~ . A2 ~ ~ . | D3 ~ ~ ~ ~ ~ . .',
+                },
+            },
+        },
+
+        // Upbeat adventure chase for even-day raids. A minor turning to C major, 16 bars.
+        invasion2: {
+            bpm: 156,
+            stepsPerBeat: 2,
+            voices: {
+                lead: {
+                    wave: 'square', vol: 0.14, cutoff: 2800, sustain: 0.5,
+                    pattern:
+                        'A4 . A4 C5 E5 . D5 C5 | D5 . C5 A4 F4 ~ A4 . | B4 . B4 D5 G5 . F5 D5 | E5 ~ ~ . B4 . G4 B4 |' +
+                        'A4 . A4 C5 E5 . A5 G5 | F5 . E5 D5 C5 ~ A4 . | G4 . B4 D5 F5 . E5 D5 | E5 ~ ~ ~ G#4 ~ B4 . |' +
+                        'C5 . E5 G5 C6 ~ G5 . | B5 . G5 D5 B4 ~ D5 . | C5 . E5 A5 C6 . B5 A5 | A5 ~ F5 ~ C5 . A4 . |' +
+                        'G4 . C5 E5 G5 . E5 C5 | D5 . G5 B5 D6 ~ B5 . | C6 . A5 F5 C5 . A5 C6 | B5 ~ ~ ~ G5 . D5 .',
+                },
+                arp: {
+                    wave: 'square', vol: 0.05, cutoff: 1800, sustain: 0.3,
+                    pattern:
+                        'A3 E4 A4 E4 A3 E4 A4 E4 | F3 C4 F4 C4 F3 C4 F4 C4 | G3 D4 G4 D4 G3 D4 G4 D4 | E3 B3 E4 B3 E3 B3 E4 B3 |' +
+                        'A3 E4 A4 E4 A3 E4 A4 E4 | F3 C4 F4 C4 F3 C4 F4 C4 | G3 D4 G4 D4 G3 D4 G4 D4 | E3 G#3 B3 E4 E3 G#3 B3 E4 |' +
+                        'C4 G4 C5 G4 C4 G4 C5 G4 | G3 D4 G4 D4 G3 D4 G4 D4 | A3 E4 A4 E4 A3 E4 A4 E4 | F3 C4 F4 C4 F3 C4 F4 C4 |' +
+                        'C4 G4 C5 G4 C4 G4 C5 G4 | G3 D4 G4 D4 G3 D4 G4 D4 | F3 C4 F4 C4 F3 C4 F4 C4 | G3 D4 G4 D4 G3 D4 G4 D4',
+                },
+                bass: {
+                    wave: 'triangle', vol: 0.5, sustain: 0.6,
+                    pattern:
+                        'A2 A3 A2 A3 A2 A3 A2 A3 | F2 F3 F2 F3 F2 F3 F2 F3 | G2 G3 G2 G3 G2 G3 G2 G3 | E2 E3 E2 E3 E2 E3 E2 E3 |' +
+                        'A2 A3 A2 A3 A2 A3 A2 A3 | F2 F3 F2 F3 F2 F3 F2 F3 | G2 G3 G2 G3 G2 G3 G2 G3 | E2 E3 E2 E3 E2 E3 E2 E3 |' +
+                        'C2 C3 C2 C3 C2 C3 C2 C3 | G2 G3 G2 G3 G2 G3 G2 G3 | A2 A3 A2 A3 A2 A3 A2 A3 | F2 F3 F2 F3 F2 F3 F2 F3 |' +
+                        'C2 C3 C2 C3 C2 C3 C2 C3 | G2 G3 G2 G3 G2 G3 G2 G3 | F2 F3 F2 F3 F2 F3 F2 F3 | G2 G3 G2 G3 G2 G3 G2 G3',
+                },
+                drums: {
+                    wave: 'noise', vol: 0.12,
+                    pattern:
+                        'X . x . X . x x | X . x . X . x x | X . x . X . x x | X . x . X . x x |' +
+                        'X . x . X . x x | X . x . X . x x | X . x . X . x x | X x x x X x X X |' +
+                        'X . x . X . x x | X . x . X . x x | X . x . X . x x | X . x . X . x x |' +
+                        'X . x . X . x x | X . x . X . x x | X . x . X . x x | X x x x X x X X',
+                },
+            },
+        },
+
+        // Second cozy loop for even-day shifts: same calm, its own tune. G major, A-B-A' (24 bars).
+        cleaning2: {
+            bpm: 88,
+            stepsPerBeat: 2,
+            voices: {
+                lead: {
+                    wave: 'triangle', vol: 0.3, attack: 0.03, sustain: 0.6, release: 0.15,
+                    pattern:
+                        'B4 ~ ~ . D5 ~ B4 . | G4 ~ ~ ~ . . E4 G4 | E5 ~ ~ . D5 ~ C5 . | A4 ~ ~ ~ . . . . |' +
+                        'B4 ~ ~ . D5 ~ G5 . | F#5 ~ E5 ~ . . B4 . | C5 ~ E5 ~ D5 ~ C5 B4 | A4 ~ ~ ~ ~ ~ . . |' +
+                        '. . E4 G4 C5 ~ ~ . | D5 ~ ~ . F#5 ~ E5 D5 | F#5 ~ ~ ~ D5 ~ B4 . | E5 ~ ~ ~ ~ ~ . . |' +
+                        '. . G4 A4 C5 ~ E5 . | E5 ~ ~ . C5 ~ A4 . | A4 ~ C5 ~ D5 ~ ~ . | . . . . . . . . |' +
+                        'B4 ~ ~ . D5 ~ B4 . | G4 ~ ~ ~ . . E4 G4 | E5 ~ ~ . D5 ~ C5 . | A4 ~ ~ ~ . . . . |' +
+                        'B4 ~ ~ . D5 ~ G5 . | F#5 ~ E5 ~ . . B4 . | C5 ~ B4 ~ A4 ~ ~ . | G4 ~ ~ ~ B4 ~ . .',
+                },
+                bass: {
+                    wave: 'triangle', vol: 0.45, attack: 0.02, sustain: 0.7, release: 0.1,
+                    pattern:
+                        'G2 ~ ~ . D3 ~ ~ . | E2 ~ ~ . B2 ~ ~ . | C3 ~ ~ . G2 ~ ~ . | D3 ~ ~ . A2 ~ ~ . |' +
+                        'G2 ~ ~ . D3 ~ ~ . | E2 ~ ~ . B2 ~ ~ . | A2 ~ ~ . E3 ~ ~ . | D3 ~ ~ . A2 ~ ~ . |' +
+                        'C3 ~ ~ . G2 ~ ~ . | D3 ~ ~ . A2 ~ ~ . | B2 ~ ~ . F#2 ~ ~ . | E2 ~ ~ . B2 ~ ~ . |' +
+                        'C3 ~ ~ . G2 ~ ~ . | A2 ~ ~ . E3 ~ ~ . | D3 ~ ~ . A2 ~ ~ . | D3 ~ ~ . A2 ~ ~ . |' +
+                        'G2 ~ ~ . D3 ~ ~ . | E2 ~ ~ . B2 ~ ~ . | C3 ~ ~ . G2 ~ ~ . | D3 ~ ~ . A2 ~ ~ . |' +
+                        'G2 ~ ~ . D3 ~ ~ . | E2 ~ ~ . B2 ~ ~ . | A2 ~ ~ . E3 ~ ~ . | G2 ~ ~ ~ ~ ~ . .',
+                },
+                hat: {
+                    wave: 'noise', vol: 0.05, cutoff: 8000,
+                    pattern:
+                        '. . x . . . x . | . . x . . x x . | . . x . . . x . | . . x . . x x . |' +
+                        '. . x . . . x . | . . x . . x x . | . . x . . . x . | . . x . . x x . |' +
+                        '. . x . . . x . | . . x . . x x . | . . x . . . x . | . . x . . x x . |' +
+                        '. . x . . . x . | . . x . . x x . | . . x . . . x . | . . . . . . . . |' +
+                        '. . x . . . x . | . . x . . x x . | . . x . . . x . | . . x . . x x . |' +
+                        '. . x . . . x . | . . x . . x x . | . . x . . . x . | . . x . . x x .',
+                },
+            },
+        },
+
         // Music-box lullaby for the black night / end-of-day screens. A minor.
         night: {
             bpm: 60,

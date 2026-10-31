@@ -72,9 +72,10 @@ test('bad token throws', () => {
     assert.throws(() => ctx.Music.parse('C4 H2'));
 });
 
-test('all three tracks exist, parse and loop at least 8 bars', () => {
+test('all tracks exist, parse and loop at least 8 bars', () => {
     const { ctx } = boot();
-    for (const name of ['invasion', 'cleaning', 'night']) {
+    const names = ['invasion', 'invasion2', 'cleaning', 'cleaning2', 'night', 'title'];
+    for (const name of names) {
         assert.ok(name in ctx.Music.tracks, name);
         const song = ctx.Music.parsed(name);
         const stepsPerBar = 4 * (ctx.Music.tracks[name].stepsPerBeat || 2);
@@ -85,11 +86,18 @@ test('all three tracks exist, parse and loop at least 8 bars', () => {
             assert.equal(v.steps.length, song.length, name + '.' + v.name + ' length mismatch');
         }
     }
-    assert.ok(ctx.Music.tracks.invasion.bpm > ctx.Music.tracks.cleaning.bpm);
-    assert.ok(ctx.Music.tracks.cleaning.bpm > ctx.Music.tracks.night.bpm);
-    // cleaning has the longest loop in time
+    const T = ctx.Music.tracks;
+    assert.ok(T.invasion.bpm > T.cleaning.bpm);
+    assert.ok(T.cleaning.bpm > T.night.bpm);
+    assert.ok(T.invasion2.bpm > T.invasion.bpm, 'the second raid tune is livelier');
+    assert.ok(T.cleaning2.bpm < T.invasion.bpm && T.title.bpm < T.invasion.bpm, 'calm tunes stay calm');
+    assert.ok(T.title.bpm > T.night.bpm);
+    // cleaning tunes have the longest loops in time
     const secs = n => ctx.Music.parsed(n).length * ctx.Music.parsed(n).stepDur;
     assert.ok(secs('cleaning') > secs('invasion'));
+    assert.ok(secs('cleaning2') > secs('invasion2'));
+    // the title theme has no percussion: it is the quiet front door
+    assert.ok(Object.values(T.title.voices).every(v => v.wave != 'noise'));
 });
 
 test('music is on by default and toggle persists', () => {
