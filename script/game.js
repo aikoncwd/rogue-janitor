@@ -883,7 +883,7 @@ var Game = {
         let maxParty=Math.floor(validPartySpots.length/2);
         // Sort monsters. Prioritize higher level, more loved by the player, more loved by eachother
         this.monsterList.sort(function (a,b) {
-            return 2*b.level+b.playerInteractions+b.friends.length - 2*a.level+a.playerInteractions+a.friends.length;
+            return (2*b.level+b.playerInteractions+b.friends.length) - (2*a.level+a.playerInteractions+a.friends.length);
         });
         let questItemIndex = Math.floor(maxPlace * ROT.RNG.getUniform());
         let partyCommenced=false;

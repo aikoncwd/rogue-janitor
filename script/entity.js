@@ -261,7 +261,6 @@ Entity.prototype.doConvo = function() {
                         Game.player.reach=2;
                     }
                     Game.convoTags[newTags[i]] = thisConvo.globalTags[newTags[i]];
-                    console.log(newTags[i] + ':' + thisConvo.globalTags[newTags[i]])
                 }
             }
 
@@ -297,7 +296,6 @@ Entity.prototype.doConvo = function() {
 
                     this.convoOptions[choiceNum.toString()]=thisConvo[options[i]];
                 }
-                console.log(this.convoOptions);
                 outstring = "Options:\n"+outstring;
                 Game.display.drawText(2,2*Game.offset[1]-1-linesNeeded,outstring);
             }
@@ -324,7 +322,6 @@ Entity.prototype.handleEvent = function(e) {
     var charCode = e.charCode;
     var ch = String.fromCharCode(charCode);
     let success=false;
-    console.log(keyCode+','+charCode);
     let thisConvo = this.convos[this.convoIndex];
     if (this.convoIndex >= 0 && this.convoIndex < this.convos.length) {
         //console.log('1');
@@ -703,7 +700,6 @@ function AddMonster(x,y,level) {
         for (let i=0;i<Game.monsterList.length;i++) {
             if (!Game.monsterList[i].alive || Game.monsterList[i].retired) {
                 if (Game.monsterList[i].species == chosen) {
-                    console.log(chosen +' - '+Game.monsterList[i].species);
                     return Game.monsterList[i].reset(x,y);
                 }
             }

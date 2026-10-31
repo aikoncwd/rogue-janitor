@@ -141,7 +141,7 @@ Adventurer.prototype.act = function () {
         this.targets.shift();
     }
     if (this.targets.length>0) {
-        if (this.currentTarget != [this.targets[0].x,this.targets[0].y]) {
+        if (this.currentTarget[0] != this.targets[0].x || this.currentTarget[1] != this.targets[0].y) {
             this.currentTarget=[this.targets[0].x,this.targets[0].y];
             this.recalculate=true;
         }
@@ -151,7 +151,8 @@ Adventurer.prototype.act = function () {
             this.nextDestination();
             if (!this.active) {return;}
         }
-        if (this.currentTarget != this.destinations[this.destinationIndex]) {
+        let dest = this.destinations[this.destinationIndex];
+        if (this.currentTarget[0] != dest[0] || this.currentTarget[1] != dest[1]) {
             this.currentTarget = this.destinations[this.destinationIndex];
             this.recalculate=true;
         }

@@ -184,8 +184,6 @@ function QuestMess(dropper,x,y) {
         options=['Manifesto'];
     }
     let choice = ROT.RNG.getItem(options);
-    console.log(choice);
-    console.log(options);
     let newMess = makeMess(x, y, choice);
     newMess.unique=true;
     dropper.questItemName = newMess.name.toLowerCase();
