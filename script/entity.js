@@ -207,6 +207,7 @@ Entity.prototype.progressConvo = function(newInnerDex) {
     if ((n-this.lastConvoChange)>200) {
         this.lastConvoChange=n;
         this.convoInnerDex=newInnerDex;
+        Sfx.play('blip');
         return true;
     }
     return false;

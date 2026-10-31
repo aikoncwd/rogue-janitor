@@ -71,6 +71,7 @@ Tile.prototype.passThrough = function() {
 
 Tile.prototype.openSecretDoor = function() {
     if (this.secretDoor != null) {
+        Sfx.play('secret');
         Game.player.wait(500);
         this.door=this.secretDoor.door;
         this.char=this.secretDoor.char;

@@ -95,6 +95,7 @@ Player.prototype.openClose=function(openclose) {
             if (key in Game.map && Game.map[key].mess == null && Game.map[key].door != null) {
                 if (Game.map[key].open != openclose) {
                     Game.map[key].open=openclose;
+                    Sfx.play('door');
                     if (openclose) {
                         Game.sendMessage("You open the door.")
                     }
@@ -109,6 +110,7 @@ Player.prototype.openClose=function(openclose) {
 
 Player.prototype.clean = function(verb) {
     let doSelf=null;
+    let sound = {mop:'mop', get:'pickup', fix:'fix'}[verb];
     for (let i=-this.reach;i<=this.reach;i++) {
         for (let j=-this.reach;j<=this.reach;j++) {
             let key = (this.x+i)+','+(this.y+j);
@@ -146,6 +148,7 @@ Player.prototype.clean = function(verb) {
                 Game.map[key].mess.pickedUp=true;
                 Game.map[key].mess=null;
                 Game.messNumbers[0]--;
+                Sfx.play(sound);
                 return;
             }
             else if (key in Game.map && Game.map[key].mess == null && Game.map[key].entity==null && Game.map[key].secretDoor != null) {
@@ -307,6 +310,7 @@ Player.prototype.moveTo = function(x,y) {
     if (newKey in Game.map && Game.map[newKey].door != null && !Game.map[newKey].open) {
         Game.sendMessage("You open the door.");
         Game.map[newKey].open=true;
+        Sfx.play('door');
         return true;
     }
 
