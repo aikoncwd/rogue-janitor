@@ -71,8 +71,8 @@ function makeContext() {
         for (const t of batch) t.fn();
         return batch.length;
     };
-    ctx.__press = function (keyCode, charCode = 0) {
-        const ev = { keyCode, charCode, which: keyCode, preventDefault() {}, stopPropagation() {} };
+    ctx.__press = function (keyCode, charCode = 0, key = undefined) {
+        const ev = { keyCode, charCode, key, which: keyCode, preventDefault() {}, stopPropagation() {} };
         for (const l of listeners.slice()) {
             if (l.type !== 'keydown') continue;
             if (typeof l.fn === 'function') l.fn(ev);

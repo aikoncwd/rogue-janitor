@@ -120,6 +120,7 @@ var Game = {
                 ["(%c{#ff0}O%c{})pen or (%c{#ff0}C%c{})lose doors.",24],
                 ["(%c{#ff0}EX%c{})amine your surroundings.",12],
                 ["Walk into monsters and other objects to interact with them.",0],
+                ["Toggle sound with %c{#ff0}V%c{}",12],
                 ["Display this help prompt with %c{#ff0}?%c{}",12]
             ];
             let halfLength=Math.floor(instructions.length/2);

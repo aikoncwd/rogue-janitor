@@ -210,6 +210,9 @@ Player.prototype.handleEvent = function(e) {
         return;
     }
     let code = e.keyCode;
+    if (e.key === '?') {
+        code = 191; // "?" sits on different physical keys depending on the keyboard layout
+    }
     if (this.talking != null) {
         return;
     }
