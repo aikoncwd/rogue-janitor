@@ -134,3 +134,13 @@ test('how-to indented lines keep their indent (rot.js drops leading spaces)', ()
     assert.ok(!/^ /.test(cont.text), 'no leading spaces handed to rot.js');
     assert.equal(cont.x - head.x, 13);
 });
+
+test('each tagline stays about six seconds so it can be read', () => {
+    const ctx = boot();
+    const first = ctx.Title.tagline;
+    const ticks = Math.round(5500 / ctx.Title.TICK_MS);
+    for (let i = 0; i < ticks; i++) ctx.__runTimers();
+    assert.equal(ctx.Title.tagline, first, 'still showing after 5.5 s');
+    for (let i = ticks; i < Math.round(6000 / ctx.Title.TICK_MS); i++) ctx.__runTimers();
+    assert.notEqual(ctx.Title.tagline, first, 'changes at 6 s');
+});

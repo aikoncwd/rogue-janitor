@@ -3,7 +3,7 @@
 // does not matter. Any key (except the global ones) clocks you in.
 var Title = {
     TICK_MS: 250,
-    TAGLINE_FRAMES: 12,
+    TAGLINE_FRAMES: 24, // 6 s per tagline: time to read it
     BOX_W: 40,
     timer: null,
     frame: 0,
