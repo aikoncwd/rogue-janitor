@@ -173,6 +173,7 @@ Player.prototype.clean = function(verb) {
     }
     else {
         Game.lastMessage="";
+        Game.log.markStale();
         Game.lastlastMessageTime--;
     }
 }
@@ -327,6 +328,7 @@ Player.prototype.moveTo = function(x,y) {
         return false;
     }
     Game.lastMessage="";
+    Game.log.markStale();
     Game.lastlastMessageTime--;
     /*console.log(Game.getRoomIndex(x,y));
     if (Game.getRoomIndex(x,y)>=0) {

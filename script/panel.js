@@ -1,0 +1,171 @@
+// Screen layout "B": map viewport on the left, side panel on the right, message
+// log under the map.
+var Panel = {
+    WIDTH: 24,
+    LOG_ROWS: 5,
+    MESS_BAR_MAX: 400,
+    HERO_HP_MAX: 6,
+    MIN_COLS_FOR_PANEL: 60,
+    BAR_WIDTH: 12,
+
+    layout: function (cols, rows) {
+        let panelX = cols < this.MIN_COLS_FOR_PANEL ? cols : cols - this.WIDTH;
+        let mapCols = Math.max(1, panelX);
+        let logY = Math.max(1, rows - this.LOG_ROWS);
+        let mapRows = Math.max(1, logY - 1);
+        return {
+            mapCols: mapCols,
+            mapRows: mapRows,
+            panelX: panelX,
+            logY: logY,
+            offset: [Math.max(1, Math.floor(mapCols / 2)), Math.max(1, Math.floor(mapRows / 2))],
+        };
+    },
+
+    messCategories: function () {
+        let c = { blood: 0, prints: 0, spills: 0, litter: 0, broken: 0, other: 0 };
+        for (let key in Game.map) {
+            let mess = Game.map[key].mess;
+            if (mess == null) {
+                continue;
+            }
+            let name = mess.name;
+            if (mess.cleanMethod == 'fix') {
+                c.broken++;
+            }
+            else if (/Footprints$/.test(name)) {
+                c.prints++;
+            }
+            else if (/Blood/.test(name)) {
+                c.blood++;
+            }
+            else if (/^(Water|Acid Pool|Scorch Mark|Splinters)$/.test(name)) {
+                c.spills++;
+            }
+            else if (mess.cleanMethod == 'get' && !mess.unique) {
+                c.litter++;
+            }
+            else {
+                c.other++;
+            }
+        }
+        return c;
+    },
+
+    bar: function (value, max, color) {
+        let filled = max > 0 ? Math.round(this.BAR_WIDTH * Math.max(0, Math.min(value, max)) / max) : 0;
+        return '%c{' + color + '}' + '█'.repeat(filled) + '%c{#333}' + '█'.repeat(this.BAR_WIDTH - filled) + '%c{}';
+    },
+
+    fit: function (text, width) {
+        return text.length > width ? text.slice(0, width - 1) + '…' : text;
+    },
+
+    // A titled list that shows as many entries as fit, then "+N more".
+    listLines: function (entries, room) {
+        if (entries.length <= room) {
+            return entries;
+        }
+        let shown = Math.max(0, room - 1);
+        return entries.slice(0, shown).concat(['%c{#777}+' + (entries.length - shown) + ' more%c{}']);
+    },
+
+    monsterStatus: function (m) {
+        if (!m.alive) {
+            return ['fainted', '#555'];
+        }
+        if (m.active) {
+            return ['fighting!', '#ff0'];
+        }
+        return ['unharmed', '#ccc'];
+    },
+
+    lines: function (phase, maxRows = Infinity) {
+        let w = this.WIDTH - 1;
+        let head, list, tail;
+        if (phase == 'invasion' || phase == 'intro') {
+            let hero = Game.adventurer;
+            let hp = hero ? Math.max(0, Math.min(hero.hp, this.HERO_HP_MAX)) : 0;
+            head = [
+                '%c{#fff}── INVASION ──%c{}',
+                '%c{#0ff}' + this.fit(Invasion.hero.full, w) + '%c{}',
+                'HP ' + this.bar(hp, this.HERO_HP_MAX, '#0c0') + ' ' + hp + '/' + this.HERO_HP_MAX,
+                'Turn ' + Invasion.turn,
+                '',
+                '%c{#fff}── MONSTERS ──%c{}',
+            ];
+            let self = this;
+            list = Invasion.roster.map(function (m) {
+                let st = self.monsterStatus(m);
+                let name = self.fit(m.name.split(' the ')[0], w - 2 - 10);
+                let pad = ' '.repeat(Math.max(1, w - 2 - name.length - st[0].length));
+                let glyphColor = m.alive ? m.color : '#555';
+                return '%c{' + glyphColor + '}' + m.char + '%c{} %c{' + st[1] + '}' + name + pad + st[0] + '%c{}';
+            });
+            let mess = Game.messNumbers[0];
+            tail = [
+                '',
+                '%c{#fff}── MESS ──%c{}',
+                this.bar(mess, this.MESS_BAR_MAX, '#c00') + ' ' + mess,
+                '',
+                '%c{#777}[Space] fast: ' + (Invasion.fast ? 'on' : 'off') + '%c{}',
+                '%c{#777}[Esc] skip%c{}',
+                '%c{#777}[V] sound: ' + (Sfx.enabled ? 'on' : 'off') + '%c{}',
+            ];
+        }
+        else {
+            let pct = Game.messNumbers[1] > 0 ? Game.cleanPercent() : 100;
+            head = [
+                '%c{#fff}── SHIFT ──%c{}',
+                'Day ' + Game.day,
+                'Clean ' + this.bar(pct, 100, '#0c0') + ' ' + pct + '%',
+                '',
+                '%c{#fff}── STAFF LOUNGE ──%c{}',
+            ];
+            let self = this;
+            list = Game.monsterList.filter(function (m) { return m.alive && m.retired && !m.partying; })
+                .map(function (m) { return '%c{' + m.color + '}' + m.char + '%c{} ' + self.fit(m.name, w - 2); });
+            if (list.length == 0) {
+                list = ['%c{#777}(nobody)%c{}'];
+            }
+            let c = this.messCategories();
+            let labels = [['blood', '"Blood"'], ['prints', 'Footprints'], ['spills', 'Spills'],
+                ['litter', 'Litter'], ['broken', 'Broken stuff'], ['other', 'Other']];
+            let messLines = [];
+            for (let i = 0; i < labels.length; i++) {
+                if (c[labels[i][0]] > 0) {
+                    let label = labels[i][1];
+                    let n = String(c[labels[i][0]]);
+                    messLines.push(label + ' '.repeat(Math.max(1, w - label.length - n.length)) + n);
+                }
+            }
+            if (messLines.length == 0) {
+                messLines = ['%c{#0c0}Spotless!%c{}'];
+            }
+            tail = ['', '%c{#fff}── MESS LEFT ──%c{}'].concat(messLines).concat([
+                '',
+                '%c{#777}[?] help  [V] sound: ' + (Sfx.enabled ? 'on' : 'off') + '%c{}',
+            ]);
+        }
+        let room = maxRows - head.length - tail.length;
+        if (room < 1) {
+            return head.concat(tail).slice(0, Math.max(0, maxRows));
+        }
+        return head.concat(this.listLines(list, room)).concat(tail);
+    },
+
+    draw: function (display, info, cols, rows) {
+        if (info.panelX >= cols) {
+            return; // window too narrow: panel hidden
+        }
+        for (let y = 0; y < rows; y++) {
+            display.draw(info.panelX, y, '│', '#333', '#000');
+        }
+        let lines = this.lines(Game.phase, rows - 1);
+        for (let i = 0; i < lines.length; i++) {
+            display.drawText(info.panelX + 1, i + 1, lines[i], this.WIDTH - 1);
+        }
+    },
+};
+
+if (typeof module !== 'undefined') module.exports = Panel;

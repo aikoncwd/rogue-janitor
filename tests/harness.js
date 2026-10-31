@@ -11,6 +11,7 @@ const DEFAULT_FILES = [
     'script/messagelog.js',
     'script/sound.js',
     'script/invasion.js',
+    'script/panel.js',
     'script/game.js',
     'script/player.js',
     'script/tile.js',

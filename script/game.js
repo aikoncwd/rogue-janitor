@@ -89,8 +89,9 @@ var Game = {
     getSize: function(redraw=true) {
         var setsize=this.display.computeSize(this.screen.clientWidth,this.screen.clientHeight);
         this.display.setOptions({width: setsize[0],height: setsize[1]});
-        this.offset[0] = parseInt(setsize[0]/2);
-        this.offset[1] = parseInt(setsize[1]/2);
+        this.screenSize = [setsize[0], setsize[1]];
+        this.layoutInfo = Panel.layout(setsize[0], setsize[1]);
+        this.offset = this.layoutInfo.offset;
         if (redraw) {
             Game.drawMap();
         }
@@ -140,12 +141,13 @@ var Game = {
         }
 
         let cam = this.cameraTarget();
+        let invading = this.phase == 'invasion';
         for (let i=-this.offset[0]+cam.x;i<=this.offset[0]+cam.x;i++) {
             for (let j=-this.offset[1]+cam.y;j<=this.offset[1]+cam.y;j++) {
                 let key=i+','+j;
                 if (key in this.map) {
                     let art = this.map[key].getMemoryArt();
-                    this.display.draw(i+this.offset[0]-cam.x,j+this.offset[1]-cam.y,art[0],art[1],art[2]);
+                    this.drawCell(i-cam.x,j-cam.y,art[0],art[1],art[2]);
                 }
             }
         }
@@ -153,17 +155,22 @@ var Game = {
             let key=x+','+y;
             if (key in Game.map) {
                 let art = Game.map[key].getArt();
-                Game.display.draw(x+Game.offset[0]-cam.x,y+Game.offset[1]-cam.y,art[0],art[1],art[2]);
+                let bg = (invading && key in Invasion.flashes) ? '#a00' : art[2];
+                Game.drawCell(x-cam.x,y-cam.y,art[0],art[1],bg);
             }
         });
-
-        if (this.phase == 'cleaning') {
-            this.display.drawText(1,1,"Cleanliness: " + this.cleanPercent() + "%");
+        if (invading) {
+            // fainted monsters lie where they fell until the hero leaves
+            for (let i=0;i<Invasion.bodies.length;i++) {
+                let b = Invasion.bodies[i];
+                let tile = this.map[b.x+','+b.y];
+                if (tile && tile.visible && tile.entity == null) {
+                    this.drawCell(b.x-cam.x,b.y-cam.y,b.char,'#555',tile.bgColor);
+                }
+            }
         }
-        var dayCounter="Day: "+this.day;
-        //var pointCounter = "Points: "+(this.yendorPoints+this.cleanPercent());
-        this.display.drawText(2*this.offset[0]-dayCounter.length-2,1,dayCounter);
-        //this.display.drawText(2*this.offset[0]-pointCounter.length-2,2,pointCounter);
+
+        this.drawChrome();
 
         if (Game.player.examining != null) {
             this.display.draw(Game.player.examining[0]+Game.offset[0]-Game.player.x,Game.player.examining[1]+Game.offset[1]-Game.player.y,'X','#ff0');
@@ -209,11 +216,44 @@ var Game = {
         if (Game.player.talking) {
             Game.player.talking.doConvo();
         }
-        else {
-            this.sendMessage();
+        this.drawLog();
+    },
+
+    // Draws one map cell given its position relative to the camera, clipped to the map viewport.
+    drawCell: function(dx,dy,ch,fg,bg) {
+        let x = dx + this.offset[0];
+        let y = dy + this.offset[1];
+        if (x >= 0 && y >= 0 && x < this.layoutInfo.mapCols && y < this.layoutInfo.mapRows) {
+            this.display.draw(x,y,ch,fg,bg);
         }
     },
 
+    // Side panel plus the separator line above the message log.
+    drawChrome: function() {
+        let info = this.layoutInfo;
+        for (let x=0;x<info.mapCols;x++) {
+            this.display.draw(x,info.logY-1,'─','#333','#000');
+        }
+        Panel.draw(this.display,info,this.screenSize[0],this.screenSize[1]);
+    },
+
+    drawLog: function() {
+        let info = this.layoutInfo;
+        let lines = this.log.recent(Panel.LOG_ROWS);
+        for (let i=0;i<Panel.LOG_ROWS;i++) {
+            let y = info.logY+i;
+            for (let x=0;x<info.mapCols;x++) {
+                this.display.draw(x,y,' ','#000','#000');
+            }
+            if (i < lines.length) {
+                let text = lines[i].fresh ? lines[i].text : "%c{#777}"+lines[i].text.replace(/%c\{[^}]*\}/g,'')+"%c{}";
+                this.display.drawText(1,y,text,Math.max(1,info.mapCols-2));
+            }
+        }
+    },
+
+    // Adds a message to the log. Non-important messages (ambient hints) are dropped
+    // while a fresh message is still showing, as before.
     sendMessage: function(msg=null,important=true) {
         if (this.lastMessage != "" && !important) {
             msg=null;
@@ -222,17 +262,10 @@ var Game = {
             this.lastlastMessage=msg;
             this.lastlastMessageTime=4;
             this.lastMessage=msg;
-            this.display.drawText(2,2*this.offset[1]-2,"> "+msg);
+            this.log.push(msg);
         }
-        else {
-            if (this.lastMessage != "") {
-                this.display.drawText(2,2*this.offset[1]-2,"> "+this.lastMessage);
-            }
-            else {
-                if (this.lastlastMessage != "" && this.lastlastMessageTime>=0) {
-                    this.display.drawText(2,2*this.offset[1]-2,"%c{#444}> "+this.lastlastMessage+"%c{}");
-                }
-            }
+        if (this.display != null && this.layoutInfo != null) {
+            this.drawLog();
         }
     },
 
