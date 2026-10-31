@@ -17,6 +17,7 @@ var Invasion = {
     // or when a new day's dungeon is generated (the player's pending unlock resumes it).
     start: function () {
         Game.phase = 'invasion';
+        Game.stopQuestBlink();
         Game.drawMap();
         if (!this.engineStarted) {
             this.engineStarted = true;
@@ -228,12 +229,8 @@ var Invasion = {
             'Blood puddles (fake): ' + s.bloodPuddles + '   Walls vandalised: ' + s.graffiti,
             this.classStat() + ': ' + s.specials,
         ];
-        let scene = [];
-        for (let i = 0; i < lines.length; i++) {
-            scene.push({ message: lines[i], any: i + 1 });
-        }
-        scene[scene.length - 1].any = -1;
-        return scene;
+        // one screen for the whole report: a single Enter to read it all
+        return [{ message: lines.join('\n'), any: -1 }];
     },
 
     // --- Hand-over: the pause between the hero leaving and the shift starting ---

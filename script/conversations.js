@@ -52,6 +52,7 @@ var ConversationBuilder = {
 
         delete speaker.convoTags.request;
         delete speaker.convoTags.requestThanked;
+        delete speaker.convoTags.offerSeen;
         if (!party) {
             Requests.offer(speaker, newConversation);
         }
@@ -65,7 +66,7 @@ var ConversationBuilder = {
     
     searchQuestConvo: function(newConversation, speaker) {
         var findConvo=[
-            {text:"Oh dang I lost my "+speaker.questItemName+"! Can you help me find it?",any:-1,conditions:{questItemGot:false}}
+            {text:"Oh dang I lost my "+speaker.questItemName+"! Can you help me find it?",any:-1,conditions:{questItemGot:false},tags:{questHeard:true}}
         ];
         var gotConvo = [
             {text:"You found my "+speaker.questItemName+"! Thank you so much ^.^",any:-1,conditions:{questItemGot:true},tags:{questItemSuccess:true},globalTags:{yendorPoints:50}}
@@ -1089,7 +1090,7 @@ var Requests = {
         }
         Game.requestsOffered++;
         convos.push([
-            {text:t.ask, y:1, n:2},
+            {text:t.ask, y:1, n:2, tags:{offerSeen:true}},
             {text:"You're the best! Come find me when it's done.", any:-1, tags:{request:t.key}},
             {text:"No worries! Forget I asked :)", any:-1},
         ]);

@@ -127,7 +127,7 @@ test('the invasion rolls a class for the hero and reports its special', () => {
     assert.equal(a.char, '@');
     const scene = ctx.Game.monsterList[0].convos[ctx.Game.monsterList[0].convos.length - 1];
     const stat = ctx.Adventurer.classes[a.heroClass].stat;
-    assert.ok(scene.some(n => n.message && n.message.startsWith(stat + ':')), stat);
+    assert.ok(scene.some(n => n.message && n.message.split('\n').some(l => l.startsWith(stat + ':'))), stat);
 });
 
 // ---------------------------------------------------------------- requests

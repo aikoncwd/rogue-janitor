@@ -91,32 +91,64 @@ test('the scene stops animating once the cutscene moves on', () => {
     assert.equal(ctx.Scenes.timer, null);
 });
 
-test('comrades with a favour or a lost item get a "!" above them', () => {
+test('comrades with a quest to give blink with a "!" on their own tile until you take it', () => {
     const ctx = cleaning();
     const G = ctx.Game;
-    const lounge = G.monsterList.filter(x => x.alive && x.retired);
     for (const t of Object.values(G.map)) t.visible = true;
-    const m = lounge.find(x => !x.questItem && !(x.convoTags.request));
+    const m = G.monsterList.find(x => x.alive && x.retired && !G.hasQuestToGive(x));
     assert.ok(m);
-    G.player.moveTo(m.x, m.y + 2);
-    const bangAt = () => {
+    const cam = () => G.cameraTarget();
+    const glyphAt = (bang) => {
+        const real = Date.now;
+        ctx.Date.now = () => (bang ? 1 : 0) * G.QUEST_BLINK_MS;
         G.drawMap();
-        const cam = G.cameraTarget();
-        return ctx.__drawn.filter(d => d.ch === '!' && d.x === m.x - cam.x + G.offset[0] && d.y === m.y - 1 - cam.y + G.offset[1]);
+        ctx.Date.now = real;
+        const x = m.x - cam().x + G.offset[0], y = m.y - cam().y + G.offset[1];
+        return ctx.__drawn.filter(d => d.x === x && d.y === y && d.ch).pop();
     };
-    const above = G.map[m.x + ',' + (m.y - 1)];
-    if (above.entity) above.entity = null;
-    assert.equal(G.questMarker(m), null);
-    m.convoTags.request = 'cobwebs';
-    assert.ok(G.questMarker(m));
-    const shown = bangAt();
-    assert.equal(shown.length, 1);
-    assert.equal(shown[0].fg, ctx.Requests.isDone(m) ? '#0f0' : '#ff0');
-    m.convoTags.requestThanked = true;
-    assert.equal(G.questMarker(m), null);
-    assert.equal(bangAt().length, 0);
+    assert.equal(glyphAt(true).ch, m.char, 'no quest: no marker');
+
+    // a favour on offer
+    m.convos.push([{ text: 'Could you…', y: 1, n: 2, tags: { offerSeen: true } }]);
+    assert.ok(G.hasQuestToGive(m));
+    assert.equal(glyphAt(true).ch, '!');
+    assert.equal(glyphAt(true).fg, '#ff0');
+    assert.equal(glyphAt(false).ch, m.char, 'blinks back to the monster');
+    m.convoTags.offerSeen = true; // you heard the request
+    assert.ok(!G.hasQuestToGive(m));
+    assert.equal(glyphAt(true).ch, m.char);
+
+    // a lost item
     m.questItem = { pickedUp: false };
-    assert.equal(G.questMarker(m), '#ff0');
+    assert.ok(G.hasQuestToGive(m));
+    m.convoTags.questHeard = true;
+    assert.ok(!G.hasQuestToGive(m), 'gone once they told you');
+});
+
+test('hearing the lost-item line or a favour offer clears the marker', () => {
+    const ctx = cleaning();
+    const conv = [];
+    const m = ctx.Game.monsterList.find(x => x.alive);
+    m.questItemName = 'hat';
+    ctx.ConversationBuilder.searchQuestConvo(conv, m);
+    assert.equal(conv[0][0].tags.questHeard, true);
+});
+
+test('a lost item you were told about is listed under REQUESTS until you hand it back', () => {
+    const ctx = cleaning();
+    const G = ctx.Game;
+    const strip = s => s.replace(/%c\{[^}]*\}/g, '');
+    const m = G.monsterList.find(x => x.alive && x.retired);
+    m.questItem = { pickedUp: false };
+    m.questItemName = 'favourite hat';
+    const text = () => ctx.Panel.lines('cleaning', 70).map(strip).join('\n');
+    assert.ok(!/Favourite hat/.test(text()), 'not before they tell you');
+    m.convoTags.questHeard = true;
+    assert.match(text(), /REQUESTS/);
+    assert.match(text(), /Favourite hat +lost/);
     m.questItem.pickedUp = true;
-    assert.equal(G.questMarker(m), '#0f0', 'green once you found it');
+    assert.match(text(), /Favourite hat +found!/);
+    m.convoTags.questItemSuccess = true;
+    assert.ok(!/Favourite hat/.test(text()), 'gone once handed back');
+    for (const l of ctx.Panel.lines('cleaning', 70)) assert.ok(strip(l).length <= ctx.Panel.WIDTH - 1, l);
 });

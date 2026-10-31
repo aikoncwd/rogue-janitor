@@ -100,15 +100,31 @@ var Panel = {
         return entries.slice(0, shown).concat(['%c{#777}+' + (entries.length - shown) + ' more%c{}']);
     },
 
+    // Lost items a comrade has told you about and not got back yet: [{who, label, found}]
+    lostItems: function () {
+        return Game.monsterList.filter(function (m) {
+            return m.alive && m.questItem != null && m.convoTags.questHeard && !('questItemSuccess' in m.convoTags);
+        }).map(function (m) {
+            return {who: m, label: m.questItemName.charAt(0).toUpperCase() + m.questItemName.slice(1), found: m.questItem.pickedUp};
+        });
+    },
+
+    // Favours (with how much is left) and lost items, one line each.
     requestLines: function (w) {
         let self = this;
-        return Requests.active().map(function (r) {
-            let status = r.left > 0 ? String(r.left) + ' left' : '%c{#0c0}done!%c{}';
-            let plainStatus = r.left > 0 ? String(r.left) + ' left' : 'done!';
-            let label = self.fit(r.label, w - 3 - plainStatus.length);
+        let line = function (who, label, plainStatus, done) {
+            let status = done ? '%c{#0c0}' + plainStatus + '%c{}' : plainStatus;
+            label = self.fit(label, w - 3 - plainStatus.length);
             let pad = ' '.repeat(Math.max(1, w - 2 - label.length - plainStatus.length));
-            return '%c{' + r.who.color + '}' + r.who.char + '%c{} ' + label + pad + status;
+            return '%c{' + who.color + '}' + who.char + '%c{} ' + label + pad + status;
+        };
+        let favours = Requests.active().map(function (r) {
+            return line(r.who, r.label, r.left > 0 ? String(r.left) + ' left' : 'done!', r.left <= 0);
         });
+        let lost = this.lostItems().map(function (q) {
+            return line(q.who, q.label, q.found ? 'found!' : 'lost', q.found);
+        });
+        return favours.concat(lost);
     },
 
     monsterStatus: function (m) {

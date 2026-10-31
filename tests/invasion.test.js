@@ -46,7 +46,7 @@ test('handover cutscene starts with report and keeps welcome text', () => {
     runInstant(ctx);
     const scene = ctx.Game.player.cutscene || ctx.Game.monsterList[0].convos[ctx.Game.monsterList[0].convos.length - 1];
     assert.ok(scene[0].message.includes(ctx.Invasion.hero.full));
-    assert.ok(scene.some(n => /Monsters fainted/.test(n.message)));
+    assert.ok(/Monsters fainted/.test(scene[0].message) && /Loot smashed/.test(scene[0].message), 'whole report on one screen');
     assert.ok(scene.some(n => /Now that the hero is gone/.test(n.message)));
     assert.equal(scene[scene.length - 1].any, -1);
 });

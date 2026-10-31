@@ -329,38 +329,52 @@ var Game = {
         this.drawLog();
     },
 
-    // '!' colour for a comrade with an open favour or a lost item: yellow while it is
-    // still to do, green once you can hand it in. null when they have nothing for you.
-    questMarker: function(m) {
+    // True while a comrade has a quest you have not taken yet: a favour they are about
+    // to ask for, or a lost item they have not told you about. Taking it (hearing them
+    // out) turns the marker off.
+    hasQuestToGive: function(m) {
         if (!m.alive) {
-            return null;
+            return false;
         }
-        if (m.convoTags.request && !m.convoTags.requestThanked) {
-            return Requests.isDone(m) ? '#0f0' : '#ff0';
+        if (!m.convoTags.offerSeen && m.convos.some(function(c) { return c[0] && c[0].tags && 'offerSeen' in c[0].tags; })) {
+            return true;
         }
-        if (m.questItem != null && !('questItemSuccess' in m.convoTags)) {
-            return m.questItem.pickedUp ? '#0f0' : '#ff0';
-        }
-        return null;
+        return m.questItem != null && !('questItemSuccess' in m.convoTags) && !m.convoTags.questHeard;
     },
 
-    // Draws the quest '!' on the tile above every visible comrade that has one.
+    QUEST_BLINK_MS: 450,
+    questBlinkTimer: null,
+
+    stopQuestBlink: function() {
+        if (this.questBlinkTimer != null) {
+            clearTimeout(this.questBlinkTimer);
+            this.questBlinkTimer = null;
+        }
+    },
+
+    // Comrades with a quest to give blink between their own glyph and a yellow '!'.
     drawQuestMarkers: function(cam) {
+        let any = false;
+        let bang = Math.floor(Date.now()/this.QUEST_BLINK_MS) % 2 == 1;
         for (let i=0;i<this.monsterList.length;i++) {
             let m = this.monsterList[i];
             let tile = this.map[m.x+','+m.y];
-            if (!tile || !tile.visible || tile.entity !== m) {
+            if (!tile || !tile.visible || tile.entity !== m || !this.hasQuestToGive(m)) {
                 continue;
             }
-            let color = this.questMarker(m);
-            if (color == null) {
-                continue;
+            any = true;
+            if (bang) {
+                this.drawCell(m.x-cam.x,m.y-cam.y,'!','#ff0',tile.bgColor);
             }
-            let above = this.map[m.x+','+(m.y-1)];
-            if (above && above.entity != null) {
-                continue; // never cover you or another comrade
-            }
-            this.drawCell(m.x-cam.x,m.y-1-cam.y,'!',color,above && above.visible ? above.bgColor : '#000');
+        }
+        if (any && this.questBlinkTimer == null) {
+            let self = this;
+            this.questBlinkTimer = setTimeout(function() {
+                self.questBlinkTimer = null;
+                if (Effects.canRedraw()) {
+                    self.drawMap();
+                }
+            }, this.QUEST_BLINK_MS);
         }
     },
 

@@ -60,7 +60,8 @@ test('esc skips to cleaning with no double unlock', () => {
     assert.equal(ctx.Game.phase, 'cleaning');
     assert.equal(ctx.Invasion.stage, null);
     assert.equal(ctx.Game.adventurer.active, false);
-    assert.equal(ctx.__timers.length, 0, 'no stray timer left to unlock the engine again');
+    const stray = ctx.__timers.filter(t => t.id !== ctx.Game.questBlinkTimer); // quest '!' blink is fine
+    assert.equal(stray.length, 0, 'no stray timer left to unlock the engine again');
     assert.equal(ctx.Game.engine._lock, 1, 'engine held by the player only');
     assert.equal(ctx.Invasion.skipping, false);
     const playerListeners = ctx.__listeners.filter(l => l.fn === ctx.Game.player);
