@@ -7,6 +7,10 @@ const vm = require('vm');
 const ROOT = path.join(__dirname, '..');
 
 const DEFAULT_FILES = [
+    'script/flavor.js',
+    'script/messagelog.js',
+    'script/sound.js',
+    'script/invasion.js',
     'script/game.js',
     'script/player.js',
     'script/tile.js',

@@ -809,12 +809,29 @@ var ConversationBuilder = {
         return nextConvo;
     },
 
+    // Joins two cutscenes (arrays of {message, any} nodes) into one.
+    chainCutscenes: function(a, b) {
+        if (b == null || b.length == 0) {
+            return a;
+        }
+        let joined = a.map(function(n) { return Object.assign({}, n); });
+        joined[joined.length-1].any = a.length;
+        for (let i = 0; i < b.length; i++) {
+            let node = Object.assign({}, b[i]);
+            if (typeof node.any == 'number' && node.any >= 0) {
+                node.any += a.length;
+            }
+            joined.push(node);
+        }
+        return joined;
+    },
+
     startGameCutscene: function() {
         let newConvo=[];
         let text=[
             'Welcome to %c{#ff0}Rogue Janitor%c{}!',
             'You have a new job as dungeon janitor for the %c{#f00}Comrade Dungeon%c{}, and today is your first day!',
-            'The monsters of the dungeon have just finished a busy work day and are relaxing in the staff lounge...',
+            'Now that the hero is gone, your monstrous colleagues are relaxing in the staff lounge...',
             '...but your day is just beginning!',
             'Talk to your comrades, get to know them, and %c{#ff0}clean the dungeon%c{}!',
             'Press %c{#ff0}?%c{} at any time for instructions!'

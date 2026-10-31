@@ -39,6 +39,8 @@ var Game = {
     targetPoints:1500,
     yendorPoints:0,
     victory:false,
+    phase:'intro', // 'intro' | 'invasion' | 'cleaning'
+    log: new MessageLog(),
     init: function() {
         this.screen = document.getElementById("gameContainer");
         this.display = new ROT.Display({fontSize:16});
@@ -277,6 +279,21 @@ var Game = {
         this.adventurer = new Adventurer(this.stairs[0][0],this.stairs[0][1]);
         this.populateRooms();
         this.addDoors(thetheme);
+        Invasion.reset(this.adventurer);
+    },
+
+    cameraTarget: function() {
+        if (this.phase != 'cleaning' && this.adventurer != null && this.adventurer.active) {
+            return this.adventurer;
+        }
+        return this.player;
+    },
+
+    forgetMap: function() {
+        for (let key in this.map) {
+            this.map[key].lastSeen=' ';
+            this.map[key].visible=false;
+        }
     },
 
     generateDiner: function() {

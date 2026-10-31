@@ -141,6 +141,7 @@ Entity.prototype.reset = function(x,y) {
 
 Entity.prototype.adventurerAct = function() {
     if ('loot' in this.tags) {
+        Invasion.event('loot', {entity:this});
         let key = this.x+','+this.y;
         if (key in Game.map && Game.map[key].entity==this) {
             Game.map[key].entity=null;
@@ -161,6 +162,7 @@ Entity.prototype.adventurerAct = function() {
     }
     else if ('monster' in this.tags) {
         this.hp -= Game.adventurer.dmg;
+        Invasion.event('hit', {monster:this});
         let dx = Math.floor(3*ROT.RNG.getUniform())-1;
         let dy = Math.floor(3*ROT.RNG.getUniform())-1;
         let newMess1=makeMess(this.x,this.y,"BloodPool");
@@ -173,6 +175,7 @@ Entity.prototype.adventurerAct = function() {
             }
         }
         if (this.hp <= 0) {
+            Invasion.event('faint', {monster:this});
             this.alive=false;
             let key = this.x+','+this.y;
             if (key in Game.map && Game.map[key].entity==this) {
@@ -499,6 +502,7 @@ Entity.prototype.act = function() {
                 else {
                     Game.adventurer.hp--;
                     this.damagedealt++;
+                    Invasion.event('heroHurt', {by:this});
                 }
                 let newmess=makeMess(Game.adventurer.x+dx,Game.adventurer.y+dy,this.tags.rangeMess);
                 newmess.droppedBy=this;

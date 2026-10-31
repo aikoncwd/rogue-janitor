@@ -41,14 +41,7 @@ Adventurer.prototype.nextDestination = function() {
     if (this.destinations.length==0 || this.destinations==null) {
         this.destinations=[[Game.stairs[1][0],Game.stairs[1][1]]];
         if (this.x==this.destinations[0][0] && this.y==this.destinations[0][1]) {
-            let key=this.x+','+this.y;
-            if (key in Game.map && Game.map[key].entity==this) {
-                Game.map[key].entity=null;
-            }
-            this.x=-10000;this.y=-100000;
-            this.active=false;
-            Game.moveMonstersToLounge();
-            Game.scheduler.add(Game.player,true);
+            this.leave();
             return;
         }
     }
@@ -62,6 +55,21 @@ Adventurer.prototype.nextDestination = function() {
         }
     }
     this.destinationIndex=best[0];
+}
+
+Adventurer.prototype.maxTurns = 10000; // fail-safe: give up and leave if stuck
+
+// The hero exits the dungeon; the fainted monsters get up and the player's shift starts.
+Adventurer.prototype.leave = function() {
+    let key=this.x+','+this.y;
+    if (key in Game.map && Game.map[key].entity==this) {
+        Game.map[key].entity=null;
+    }
+    this.x=-10000;this.y=-100000;
+    this.active=false;
+    Game.moveMonstersToLounge();
+    Game.scheduler.add(Game.player,true);
+    Invasion.finish();
 }
 
 Adventurer.prototype.look = function() {
@@ -93,6 +101,7 @@ Adventurer.prototype.look = function() {
 
 Adventurer.prototype.damage = function() {
     this.hp--;
+    Invasion.event('heroHurt', {by:null});
     let dx = Math.floor(3 * ROT.RNG.getUniform()) - 1;
     let dy = Math.floor(3 * ROT.RNG.getUniform()) - 1;
     //let newMess1 = makeMess(this.x, this.y, "BloodPool");
@@ -103,14 +112,17 @@ Adventurer.prototype.damage = function() {
 // How does the brave and noble adventurer proceed?
 Adventurer.prototype.act = function () {
     //console.log(this.turns);
-    if (this.turns>10000) {
-        this.active=false;
-        Game.generateDungeon();
-    }
-    //console.log(this.hp);
     if (!this.active) {
         return;
     }
+    if (this.turns>this.maxTurns) {
+        this.leave();
+        return;
+    }
+    if (this.turns==-1) {
+        Invasion.event('enter', {});
+    }
+    Invasion.event('turn', {});
     if (this.spreadCount>0 && this.spreading != null) {
         let newMess = makeMess(this.x,this.y,this.spreading);
         this.spreadCount--;
@@ -121,6 +133,7 @@ Adventurer.prototype.act = function () {
     if (this.hp<=0 && this.turns % 5 ==0) {
         //console.log("Dropping potion");
         let newMess1 = makeMess(this.x, this.y, "EmptyPotion");
+        Invasion.event('potion', {});
         this.hp+=6;
     }
     //console.log(this.x+','+this.y);
@@ -128,6 +141,7 @@ Adventurer.prototype.act = function () {
     this.hunger--;
     if (this.hunger<=0) {
         let newMess = makeMess(this.x,this.y,"Wrapper");
+        Invasion.event('snack', {});
         this.hunger += Math.floor(15*ROT.RNG.getUniform())+20;
     }
     this.turns++;
@@ -184,8 +198,9 @@ Adventurer.prototype.act = function () {
         if (!this.moveTo(nextStep[0],nextStep[1])) {
             let key=nextStep[0]+','+nextStep[1];
             if (key in Game.map) {
-                if (Game.map[key].door != null) {
+                if (Game.map[key].door != null && !Game.map[key].open) {
                     Game.map[key].open=true;
+                    Invasion.event('door', {x:nextStep[0], y:nextStep[1]});
                 }
                 if (Game.map[key].entity != null && Game.map[key].entity instanceof Entity) {
                     Game.map[key].entity.adventurerAct();
