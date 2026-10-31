@@ -7,8 +7,8 @@ var Invasion = {
     FAST_FACTOR: 4,
     // Rhythm of the replay (ms): quick through empty corridors, a beat when
     // something comes into view, and holds long enough to read the good bits.
-    BEATS: { quiet: 50, spot: 400, hit: 200, combo: 150, faint: 700, loot: 450, door: 350, heroHurt: 250,
-        snack: 900, potion: 1100, special: 1100, graffiti: 1100, enter: 1200, cry: 900 },
+    BEATS: { quiet: 25, spot: 200, hit: 100, combo: 75, faint: 350, loot: 225, door: 175, heroHurt: 125,
+        snack: 450, potion: 550, special: 550, graffiti: 550, enter: 600, cry: 450 },
     SPEECH: ['snack', 'potion', 'special', 'graffiti', 'enter', 'cry'],
     hold: 0,
     combo: 0,
@@ -36,7 +36,7 @@ var Invasion = {
     // to read adds a little time (capped).
     beat: function (name, line) {
         let plainLength = line ? line.replace(/%c\{[^}]*\}/g, '').length : 0;
-        let ms = this.BEATS[name] + Math.min(500, plainLength * 10);
+        let ms = this.BEATS[name] + Math.min(250, plainLength * 5);
         this.hold = Math.max(this.hold, ms);
         if (this.SPEECH.indexOf(name) >= 0) {
             this.speaking = true;
@@ -178,20 +178,20 @@ var Invasion = {
 
     // One line for the top of the map, shortened to fit `width` columns.
     bannerText: function (width) {
-        let dot = '%c{' + (this.turn % 4 < 2 ? '#f00' : '#400') + '}●%c{}';
+        let dot = '%c{' + (this.turn % 4 < 2 ? '#f00' : '#500') + '}●%c{}';
         let play = this.fast ? '▶▶ x' + this.FAST_FACTOR : '▶';
         let clock = this.clockText();
         let forms = [
-            '%c{#aaa}[ ' + dot + '%c{#aaa} REC  ' + play + ' PLAYBACK · CAM ' + this.camera + ' (floating eye) · ' + clock + ' ]%c{}  %c{#777}just watch - no input needed%c{}',
-            '%c{#aaa}[ ' + dot + '%c{#aaa} REC  ' + play + ' PLAYBACK · CAM ' + this.camera + ' (floating eye) · ' + clock + ' ]%c{}',
-            '%c{#aaa}[ ' + dot + '%c{#aaa} REC  ' + play + ' PLAYBACK · ' + clock + ' ]%c{}',
+            '%c{#fff}[ ' + dot + '%c{#fff} REC  ' + play + ' PLAYBACK · CAM ' + this.camera + ' (floating eye) · ' + clock + ' ]%c{}  %c{#ddd}just watch - no input needed%c{}',
+            '%c{#fff}[ ' + dot + '%c{#fff} REC  ' + play + ' PLAYBACK · CAM ' + this.camera + ' (floating eye) · ' + clock + ' ]%c{}',
+            '%c{#fff}[ ' + dot + '%c{#fff} REC  ' + play + ' PLAYBACK · ' + clock + ' ]%c{}',
         ];
         for (let i = 0; i < forms.length; i++) {
             if (forms[i].replace(/%c\{[^}]*\}/g, '').length <= width - 2) {
                 return forms[i];
             }
         }
-        return dot + '%c{#aaa} REC ' + play + ' ' + clock + '%c{}';
+        return dot + '%c{#fff} REC ' + play + ' ' + clock + '%c{}';
     },
 
     // Pressing game keys during the replay: a gentle reminder, at most every NAG_MS.

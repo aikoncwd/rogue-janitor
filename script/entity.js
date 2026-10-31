@@ -76,7 +76,7 @@ function Entity(x,y,char,color,species,hp=1,tags={},level=1,bgColor='#000',attac
         for (let i=-3;i<4;i++) {
             for (let j=-3;j<4;j++) {
                 let testKey = (this.x+i)+','+(this.y+j);
-                if (testKey in Game.map && !Game.map[testKey].passable && Game.map[testKey].entity==null && Game.map[testKey].mess==null) {
+                if (testKey in Game.map && !Game.map[testKey].passable && Game.map[testKey].entity==null && Game.map[testKey].mess==null && Game.map[testKey].secretDoor==null) { // never cover a secret door
                     let dist = Math.abs(i)+Math.abs(j);
                     if (dist < best[2]) {
                         best[0]=i;

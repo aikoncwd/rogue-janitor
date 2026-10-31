@@ -317,7 +317,12 @@ var Game = {
         if (invading && Invasion.stage == null && !Invasion.skipping) {
             let banner = Invasion.bannerText(this.layoutInfo.mapCols);
             let len = banner.replace(/%c\{[^}]*\}/g, '').length;
-            this.display.drawText(Math.max(0, Math.floor((this.layoutInfo.mapCols - len) / 2)), 0, '%b{#000}' + banner);
+            // a wall-grey strip across the top, so it reads as part of the screen, not a hole in the map
+            let wall = this.dungeonTheme.roomWalls[1];
+            for (let x = 0; x < this.layoutInfo.mapCols; x++) {
+                this.display.draw(x, 0, ' ', '#fff', wall);
+            }
+            this.display.drawText(Math.max(0, Math.floor((this.layoutInfo.mapCols - len) / 2)), 0, '%b{' + wall + '}' + banner);
         }
 
         this.drawChrome();

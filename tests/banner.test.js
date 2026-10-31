@@ -123,3 +123,10 @@ test('how-to does not promise help that only works during the shift', () => {
     assert.ok(!/any time/.test(text));
     assert.ok(/during your shift/.test(text));
 });
+
+test('banner sits on a wall-grey strip, not a black hole', () => {
+    const ctx = invading();
+    ctx.Game.drawMap();
+    const b = ctx.__drawn.find(d => d.text && d.text.includes('PLAYBACK'));
+    assert.ok(b.text.startsWith('%b{' + ctx.Game.dungeonTheme.roomWalls[1] + '}'), b.text.slice(0, 20));
+});

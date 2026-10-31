@@ -33,7 +33,7 @@ test('longer lines hold a bit longer, capped', () => {
     inv.hold = 0;
     inv.beat('potion', 'x'.repeat(200));
     assert.ok(inv.turnDelay() > a);
-    assert.equal(inv.turnDelay(), inv.BEATS.potion + 500);
+    assert.equal(inv.turnDelay(), inv.BEATS.potion + 250);
 });
 
 test('holds take the longest beat of the turn', () => {
@@ -78,7 +78,7 @@ test('a paced invasion uses many different delays', () => {
         ctx.__runTimers();
     }
     assert.ok(seen.has(ctx.Invasion.BEATS.quiet), 'quick corridor steps');
-    assert.ok([...seen].some(ms => ms >= 700), 'some long holds: ' + [...seen].join(','));
+    assert.ok([...seen].some(ms => ms >= 350), 'some long holds: ' + [...seen].join(','));
     assert.ok(seen.size >= 4, 'varied rhythm: ' + [...seen].join(','));
 });
 
@@ -98,4 +98,12 @@ test('turning fast mode on during a long hold shortens the wait right away', () 
     const turns = ctx.Game.adventurer.turns;
     ctx.__runTimers();
     assert.equal(ctx.Game.adventurer.turns, turns + 1, 'engine resumes once');
+});
+
+test('beats are gentle: half of the first, too marked, rhythm', () => {
+    const ctx = invading();
+    assert.deepEqual(JSON.parse(JSON.stringify(ctx.Invasion.BEATS)), {
+        quiet: 25, spot: 200, hit: 100, combo: 75, faint: 350, loot: 225, door: 175, heroHurt: 125,
+        snack: 450, potion: 550, special: 550, graffiti: 550, enter: 600, cry: 450,
+    });
 });

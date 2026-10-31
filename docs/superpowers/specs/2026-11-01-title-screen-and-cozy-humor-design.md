@@ -369,6 +369,15 @@ tagline. Tone: "They say..." in the NetHack tradition. Examples:
   lives. You still only have one mop." plus a short happy SFX. Movement still
   happens normally; detection is a passive key-history check.
 
+- **Colleagues drop hints** (user request): now and then a colleague in the lounge
+  mentions an easter egg in passing, so the player feels invited to try it, e.g.
+  "Did you know if you type #pray the Mop God sometimes answers? Gary swears by it.",
+  "Old janitors say xyzzy is a magic word. Never worked for me.",
+  "Some folks name their mop. #name, I think? Mine is called Sir Swishalot.",
+  "Kevin keeps pressing up, up, down, down... on everything. Weird guy."
+  Random, at most one hint per conversation, never the same hint twice in a day;
+  hints for eggs the player already tried become rarer.
+
 All easter-egg key handling must not block existing keys (`#` and `Q` are currently
 unused — builder verifies).
 
