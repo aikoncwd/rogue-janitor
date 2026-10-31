@@ -1,9 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, toIntro } = require('./harness');
 
 function cleaning() {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.Invasion.instant = true;
     ctx.__press(13);                       // start + run the whole invasion
     while (ctx.Game.player.talking) {      // dismiss report and welcome cutscenes

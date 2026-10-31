@@ -1,9 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, toIntro } = require('./harness');
 
 function cleaning(seed = 1234) {
-    const ctx = bootHeadless({ seed, begin: true });
+    const ctx = toIntro(bootHeadless({ seed, begin: true }));
     ctx.Invasion.instant = true;
     ctx.__press(13);
     while (ctx.Game.player.talking) ctx.Game.player.talking.cancelConvo();

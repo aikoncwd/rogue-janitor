@@ -13,6 +13,34 @@ var Flavor = {
             "%c{#777}Press any key.%c{}",
         ],
 
+        titleTaglines: [
+            "Mop the dungeon. Retrieve the Amulet of Clean-dor.",
+            "Procedurally generated mess. Hand-crafted mopping.",
+            "The RNG made this mess. You get to clean it.",
+            "Permadeath? No. Perma-mess.",
+            "Now with 100% fake blood.",
+            "Rodney says hi. Rodney has the Amulet. Again.",
+            "You hear the footsteps of a janitor on patrol.",
+            "Every YASD starts with 'I'll just...'",
+        ],
+
+        howtoText: [
+            "%c{#ff0}HOW YOUR JOB WORKS%c{}",
+            "",
+            "%c{#0ff}1. TONIGHT%c{}   A hero raids the dungeon. You are %c{#f80}NOT%c{} playing:",
+            "             you are watching last night's security footage.",
+            "             %c{#ff0}[Space]%c{} fast-forward   %c{#ff0}[Esc]%c{} skip to the morning",
+            "",
+            "%c{#0ff}2. MORNING%c{}   The mess is yours. Mop, pick up, fix.",
+            "",
+            "%c{#0ff}3. BREAKS%c{}    Your colleagues relax in the staff lounge.",
+            "             Chat with them. They are lovely.",
+            "",
+            "             Press %c{#ff0}[?]%c{} any time for the full controls.",
+            "",
+            "%c{#777}Press any key.%c{}",
+        ],
+
         heroEnter: [
             "{hero} kicks open the front door. \"FOR GLORY AND LOOT!\"",
             "{hero} strides in, cape billowing for no discernible reason.",

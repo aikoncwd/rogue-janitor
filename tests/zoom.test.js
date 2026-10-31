@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, toIntro } = require('./harness');
 
 const keyEv = (key, keyCode) => ({ key, keyCode, preventDefault() {} });
 
@@ -15,7 +15,7 @@ test('default font size scales with the window height (about 40 rows)', () => {
 });
 
 test('+ and - change the font size, applied to the display and remembered', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     const start = ctx.Game.fontSize;
     ctx.Game.onKey(keyEv('+', 187));
     assert.equal(ctx.Game.fontSize, start + 2);
@@ -28,7 +28,7 @@ test('+ and - change the font size, applied to the display and remembered', () =
 });
 
 test('zoom is clamped', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     for (let i = 0; i < 60; i++) ctx.Game.onKey(keyEv('+', 187));
     assert.equal(ctx.Game.fontSize, ctx.Game.MAX_FONT);
     for (let i = 0; i < 60; i++) ctx.Game.onKey(keyEv('-', 189));
@@ -36,7 +36,7 @@ test('zoom is clamped', () => {
 });
 
 test('0 resets to automatic and forgets the saved size', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.Game.onKey(keyEv('+', 187));
     ctx.Game.onKey(keyEv('0', 48));
     assert.equal(ctx.Game.fontSize, ctx.Game.autoFontSize());
@@ -52,7 +52,7 @@ test('a saved zoom level is used on the next visit', () => {
 });
 
 test('zoom works during the invasion and while cleaning', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.__press(13);
     const f = ctx.Game.fontSize;
     ctx.Game.onKey(keyEv('+', 187));
@@ -62,7 +62,7 @@ test('zoom works during the invasion and while cleaning', () => {
 });
 
 test('panel shows the zoom hint', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.__press(13);
     const text = ctx.Panel.lines('invasion', 60).join('\n');
     assert.ok(text.includes('[+/-] zoom'));

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, toIntro } = require('./harness');
 
 function freshDungeon(seed = 1234) {
     const ctx = bootHeadless({ seed });
@@ -238,7 +238,7 @@ test('panel shows requests, nearest mess and the music hint, and no minimap', ()
 // ---------------------------------------------------------------- music wiring
 
 test('T toggles music and each phase picks a fitting track', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     const played = [];
     ctx.Music.play = name => { played.push(name); return true; };
     ctx.Game.drawMap();

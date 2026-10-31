@@ -1,12 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, toIntro } = require('./harness');
 
 const KEY = { ENTER: 13, ESC: 27 };
 
 // Day 1 with a controllable clock: the hand-over stages are timed with Invasion.now().
 function bootWithClock() {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     let t = 0;
     ctx.Invasion.now = () => t;
     ctx.__advance = ms => { t += ms; };
@@ -73,7 +73,7 @@ test('the curtain blacks out rows from both edges of the map', () => {
 });
 
 test('instant invasions (tests, skipping logic) still hand over synchronously', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.Invasion.instant = true;
     ctx.__press(KEY.ENTER);
     assert.equal(ctx.Game.phase, 'cleaning');

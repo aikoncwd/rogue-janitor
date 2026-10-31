@@ -1,12 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, toIntro } = require('./harness');
 
 const strip = s => s.replace(/%c\{[^}]*\}/g, '');
 const keyEv = (key, keyCode) => ({ key, keyCode, preventDefault() {} });
 
 function cleaning(seed = 1234) {
-    const ctx = bootHeadless({ seed, begin: true });
+    const ctx = toIntro(bootHeadless({ seed, begin: true }));
     ctx.Invasion.instant = true;
     ctx.__press(13);
     while (ctx.Game.player.talking) ctx.Game.player.talking.cancelConvo();
@@ -14,7 +14,7 @@ function cleaning(seed = 1234) {
 }
 
 test('numpad 0 resets zoom to automatic', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.Game.onKey(keyEv('+', 187));
     ctx.Game.onKey(keyEv('0', 96)); // numpad 0, NumLock on
     assert.equal(ctx.Game.fontSize, ctx.Game.autoFontSize());
@@ -85,7 +85,7 @@ test('M-7: a stuck hero gives up after a few minutes of watching, not half an ho
 });
 
 test('M-8: pets stay quiet during the invasion', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.__press(13);
     ctx.Game.lastMessage = '';
     const pet = { lastSeen: 0, sound: ['text', 'Woof'], name: 'Dog', animQueue: [], spreadCount: 0, home: {}, x: 0, y: 0 };
@@ -96,7 +96,7 @@ test('M-8: pets stay quiet during the invasion', () => {
 });
 
 test('M-9: the invasion report counts blood puddles', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.Invasion.instant = true;
     ctx.__press(13);
     const scene = ctx.Game.monsterList[0].convos[ctx.Game.monsterList[0].convos.length - 1];
@@ -107,7 +107,7 @@ test('M-9: the invasion report counts blood puddles', () => {
 });
 
 test('M-10: during the invasion only this turn\'s lines are bright', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.__press(13);
     for (let i = 0; i < 40; i++) ctx.__runTimers();
     const lines = ctx.Game.log.recent(5);

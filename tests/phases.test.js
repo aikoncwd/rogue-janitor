@@ -1,11 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, toIntro } = require('./harness');
 
 const KEY = { ENTER: 13, SPACE: 32, ESC: 27, LEFT: 37, V: 86 };
 
 function bootDay1(seed = 1234) {
-    const ctx = bootHeadless({ seed, begin: true });
+    const ctx = toIntro(bootHeadless({ seed, begin: true }));
     return ctx;
 }
 

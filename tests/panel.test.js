@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, toIntro } = require('./harness');
 
 const strip = s => s.replace(/%c\{[^}]*\}/g, '');
 
@@ -108,7 +108,7 @@ test('cleaning drawMap draws log and panel, not the old top text', () => {
 });
 
 test('bodies and flashes are drawn during the invasion', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.__press(13);
     const hero = ctx.Game.adventurer;
     // a body right next to the hero, on an empty visible tile
@@ -127,7 +127,7 @@ test('bodies and flashes are drawn during the invasion', () => {
 });
 
 test('drawMap works in a tiny window', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.Game.display.computeSize = () => [12, 7];
     ctx.Game.getSize(true);
     ctx.__press(13);

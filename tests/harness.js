@@ -15,6 +15,7 @@ const DEFAULT_FILES = [
     'script/panel.js',
     'script/effects.js',
     'script/scenes.js',
+    'script/title.js',
     'script/game.js',
     'script/player.js',
     'script/tile.js',
@@ -120,8 +121,17 @@ function bootHeadless({ seed = 1234, files = DEFAULT_FILES, game = true, begin =
     return ctx;
 }
 
+// Day-1 boots open on the title screen; tests about the story intro or the
+// invasion press through the title and the how-to screen first.
+function toIntro(ctx) {
+    for (let i = 0; i < 2 && (ctx.Game.phase == 'title' || ctx.Game.phase == 'howto'); i++) {
+        ctx.__press(13);
+    }
+    return ctx;
+}
+
 function run(ctx, code) {
     return vm.runInContext(code, ctx);
 }
 
-module.exports = { bootHeadless, run, DEFAULT_FILES, makeContext, load };
+module.exports = { bootHeadless, toIntro, run, DEFAULT_FILES, makeContext, load };

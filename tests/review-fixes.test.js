@@ -1,9 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, toIntro } = require('./harness');
 
 function cleaning() {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     ctx.Invasion.instant = true;
     ctx.__press(13);
     while (ctx.Game.player.talking) ctx.Game.player.talking.cancelConvo();
@@ -11,7 +11,7 @@ function cleaning() {
 }
 
 test('M-6: browser keys on the intro screen do not start the invasion', () => {
-    const ctx = bootHeadless({ begin: true });
+    const ctx = toIntro(bootHeadless({ begin: true }));
     let prevented = 0;
     const ev = (keyCode, extra = {}) => Object.assign({ keyCode, preventDefault() { prevented++; } }, extra);
     for (const e of [ev(116), ev(123), ev(122), ev(16), ev(17), ev(18), ev(82, { ctrlKey: true }), ev(82, { metaKey: true }), ev(9, { altKey: true })]) {

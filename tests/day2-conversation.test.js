@@ -1,11 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, toIntro } = require('./harness');
 
 // Plays day 1 instantly, then goes home through the real exit-stairs conversation
 // and stops on its last node (the one that calls Game.nextDay()).
 function onLastNightNode() {
-    const ctx = bootHeadless({ seed: 1234, begin: true });
+    const ctx = toIntro(bootHeadless({ seed: 1234, begin: true }));
     const G = ctx.Game;
     ctx.Invasion.instant = true;
     ctx.__press(13);

@@ -77,7 +77,8 @@ var Game = {
 
     begin: function() {
         this.generateDungeon();
-        this.phase = 'intro';
+        this.phase = 'title';
+        Title.start();
         this.drawMap();
     },
 
@@ -115,6 +116,21 @@ var Game = {
             Sfx.toggle();
             if (this.phase != 'cleaning' || this.player.talking == null) {
                 this.drawMap();
+            }
+            return;
+        }
+        if (this.phase == 'title') {
+            Title.handleKey(e);
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            return;
+        }
+        if (this.phase == 'howto') {
+            this.phase = 'intro';
+            this.drawMap();
+            if (e.preventDefault) {
+                e.preventDefault();
             }
             return;
         }
@@ -181,7 +197,7 @@ var Game = {
 
     // Which tune fits what is on screen right now.
     musicTrack: function() {
-        if (this.phase == 'intro') {
+        if (this.phase == 'title' || this.phase == 'howto' || this.phase == 'intro') {
             return 'night';
         }
         if (this.phase == 'invasion') {
@@ -224,6 +240,16 @@ var Game = {
                 let halfwidth=Math.floor((instructions[i][0].length - instructions[i][1])/2);
                 this.display.drawText(this.offset[0]-halfwidth,this.offset[1]-halfLength+i,instructions[i][0]);
             }
+            return;
+        }
+
+        if (this.phase == 'title') {
+            Title.draw();
+            return;
+        }
+
+        if (this.phase == 'howto') {
+            Title.drawLines(Flavor.pools.howtoText, true);
             return;
         }
 
