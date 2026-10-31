@@ -242,7 +242,7 @@ test('T toggles music and each phase picks a fitting track', () => {
     const played = [];
     ctx.Music.play = name => { played.push(name); return true; };
     ctx.Game.drawMap();
-    assert.equal(played[played.length - 1], 'night', 'intro is quiet');
+    assert.equal(played[played.length - 1], 'title', 'intro plays the calm title theme');
     const before = ctx.Music.enabled;
     ctx.__press(84);
     assert.equal(ctx.Music.enabled, !before);
