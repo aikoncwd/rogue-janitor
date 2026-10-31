@@ -94,7 +94,7 @@ function stubDisplay(ctx) {
         drawText(x, y, text, maxWidth) { ctx.__drawn.push({ x, y, text, maxWidth }); return 1; },
         clear() { ctx.__drawn.length = 0; },
         computeSize() { return [100, 40]; },
-        setOptions() {},
+        setOptions(o) { ctx.__displayOptions = Object.assign(ctx.__displayOptions || {}, o); },
         getContainer() { return {}; },
     };
 }

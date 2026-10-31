@@ -41,9 +41,16 @@ var Game = {
     victory:false,
     phase:'intro', // 'intro' | 'invasion' | 'cleaning'
     log: new MessageLog(),
+    fontSize: 16,
+    MIN_FONT: 12,
+    MAX_FONT: 48,
+    FONT_STEP: 2,
+    TARGET_ROWS: 40,
+
     init: function() {
         this.screen = document.getElementById("gameContainer");
-        this.display = new ROT.Display({fontSize:16});
+        this.fontSize = this.chooseFontSize();
+        this.display = new ROT.Display({fontSize:this.fontSize});
         this.getSize(false);
         this.screen.appendChild(this.display.getContainer());
         this.setup();
@@ -77,6 +84,19 @@ var Game = {
             return;
         }
         Sfx.unlock();
+        // zoom: + / - (main keyboard or numpad), 0 = automatic size
+        if (e.key == '+' || e.key == '=' || code == 107) {
+            this.setFontSize(this.fontSize + this.FONT_STEP, true);
+            return;
+        }
+        if (e.key == '-' || e.key == '_' || code == 109) {
+            this.setFontSize(this.fontSize - this.FONT_STEP, true);
+            return;
+        }
+        if (e.key == '0' && code == 48) {
+            this.setFontSize(this.autoFontSize(), false);
+            return;
+        }
         if (e.keyCode == 86) { // V
             Sfx.toggle();
             if (this.phase != 'cleaning' || this.player.talking == null) {
@@ -91,7 +111,45 @@ var Game = {
         }
     },
 
+    // Font size that gives roughly TARGET_ROWS rows in the current window.
+    autoFontSize: function() {
+        let h = (this.screen && this.screen.clientHeight) ? this.screen.clientHeight : 640;
+        return Math.max(this.MIN_FONT, Math.min(this.MAX_FONT, Math.floor(h / this.TARGET_ROWS)));
+    },
+
+    // The player's saved zoom level, or the automatic size.
+    chooseFontSize: function() {
+        try {
+            let saved = parseInt(localStorage.getItem('rj-font'), 10);
+            if (saved >= this.MIN_FONT && saved <= this.MAX_FONT) {
+                return saved;
+            }
+        } catch (e) {
+            // storage unavailable
+        }
+        return this.autoFontSize();
+    },
+
+    setFontSize: function(size, remember) {
+        this.fontSize = Math.max(this.MIN_FONT, Math.min(this.MAX_FONT, size));
+        try {
+            if (remember) {
+                localStorage.setItem('rj-font', String(this.fontSize));
+            }
+            else {
+                localStorage.removeItem('rj-font');
+            }
+        } catch (e) {
+            // storage unavailable: zoom lasts for this session only
+        }
+        this.display.setOptions({fontSize: this.fontSize});
+        this.getSize(true);
+    },
+
     getSize: function(redraw=true) {
+        if (this.display == null) {
+            return; // window resized before the game finished loading
+        }
         var setsize=this.display.computeSize(this.screen.clientWidth,this.screen.clientHeight);
         this.display.setOptions({width: setsize[0],height: setsize[1]});
         this.screenSize = [setsize[0], setsize[1]];
@@ -126,6 +184,7 @@ var Game = {
                 ["(%c{#ff0}EX%c{})amine your surroundings.",12],
                 ["Walk into monsters and other objects to interact with them.",0],
                 ["Toggle sound with %c{#ff0}V%c{}",12],
+                ["Zoom with %c{#ff0}+%c{} and %c{#ff0}-%c{}, automatic size with %c{#ff0}0%c{}",36],
                 ["Display this help prompt with %c{#ff0}?%c{}",12]
             ];
             let halfLength=Math.floor(instructions.length/2);

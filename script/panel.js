@@ -111,6 +111,7 @@ var Panel = {
                 '%c{#777}[Space] fast: ' + (Invasion.fast ? 'on' : 'off') + '%c{}',
                 '%c{#777}[Esc] skip%c{}',
                 '%c{#777}[V] sound: ' + (Sfx.enabled ? 'on' : 'off') + '%c{}',
+                '%c{#777}[+/-] zoom  [0] auto%c{}',
             ];
         }
         else {
@@ -144,7 +145,9 @@ var Panel = {
             }
             tail = ['', '%c{#fff}── MESS LEFT ──%c{}'].concat(messLines).concat([
                 '',
-                '%c{#777}[?] help  [V] sound: ' + (Sfx.enabled ? 'on' : 'off') + '%c{}',
+                '%c{#777}[?] help%c{}',
+                '%c{#777}[V] sound: ' + (Sfx.enabled ? 'on' : 'off') + '%c{}',
+                '%c{#777}[+/-] zoom  [0] auto%c{}',
             ]);
         }
         let room = maxRows - head.length - tail.length;
