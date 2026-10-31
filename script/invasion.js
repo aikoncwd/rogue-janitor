@@ -140,6 +140,7 @@ var Invasion = {
         switch (type) {
             case 'turn':
                 this.turn++;
+                Game.log.markStale(); // last turn's lines dim, this turn's stay bright
                 this.optionalLogged = false;
                 for (let key in this.flashes) {
                     this.flashes[key]--;
@@ -207,6 +208,7 @@ var Invasion = {
             'Monsters fainted (theatrically): ' + s.fainted,
             'Loot smashed: ' + s.lootSmashed + '   Doors kicked: ' + s.doors,
             'Snacks eaten on duty: ' + s.snacks + '   Potions quaffed: ' + s.potions,
+            'Blood puddles (fake): ' + s.bloodPuddles,
         ];
         let scene = [];
         for (let i = 0; i < lines.length; i++) {
@@ -230,6 +232,12 @@ var Invasion = {
         this.bodies = [];
         this.flashes = {};
         Game.forgetMap();
+        this.stats.bloodPuddles = 0;
+        for (let key in Game.map) {
+            if (Game.map[key].mess != null && Game.map[key].mess.name == '"Blood"') {
+                this.stats.bloodPuddles++;
+            }
+        }
         Game.player.cutscene = ConversationBuilder.chainCutscenes(this.reportCutscene(), Game.player.cutscene);
         Game.phase = 'cleaning';
     },

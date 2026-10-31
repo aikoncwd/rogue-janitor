@@ -61,6 +61,30 @@ var Panel = {
         return text.length > width ? text.slice(0, width - 1) + '…' : text;
     },
 
+    // Like fit(), but for text with rot.js %c{...} colour codes: only visible
+    // characters count, and the colour codes are kept.
+    fitColored: function (text, width) {
+        let plain = text.replace(/%c\{[^}]*\}/g, '');
+        if (plain.length <= width) {
+            return text;
+        }
+        let out = '';
+        let visible = 0;
+        let i = 0;
+        while (i < text.length && visible < width - 1) {
+            let code = text.slice(i).match(/^%c\{[^}]*\}/);
+            if (code) {
+                out += code[0];
+                i += code[0].length;
+                continue;
+            }
+            out += text[i];
+            visible++;
+            i++;
+        }
+        return out + '…%c{}';
+    },
+
     // A titled list that shows as many entries as fit, then "+N more".
     listLines: function (entries, room) {
         if (entries.length <= room) {

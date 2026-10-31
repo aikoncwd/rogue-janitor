@@ -93,7 +93,7 @@ var Game = {
             this.setFontSize(this.fontSize - this.FONT_STEP, true);
             return;
         }
-        if (e.key == '0' && code == 48) {
+        if (e.key == '0' || code == 96) { // main keyboard or numpad 0 (NumLock on or off)
             this.setFontSize(this.autoFontSize(), false);
             return;
         }
@@ -285,6 +285,13 @@ var Game = {
         this.drawLog();
     },
 
+    onBlackScreen: function() {
+        let t = this.player.talking;
+        let scene = t && t.convos ? t.convos[t.convoIndex] : null;
+        let node = scene ? scene[t.convoInnerDex] : null;
+        return node != null && 'blackScreenMessage' in node;
+    },
+
     // Draws one map cell given its position relative to the camera, clipped to the map viewport.
     drawCell: function(dx,dy,ch,fg,bg) {
         let x = dx + this.offset[0];
@@ -309,6 +316,9 @@ var Game = {
     },
 
     drawLog: function() {
+        if (this.onBlackScreen()) {
+            return; // night cutscenes are a plain black screen
+        }
         let info = this.layoutInfo;
         let lines;
         if (this.transientMessage) {
@@ -323,8 +333,9 @@ var Game = {
                 this.display.draw(x,y,' ','#000','#000');
             }
             if (i < lines.length) {
-                let text = lines[i].fresh ? lines[i].text : "%c{#777}"+lines[i].text.replace(/%c\{[^}]*\}/g,'')+"%c{}";
-                this.display.drawText(1,y,text,Math.max(1,info.mapCols-2));
+                let width = Math.max(1,info.mapCols-2);
+                let text = lines[i].fresh ? Panel.fitColored(lines[i].text, width) : "%c{#777}"+Panel.fit(lines[i].text.replace(/%c\{[^}]*\}/g,''), width)+"%c{}";
+                this.display.drawText(1,y,text,width);
             }
         }
     },

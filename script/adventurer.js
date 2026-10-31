@@ -57,7 +57,7 @@ Adventurer.prototype.nextDestination = function() {
     this.destinationIndex=best[0];
 }
 
-Adventurer.prototype.maxTurns = 10000; // fail-safe: give up and leave if stuck
+Adventurer.prototype.maxTurns = 1500; // fail-safe: a normal invasion takes ~500 turns; give up and leave if stuck
 
 // The hero exits the dungeon; the fainted monsters get up and the player's shift starts.
 Adventurer.prototype.leave = function() {

@@ -129,7 +129,7 @@ Pet.prototype.act = function() {
         }
     }
     this.lastSeen++;
-    if (this.lastSeen<=1 && ROT.RNG.getUniform()>0.95 && (Game.lastMessage==null || Game.lastMessage=="")) {
+    if (Game.phase == 'cleaning' && this.lastSeen<=1 && ROT.RNG.getUniform()>0.95 && (Game.lastMessage==null || Game.lastMessage=="")) {
         let punctuation=['.','.','!','!','!!'];
         if (this.sound[0]=='text') {
             Game.sendMessage(this.sound[1]+ROT.RNG.getItem(punctuation));
