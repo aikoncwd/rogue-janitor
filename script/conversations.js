@@ -769,7 +769,7 @@ var ConversationBuilder = {
             newConvo = [
                 { text: "Holy heck you cleaned so much! I'm impressed!", any: 1 },
                 { text: "Hey, I'm hosting a barbeque tonight. Yes, we're using raging hellfire. From me. Wanna come?", y: 2, n: 4 },
-                { text: ROT.RNG.getItem(this.words)+"! We can all leave together when you're ready to call it a day!", any: 3, globalTags: { invitationAccepted: true, yendorPoints: 10, dinnerPlan: speaker.name+"'s barbeque" } },
+                { text: ROT.RNG.getItem(this.words)+"! We can all leave together when you're ready to call it a day!", any: 3, globalTags: { invitationAccepted: true, yendorPoints: 10, dinnerPlan: speaker.name+"'s barbeque", dinnerHost: speaker.name } },
                 { text: "Remember, it doesn't need to be spotless! Your health and happiness are way more important than work; call it a day on your own terms!", any: -1 },
                 { text: "That's alright :) I'll invite you to the next one!", any: 3 },
             ];
@@ -780,7 +780,7 @@ var ConversationBuilder = {
             newConvo = [
                 { text: "Hey! You've done so much cleaning, holy cow!", any: 1 },
                 { text: "Listen, a bunch of us were planning to get together for " + plan + " after work. Wanna come?", y: 2, n: 4 },
-                { text: ROT.RNG.getItem(this.words)+"! We'll leave together when you're ready to call it a day!", any: 3, globalTags: { invitationAccepted: true, yendorPoints: 10, dinnerPlan: plan } },
+                { text: ROT.RNG.getItem(this.words)+"! We'll leave together when you're ready to call it a day!", any: 3, globalTags: { invitationAccepted: true, yendorPoints: 10, dinnerPlan: plan, dinnerHost: speaker.name } },
                 { text: "Remember, it doesn't need to be spotless! Your health and happiness are way more important than work; call it a day on your own terms!", any: -1 },
                 { text: "That's alright :) We do something every day; we'll keep you in the loop for future plans!", any: 3 },
             ];
@@ -844,17 +844,17 @@ var ConversationBuilder = {
             messages=[
                 "Leave for the day and head out with everyone to "+Game.convoTags.dinnerPlan+"?",
                 "You and your comrades leave together for "+Game.convoTags.dinnerPlan+"!",
-                ROT.RNG.getItem(description),
+                {message: ROT.RNG.getItem(description), scene: Scenes.forPlan(Game.convoTags.dinnerPlan)},
                 "Eventually, the night comes to an end. Your eyes grow heavy and it is time to rest.",
-                "You go home, and get a nice, full 8 hours of sleep."
+                {message: "You go home, and get a nice, full 8 hours of sleep.", scene: 'sleep'}
                 ];
         }
         else {
             messages=[
                 "Leave for the day and go home?",
                 "You leave for the day, and head home.",
-                "You have a really relaxing evening at home! You read a book and play some video games.",
-                "Eventually, it's time to sleep. You go to bed and have a nice, full 8 hours of sleep."
+                {message: "You have a really relaxing evening at home! You read a book and play some video games.", scene: 'home'},
+                {message: "Eventually, it's time to sleep. You go to bed and have a nice, full 8 hours of sleep.", scene: 'sleep'}
             ];
         }
         if ('animal' in Game.convoTags && Game.convoTags.animal != 'none') {
@@ -864,7 +864,8 @@ var ConversationBuilder = {
         messages.push("In the morning, you wake up, and have a delicious breakfast.");
         messages.push("Time for another day of work!");
         for (let i=0;i<messages.length;i++) {
-            var nextMsg = {message:messages[i]};
+            // a line is either plain text or {message, scene} with an ASCII scene above it
+            var nextMsg = typeof messages[i] == 'string' ? {message:messages[i]} : {message:messages[i].message, scene:messages[i].scene};
             if (i==0) {
                 nextMsg.y=1;
                 nextMsg.n=-1;

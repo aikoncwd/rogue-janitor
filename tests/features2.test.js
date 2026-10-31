@@ -221,18 +221,7 @@ test('nearest mess points the right way', () => {
     assert.equal(n.arrow, '→');
 });
 
-test('minimap marks the janitor and spotted mess', () => {
-    const ctx = cleaningDay();
-    for (const t of Object.values(ctx.Game.map)) t.lastSeen = '.';
-    const lines = ctx.Panel.minimap(23, 9);
-    const text = lines.join('');
-    assert.ok(lines.length > 0 && lines.length <= 9);
-    assert.ok(text.includes('@'));
-    assert.ok(text.includes('▪'));
-    for (const l of lines) assert.ok(l.replace(/%c\{[^}]*\}/g, '').length <= 23);
-});
-
-test('panel shows requests, nearest mess, the map and the music hint when there is room', () => {
+test('panel shows requests, nearest mess and the music hint, and no minimap', () => {
     const ctx = cleaningDay();
     for (const t of Object.values(ctx.Game.map)) t.lastSeen = '.';
     const m = ctx.Game.monsterList.find(x => x.alive && x.retired && !x.partying);
@@ -242,10 +231,8 @@ test('panel shows requests, nearest mess, the map and the music hint when there 
     assert.match(text, /REQUESTS/);
     assert.match(text, /Cobwebs/);
     assert.match(text, /Nearest mess|No mess left/);
-    assert.match(text, /── MAP ──/);
+    assert.ok(!/── MAP ──/.test(text), 'minimap removed');
     assert.match(text, /\[T\] music/);
-    const small = ctx.Panel.lines('cleaning', 25).map(strip).join('\n');
-    assert.ok(!/── MAP ──/.test(small), 'no minimap when space is short');
 });
 
 // ---------------------------------------------------------------- music wiring

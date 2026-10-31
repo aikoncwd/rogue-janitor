@@ -26,7 +26,10 @@ When the day is done, go out for dinner with your colleagues, or have a relaxing
 - More monsters, more mess: myconids (spores), harpies (feathers), mimics (drool), skeletons (bones) and ghosts (ectoplasm).
 - Eight hero classes, each messy in their own way: wizards scorch, rangers miss, bards leave sheet music, archeologists dig holes...
 - Stubborn stains: acid, ectoplasm and graffiti glow bright and fade a little with every pass of the mop.
-- Favours from your comrades, an end-of-shift report with your best score, a minimap and a "nearest mess" compass.
+- Favours from your comrades, an end-of-shift report with your best score and a "nearest mess" compass.
+- Comrades with a favour or a lost item show a `!` over their head (green once you can hand it in).
+- The dungeon starts small on day 1 and grows by one or two rooms every day.
+- Animated ASCII scenes for your nights: barbecues on hellfire, dinners, drinks, dancing, a cosy night in and a good sleep.
 - An original chiptune soundtrack, synthesized live (toggle with T).
 - Watch your broom (`- \ | /`) swish over every tile you mop.
 - A secret room with cute fuzzy animals in it. Find them and pet them!

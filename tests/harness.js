@@ -14,6 +14,7 @@ const DEFAULT_FILES = [
     'script/invasion.js',
     'script/panel.js',
     'script/effects.js',
+    'script/scenes.js',
     'script/game.js',
     'script/player.js',
     'script/tile.js',

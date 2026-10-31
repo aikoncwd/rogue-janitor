@@ -38,6 +38,11 @@ var Game = {
     day: 1,
     unionist: null,
     targetPoints:1500,
+    // Dungeon size grows with the days: a small first shift, then 1-2 more rooms
+    // every morning (the staff lounge counts as one of them).
+    DAY1_ROOMS: 5,
+    MAX_ROOMS: 16,
+    dungeonRooms: 5,
     yendorPoints:0,
     victory:false,
     phase:'intro', // 'intro' | 'invasion' | 'cleaning'
@@ -264,6 +269,7 @@ var Game = {
         }
         else {
             Effects.draw(cam);
+            this.drawQuestMarkers(cam);
         }
         let curtain = invading ? Invasion.curtainRows(this.layoutInfo.mapRows) : 0;
         for (let k=0;k<curtain;k++) {
@@ -321,6 +327,41 @@ var Game = {
             Game.player.talking.doConvo();
         }
         this.drawLog();
+    },
+
+    // '!' colour for a comrade with an open favour or a lost item: yellow while it is
+    // still to do, green once you can hand it in. null when they have nothing for you.
+    questMarker: function(m) {
+        if (!m.alive) {
+            return null;
+        }
+        if (m.convoTags.request && !m.convoTags.requestThanked) {
+            return Requests.isDone(m) ? '#0f0' : '#ff0';
+        }
+        if (m.questItem != null && !('questItemSuccess' in m.convoTags)) {
+            return m.questItem.pickedUp ? '#0f0' : '#ff0';
+        }
+        return null;
+    },
+
+    // Draws the quest '!' on the tile above every visible comrade that has one.
+    drawQuestMarkers: function(cam) {
+        for (let i=0;i<this.monsterList.length;i++) {
+            let m = this.monsterList[i];
+            let tile = this.map[m.x+','+m.y];
+            if (!tile || !tile.visible || tile.entity !== m) {
+                continue;
+            }
+            let color = this.questMarker(m);
+            if (color == null) {
+                continue;
+            }
+            let above = this.map[m.x+','+(m.y-1)];
+            if (above && above.entity != null) {
+                continue; // never cover you or another comrade
+            }
+            this.drawCell(m.x-cam.x,m.y-1-cam.y,'!',color,above && above.visible ? above.bgColor : '#000');
+        }
     },
 
     // Lines of text centred in the map area (intro screen, night-shift title card).
@@ -481,7 +522,7 @@ var Game = {
                 break;
             }
         }
-        this.generateMap(430,[4,10],5,thetheme);
+        this.generateMap(Infinity,[4,10],5,thetheme,this.dungeonRooms);
         this.addStairs();
         this.adventurer = new Adventurer(this.stairs[0][0],this.stairs[0][1]);
         this.populateRooms();
@@ -626,7 +667,8 @@ var Game = {
         }
     },
 
-    generateMap: function(targSize = 400 , minMax=[4,10], spacing=5,theme=this.dungeonTheme) {
+    // Builds rooms until there are `targSize` room cells or `maxRooms` rooms, whichever comes first.
+    generateMap: function(targSize = 400 , minMax=[4,10], spacing=5,theme=this.dungeonTheme,maxRooms=Infinity) {
         this.corners=[[0,0],[0,0]];
         this.messNumbers=[0,0];
         this.roomCenters=[];
@@ -639,7 +681,7 @@ var Game = {
         this.scheduler.clear();
         this.rooms=[];
         this.staffRoomID=-1;
-        while (this.freeCells.length<targSize && breaker<10000) {
+        while (this.freeCells.length<targSize && this.rooms.length<maxRooms && breaker<10000) {
             let roomSize = [ Math.floor((minMax[1]-minMax[0])*ROT.RNG.getUniform())+minMax[0], Math.floor((minMax[1]-minMax[0])*ROT.RNG.getUniform())+minMax[0] ];
             let roomCorner=[0,0];
             var breaker2=0;
@@ -660,7 +702,7 @@ var Game = {
                 this.roomCenters = [[roomCorner[0]+Math.floor(roomSize[0]/2) , roomCorner[1]+Math.floor(roomSize[1]/2)]];
             }
             this.buildRoom(roomSize,roomCorner,theme);
-            if (ROT.RNG.getUniform()>0.5 && this.freeCells.length<targSize) {
+            if (ROT.RNG.getUniform()>0.5 && this.freeCells.length<targSize && this.rooms.length<maxRooms) {
                 this.connectRoom(this.roomCenters,1,theme);
                 this.connectRoom(this.roomCenters,0,theme);
             }
@@ -1415,6 +1457,7 @@ var Game = {
 
     nextDay() {
         this.day++;
+        this.dungeonRooms = Math.min(this.MAX_ROOMS, this.dungeonRooms + 1 + Math.floor(2*ROT.RNG.getUniform()));
         this.yendorPoints += this.cleanPercent();
         if (this.yendorPoints>=this.targetPoints && !this.victory) {
             this.player.cutscene=ConversationBuilder.victoryPrompt();

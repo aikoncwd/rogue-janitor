@@ -100,63 +100,6 @@ var Panel = {
         return entries.slice(0, shown).concat(['%c{#777}+' + (entries.length - shown) + ' more%c{}']);
     },
 
-    // A scaled-down map of what you have seen: '@' you, red/orange blocks for
-    // mess you have spotted, dots for explored floor. Returns colour-coded lines.
-    MINIMAP_ROWS: 9,
-    minimap: function (width, rows) {
-        let c = Game.corners;
-        let W = c[1][0] - c[0][0] + 1, H = c[1][1] - c[0][1] + 1;
-        if (W < 1 || H < 1) {
-            return [];
-        }
-        let s = Math.max(1, Math.ceil(W / width), Math.ceil(H / rows));
-        let cols = Math.min(width, Math.ceil(W / s)), lines = Math.min(rows, Math.ceil(H / s));
-        let out = [];
-        for (let r = 0; r < lines; r++) {
-            let line = '';
-            for (let q = 0; q < cols; q++) {
-                let seen = false, mess = 0, me = false, exit = false;
-                for (let x = c[0][0] + q * s; x < c[0][0] + (q + 1) * s; x++) {
-                    for (let y = c[0][1] + r * s; y < c[0][1] + (r + 1) * s; y++) {
-                        if (x == Game.player.x && y == Game.player.y) {
-                            me = true;
-                        }
-                        let t = Game.map[x + ',' + y];
-                        if (!t || t.lastSeen == ' ') {
-                            continue;
-                        }
-                        if (t.passable) {
-                            seen = true;
-                        }
-                        if (t.mess != null) {
-                            mess++;
-                        }
-                        if (t.entity != null && t.entity.tags && 'exit' in t.entity.tags) {
-                            exit = true;
-                        }
-                    }
-                }
-                if (me) {
-                    line += '%c{#ff0}@';
-                }
-                else if (exit) {
-                    line += '%c{#c33}X';
-                }
-                else if (mess > 0) {
-                    line += (mess >= 3 ? '%c{#e33}' : '%c{#c80}') + '\u25AA';
-                }
-                else if (seen) {
-                    line += '%c{#555}\u00B7';
-                }
-                else {
-                    line += ' ';
-                }
-            }
-            out.push(line + '%c{}');
-        }
-        return out;
-    },
-
     requestLines: function (w) {
         let self = this;
         return Requests.active().map(function (r) {
@@ -256,14 +199,7 @@ var Panel = {
                 '%c{#777}[T] music: ' + (Music.enabled ? 'on' : 'off') + '%c{}',
                 '%c{#777}[+/-] zoom  [0] auto%c{}',
             ];
-            tail = ['', '%c{#fff}── MESS LEFT ──%c{}'].concat(messLines);
-            // the minimap only takes the room left after the lounge list (up to 8 names)
-            let spare = maxRows - head.length - tail.length - hints.length - 2 - Math.min(list.length, 8);
-            let map = spare >= 4 ? this.minimap(w, Math.min(this.MINIMAP_ROWS, spare)) : [];
-            if (map.length > 0) {
-                tail = tail.concat(['', '%c{#fff}── MAP ──%c{}']).concat(map);
-            }
-            tail = tail.concat(hints);
+            tail = ['', '%c{#fff}── MESS LEFT ──%c{}'].concat(messLines).concat(hints);
         }
         let room = maxRows - head.length - tail.length;
         if (room < 1) {

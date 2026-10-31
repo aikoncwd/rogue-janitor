@@ -312,7 +312,7 @@ Entity.prototype.doConvo = function() {
                 let choiceNum=0;
                 linesNeeded=1;
                 for (let i=0;i<options.length;i++) {
-                    if (options[i] == 'text' || options[i]=='action' || options[i]=='conditions' || options[i]=='tags' || options[i]=='globalTags' || options[i] == 'message' || options[i] == 'blackScreenMessage') {
+                    if (options[i] == 'text' || options[i]=='action' || options[i]=='conditions' || options[i]=='tags' || options[i]=='globalTags' || options[i] == 'message' || options[i] == 'blackScreenMessage' || options[i] == 'scene') {
                         continue;
                     }
                     linesNeeded++;
@@ -337,6 +337,12 @@ Entity.prototype.doConvo = function() {
             }
             else {
                 drawConvoText("%c{#ff0}"+this.name+" is vaping.%c{}");
+            }
+            if ('scene' in thisConvo && 'blackScreenMessage' in thisConvo) {
+                Scenes.show(thisConvo.scene, thisConvo);
+            }
+            else {
+                Scenes.stop();
             }
             
         }
