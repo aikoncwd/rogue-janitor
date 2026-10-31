@@ -282,6 +282,20 @@ good moments, like an edited highlight reel.
 - The banner clock still advances per hero turn (pauses don't freeze it oddly;
   builder's call whether holds add a minute).
 
+### Pacing revision (phase 2, user feedback after playing phase 1)
+
+The phase-1 beats did not feel right: holds between actions were too long, and
+walking (25 ms after halving) was so quick the hero seemed to fly. New rule:
+
+- **Base speed = the original pre-phase-1 timing**, for every turn: 90 ms per
+  walking turn, 200 ms per turn with action (monsters in view or any event) — the
+  old `BORING_DELAY_MS` / `BASE_DELAY_MS`.
+- Special actions **add a small extra on top of the base**, never replace it:
+  roughly +60–150 ms for potions, snacks, speeches/cries, faints and class specials;
+  nothing extra for plain hits, doors or loot. No extra per line length.
+  "Sin pasarte": the longest turn should stay well under ~400 ms.
+- Fast mode, running-hold rescaling and skip behave as in phase 1.
+
 ### Yendor, Rodney and the Amulet
 
 The game already has `yendorPoints` and the "Mop of Yendor" ending. Lean into it:
