@@ -41,6 +41,13 @@ var Flavor = {
             "%c{#777}Press any key.%c{}",
         ],
 
+        playbackNag: [
+            "You can't do anything. It's a recording.",
+            "You shout at the screen. The hero does not hear you.",
+            "This already happened. Space to fast-forward, Esc to skip.",
+            "You reach for the mop. Patience, it's still last night.",
+        ],
+
         heroEnter: [
             "{hero} kicks open the front door. \"FOR GLORY AND LOOT!\"",
             "{hero} strides in, cape billowing for no discernible reason.",

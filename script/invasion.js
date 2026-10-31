@@ -78,6 +78,10 @@ var Invasion = {
                 this.skip();
                 return true;
             }
+            if (this.stage == null && this.NAG_KEYS.indexOf(code) >= 0) {
+                this.nag();
+                return true;
+            }
         }
         return false;
     },
@@ -101,6 +105,55 @@ var Invasion = {
         this.flashes = {};
         this.turn = 0;
         this.optionalLogged = false;
+        this.clockMinutes = 60 + Flavor.rng.getUniformInt(0, 90);
+        this.camera = Flavor.rng.getUniformInt(1, 9);
+        this.lastNag = -Infinity;
+    },
+
+    // --- Playback banner: the invasion is last night's security footage ---
+    clockMinutes: 60,
+    camera: 3,
+    lastNag: -Infinity,
+    NAG_MS: 5000,
+    // arrows, numpad, and the player's movement/action letters h j k l y u b n m p g f r o c x
+    NAG_KEYS: [37, 38, 39, 40, 97, 98, 99, 100, 101, 102, 103, 104, 105,
+        72, 74, 75, 76, 89, 85, 66, 78, 77, 80, 71, 70, 82, 79, 67, 88],
+
+    clockText: function () {
+        let h24 = Math.floor(this.clockMinutes / 60) % 24;
+        let m = this.clockMinutes % 60;
+        let h12 = h24 % 12 == 0 ? 12 : h24 % 12;
+        let pad = function (n) { return (n < 10 ? '0' : '') + n; };
+        return pad(h12) + ':' + pad(m) + (h24 < 12 ? ' AM' : ' PM');
+    },
+
+    // One line for the top of the map, shortened to fit `width` columns.
+    bannerText: function (width) {
+        let dot = '%c{' + (this.turn % 4 < 2 ? '#f00' : '#400') + '}●%c{}';
+        let play = this.fast ? '▶▶ x' + this.FAST_FACTOR : '▶';
+        let clock = this.clockText();
+        let forms = [
+            '%c{#aaa}[ ' + dot + '%c{#aaa} REC  ' + play + ' PLAYBACK · CAM ' + this.camera + ' (floating eye) · ' + clock + ' ]%c{}  %c{#777}just watch - no input needed%c{}',
+            '%c{#aaa}[ ' + dot + '%c{#aaa} REC  ' + play + ' PLAYBACK · CAM ' + this.camera + ' (floating eye) · ' + clock + ' ]%c{}',
+            '%c{#aaa}[ ' + dot + '%c{#aaa} REC  ' + play + ' PLAYBACK · ' + clock + ' ]%c{}',
+        ];
+        for (let i = 0; i < forms.length; i++) {
+            if (forms[i].replace(/%c\{[^}]*\}/g, '').length <= width - 2) {
+                return forms[i];
+            }
+        }
+        return dot + '%c{#aaa} REC ' + play + ' ' + clock + '%c{}';
+    },
+
+    // Pressing game keys during the replay: a gentle reminder, at most every NAG_MS.
+    nag: function () {
+        let t = this.now();
+        if (t - this.lastNag < this.NAG_MS) {
+            return;
+        }
+        this.lastNag = t;
+        Game.log.push(Flavor.line('playbackNag'));
+        Game.drawMap();
     },
 
     // Logging and sounds are suppressed while skipping (only the report matters then).
@@ -148,6 +201,7 @@ var Invasion = {
         switch (type) {
             case 'turn':
                 this.turn++;
+                this.clockMinutes++;
                 Game.log.markStale(); // last turn's lines dim, this turn's stay bright
                 this.optionalLogged = false;
                 for (let key in this.flashes) {

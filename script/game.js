@@ -305,6 +305,12 @@ var Game = {
             }
         }
 
+        if (invading && Invasion.stage == null && !Invasion.skipping) {
+            let banner = Invasion.bannerText(this.layoutInfo.mapCols);
+            let len = banner.replace(/%c\{[^}]*\}/g, '').length;
+            this.display.drawText(Math.max(0, Math.floor((this.layoutInfo.mapCols - len) / 2)), 0, '%b{#000}' + banner);
+        }
+
         this.drawChrome();
 
         this.transientMessage = null;
