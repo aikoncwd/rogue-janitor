@@ -15,6 +15,10 @@ Your monstrous friends hang out in the staff lounge while you work. Take lots of
 When the day is done, go out for dinner with your colleagues, or have a relaxing night in. The choice is yours!
 
 ## Features
+- A classic, animated ASCII title screen (the janitor mops while the torches flicker) and a short "how your job works" screen.
+- The night invasion is last night's security-camera footage: a blinking `● REC` banner with a ticking clock reminds you it's a recording.
+- The replay has rhythm: it hurries through empty corridors and holds on potions, speeches, door kicks and dramatic faints.
+- Three new tunes: a calm title theme, a livelier second raid march and a second cozy cleaning loop, rotating by day.
 - A dynamic, procedurally generated dungeon.
 - A fully simulated dungeon adventure that you miss entirely but get to see the messy aftermath of.
 - A detailed mess system; walk through puddles and track prints everywhere! Gross!

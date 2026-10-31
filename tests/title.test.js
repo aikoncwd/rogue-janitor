@@ -103,7 +103,7 @@ test('wide screen title has the big logo', () => {
     const lines = ctx.Title.lines(100);
     for (const l of lines) assert.ok(plain(l).length <= 100);
     assert.ok(!lines.some(l => plain(l).includes('R O G U E')));
-    assert.ok(lines.some(l => plain(l).includes('|___/')));
+    assert.ok(lines.filter(l => plain(l).includes('█')).length >= 5, 'five rows of block letters');
 });
 
 test('the janitor walks and the broom spins', () => {
@@ -123,4 +123,14 @@ test('day 2 has no title or howto', () => {
     ctx.Invasion.instant = false;
     ctx.Game.nextDay();
     assert.equal(ctx.Game.phase, 'invasion');
+});
+
+test('how-to indented lines keep their indent (rot.js drops leading spaces)', () => {
+    const ctx = boot();
+    ctx.__press(KEY.ENTER);
+    const find = s => ctx.__drawn.find(d => d.text && d.text.includes(s));
+    const head = find('1. TONIGHT');
+    const cont = find('security footage');
+    assert.ok(!/^ /.test(cont.text), 'no leading spaces handed to rot.js');
+    assert.equal(cont.x - head.x, 13);
 });

@@ -10,16 +10,38 @@ var Title = {
     quitJoke: false,
     tagline: '',
 
-    LOGO: [
-        " ____                          _             _ _",
-        "|  _ \\ ___   __ _ _   _  ___  | | __ _ _ __ (_) |_ ___  _ __",
-        "| |_) / _ \\ / _` | | | |/ _ \\ | |/ _` | '_ \\| | __/ _ \\| '__|",
-        "|  _ < (_) | (_| | |_| |  __/ | | (_| | | | | | || (_) | |",
-        "|_| \\_\\___/ \\__, |\\__,_|\\___|_| |\\__,_|_| |_|_|\\__\\___/|_|",
-        "            |___/            |__/",
-    ],
+    // 5x5 block letters ('#' becomes a full block when drawn).
+    FONT: {
+        R: ["#### ", "#   #", "#### ", "#  # ", "#   #"],
+        O: [" ### ", "#   #", "#   #", "#   #", " ### "],
+        G: [" ####", "#    ", "#  ##", "#   #", " ### "],
+        U: ["#   #", "#   #", "#   #", "#   #", " ### "],
+        E: ["#####", "#    ", "#### ", "#    ", "#####"],
+        J: ["  ###", "    #", "    #", "#   #", " ### "],
+        A: [" ### ", "#   #", "#####", "#   #", "#   #"],
+        N: ["#   #", "##  #", "# # #", "#  ##", "#   #"],
+        I: ["#####", "  #  ", "  #  ", "  #  ", "#####"],
+        T: ["#####", "  #  ", "  #  ", "  #  ", "  #  "],
+        ' ': ["  ", "  ", "  ", "  ", "  "],
+    },
+    LOGO_TEXT: "ROGUE JANITOR",
+    LOGO_COLORS: ['#fd6', '#fc4', '#fb3', '#f92', '#e72'],
     COMPACT_LOGO: "R O G U E   J A N I T O R",
-    LOGO_MIN_COLS: 70,
+    LOGO_MIN_COLS: 76,
+
+    logo: function () {
+        let rows = ['', '', '', '', ''];
+        for (let i = 0; i < this.LOGO_TEXT.length; i++) {
+            let glyph = this.FONT[this.LOGO_TEXT[i]];
+            for (let r = 0; r < 5; r++) {
+                rows[r] += (i > 0 ? ' ' : '') + glyph[r];
+            }
+        }
+        let colors = this.LOGO_COLORS;
+        return rows.map(function (row, r) {
+            return '%c{' + colors[r] + '}' + row.replace(/#/g, '█') + '%c{}';
+        });
+    },
 
     // Mess lying around the vignette: [inner row, column, char, colour].
     MESS: [
@@ -122,11 +144,7 @@ var Title = {
     lines: function (cols) {
         let out = [];
         if (cols >= this.LOGO_MIN_COLS) {
-            let width = Math.max.apply(null, this.LOGO.map(function (l) { return l.length; }));
-            for (let i = 0; i < this.LOGO.length; i++) {
-                let l = this.LOGO[i];
-                out.push('%c{#fb3}' + l + ' '.repeat(width - l.length) + '%c{}');
-            }
+            out = out.concat(this.logo());
         }
         else {
             out.push('%c{#fb3}' + this.COMPACT_LOGO + '%c{}');
@@ -159,7 +177,9 @@ var Title = {
         let top = Math.max(0, Math.floor((rows - lines.length) / 2));
         for (let i = 0; i < lines.length; i++) {
             let w = block ? widest : plain[i].length;
-            Game.display.drawText(Math.max(0, Math.floor((cols - w) / 2)), top + i, lines[i]);
+            // rot.js drops leading spaces, so indent by moving the start instead
+            let indent = lines[i].match(/^ */)[0].length;
+            Game.display.drawText(Math.max(0, Math.floor((cols - w) / 2)) + indent, top + i, lines[i].slice(indent));
         }
     },
 
