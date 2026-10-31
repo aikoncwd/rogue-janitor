@@ -36,7 +36,7 @@ var Flavor = {
             "%c{#0ff}3. BREAKS%c{}    Your colleagues relax in the staff lounge.",
             "             Chat with them. They are lovely.",
             "",
-            "             Press %c{#ff0}[?]%c{} any time for the full controls.",
+            "             Press %c{#ff0}[?]%c{} during your shift for the full controls.",
             "",
             "%c{#777}Press any key.%c{}",
         ],

@@ -70,6 +70,14 @@ var Invasion = {
         Game.drawMap();
         this.hold = 0;
         this.speaking = false;
+        this.resumeIn(ms);
+    },
+
+    // The hero's next turn starts in `ms`; remembers when, so fast mode can
+    // shorten a hold that is already running.
+    timerDue: 0,
+    resumeIn: function (ms) {
+        this.timerDue = this.now() + ms;
         this.timer = setTimeout(function () {
             Invasion.timer = null;
             Game.engine.unlock();
@@ -101,6 +109,12 @@ var Invasion = {
         if (Game.phase == 'invasion') {
             if (code == 32) {
                 this.fast = !this.fast;
+                if (this.timer != null) { // rescale the wait that is already running
+                    let left = Math.max(0, this.timerDue - this.now());
+                    clearTimeout(this.timer);
+                    this.timer = null;
+                    this.resumeIn(this.fast ? left / this.FAST_FACTOR : left * this.FAST_FACTOR);
+                }
                 Game.drawMap();
                 return true;
             }
@@ -108,7 +122,7 @@ var Invasion = {
                 this.skip();
                 return true;
             }
-            if (this.stage == null && this.NAG_KEYS.indexOf(code) >= 0) {
+            if (this.stage == null && (code in Game.player.keyMap || this.NAG_KEYS.indexOf(code) >= 0)) {
                 this.nag();
                 return true;
             }
@@ -150,9 +164,9 @@ var Invasion = {
     camera: 3,
     lastNag: -Infinity,
     NAG_MS: 5000,
-    // arrows, numpad, and the player's movement/action letters h j k l y u b n m p g f r o c x
-    NAG_KEYS: [37, 38, 39, 40, 97, 98, 99, 100, 101, 102, 103, 104, 105,
-        72, 74, 75, 76, 89, 85, 66, 78, 77, 80, 71, 70, 82, 79, 67, 88],
+    // Besides every movement key in Player.keyMap: action letters m p g f r o c x e,
+    // and the wait keys . / 5 / numpad 5 (NumLock off).
+    NAG_KEYS: [77, 80, 71, 70, 82, 79, 67, 88, 69, 190, 53, 12, 101],
 
     clockText: function () {
         let h24 = Math.floor(this.clockMinutes / 60) % 24;

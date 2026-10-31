@@ -81,3 +81,21 @@ test('a paced invasion uses many different delays', () => {
     assert.ok([...seen].some(ms => ms >= 700), 'some long holds: ' + [...seen].join(','));
     assert.ok(seen.size >= 4, 'varied rhythm: ' + [...seen].join(','));
 });
+
+test('turning fast mode on during a long hold shortens the wait right away', () => {
+    const ctx = invading();
+    let t = 1000;
+    ctx.Invasion.now = () => t;
+    ctx.Invasion.event('enter', {});
+    ctx.__runTimers(); // next hero turn scheduled with the long hold
+    const held = ctx.__timers.find(x => x.ms >= ctx.Invasion.BEATS.enter);
+    assert.ok(held, 'a long hold is pending');
+    t += 200; // 200 ms into the hold
+    ctx.__press(KEY.SPACE);
+    const pending = ctx.__timers.filter(x => x.ms >= ctx.Invasion.BEATS.quiet && x.ms !== ctx.Game.QUEST_BLINK_MS);
+    assert.equal(pending.length, 1, 'only one hero timer');
+    assert.ok(pending[0].ms <= (held.ms - 200) / ctx.Invasion.FAST_FACTOR + 1, 'rescheduled at x4: ' + pending[0].ms);
+    const turns = ctx.Game.adventurer.turns;
+    ctx.__runTimers();
+    assert.equal(ctx.Game.adventurer.turns, turns + 1, 'engine resumes once');
+});

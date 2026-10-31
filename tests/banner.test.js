@@ -108,3 +108,18 @@ test('nag is throttled and ignores control keys', () => {
     assert.equal(ctx.Invasion.fast, true);
     assert.equal(nags(ctx), 2, 'space never nags');
 });
+
+test('WASD, PgUp/Home and wait/examine keys also get the reminder', () => {
+    for (const code of [68, 87, 33, 36, 190, 53, 12, 69]) {
+        const ctx = invading();
+        ctx.__press(code);
+        assert.equal(nags(ctx), 1, 'key ' + code);
+    }
+});
+
+test('how-to does not promise help that only works during the shift', () => {
+    const ctx = invading();
+    const text = ctx.Flavor.pools.howtoText.join('\n');
+    assert.ok(!/any time/.test(text));
+    assert.ok(/during your shift/.test(text));
+});
