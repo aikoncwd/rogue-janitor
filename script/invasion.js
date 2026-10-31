@@ -4,8 +4,8 @@
 // to the player when the hero leaves.
 var Invasion = {
     instant: false, // run every hero turn without delay (tests)
-    BASE_DELAY_MS: 90,
-    BORING_DELAY_MS: 25,
+    BASE_DELAY_MS: 200,
+    BORING_DELAY_MS: 90,
     FAST_FACTOR: 4,
     fast: false,
     skipping: false,
