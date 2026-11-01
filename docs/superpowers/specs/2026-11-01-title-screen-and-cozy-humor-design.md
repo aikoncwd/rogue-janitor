@@ -296,6 +296,14 @@ walking (25 ms after halving) was so quick the hero seemed to fly. New rule:
   "Sin pasarte": the longest turn should stay well under ~400 ms.
 - Fast mode, running-hold rescaling and skip behave as in phase 1.
 
+### Wall torch background (phase 2, user feedback)
+
+The wall torch (`¡`, `script/entity.js` 'Torch', `attachToWall`) is drawn on a black
+background, so it looks like a hole in the wall, same problem the banner had. Draw it
+on the background of the wall tile it is attached to (any wall-attached entity should
+take its wall's bgColor, so themed/painted dungeons work too). Its fallen/broken
+states are unaffected.
+
 ### Yendor, Rodney and the Amulet
 
 The game already has `yendorPoints` and the "Mop of Yendor" ending. Lean into it:
