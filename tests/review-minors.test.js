@@ -123,7 +123,40 @@ test('a short panel drops the minimap and the lounge list, never the help keys',
     }
 });
 
+test('a very short panel still shows MESS LEFT with a count', () => {
+    const ctx = cleaningDay();
+    ctx.Game.comboActive = () => true;
+    ctx.Game.combo.count = 7;
+    for (const rows of [11, 12, 13, 15]) {
+        const lines = ctx.Panel.lines('cleaning', rows).map(strip);
+        const i = lines.findIndex(l => /MESS LEFT/.test(l));
+        assert.ok(i >= 0, rows + ' rows: ' + lines.join('\n'));
+        assert.match(lines[i + 1] || '', /\d|Spotless/, rows + ' rows: ' + lines.join('\n'));
+        assert.ok(lines.some(l => /\[\?\] help/.test(l)));
+        assert.ok(lines.length <= rows);
+    }
+});
+
 // 4. lounge spots and secret doors
+test('nothing is put up right in front of a secret door', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const spots = ctx.Shop.loungeSpots();
+    // a corner spot (5 walls): it keeps 4 walls even with a secret door next to it
+    const spot = spots.find(([x, y]) => {
+        let walls = 0;
+        for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
+            const n = G.map[(x + i) + ',' + (y + j)];
+            if (n && !n.passable) walls++;
+        }
+        return walls >= 5;
+    });
+    assert.ok(spot, 'a corner spot');
+    const side = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([a, b]) => G.map[(spot[0] + a) + ',' + (spot[1] + b)]).find(n => n && !n.passable);
+    side.secretDoor = { door: '+', char: '+', color: '#fff', bgColor: '#000', sound: 'creak' };
+    assert.ok(!ctx.Shop.loungeSpots().some(([x, y]) => x == spot[0] && y == spot[1]));
+});
+
 test('a secret door is not a wall for lounge decorations', () => {
     const ctx = cleaningDay();
     const G = ctx.Game;
@@ -224,7 +257,7 @@ function litRoom(ctx) {
     const px = G.player.x, py = G.player.y;
     for (let i = -4; i <= 4; i++) for (let j = -6; j <= 4; j++) {
         if (i == 0 && j == 0) { G.map[px + ',' + py].mess = null; continue; }
-        const isWall = Math.abs(i) == 4 || j == 4 || j == -4 || j == -7;
+        const isWall = Math.abs(i) == 4 || j == 4 || j == -4;
         G.map[(px + i) + ',' + (py + j)] = new ctx.Tile(px + i, py + j, isWall ? '#' : '.', '#ddd', isWall ? '#777' : '#000', !isWall, !isWall);
     }
     const torch = ctx.GetEntity('Torch', px, py - 3);
@@ -245,6 +278,14 @@ test('torchlight does not go round a pillar', () => {
     wall(ctx, px, py - 2);
     assert.strictEqual(ctx.Game.warmth(px, py - 1, [torch]), 0);
     assert.ok(ctx.Game.warmth(px + 1, py - 3, [torch]) > 0);
+});
+
+test('torchlight reaches along the wall it hangs on', () => {
+    const ctx = cleaningDay();
+    const { px, py, torch } = litRoom(ctx);
+    for (const dx of [-3, -2, -1, 1, 2, 3]) {
+        assert.ok(ctx.Game.warmth(px + dx, py - 3, [torch]) > 0, 'dx ' + dx);
+    }
 });
 
 test('torchlight drawing does not use the world RNG', () => {

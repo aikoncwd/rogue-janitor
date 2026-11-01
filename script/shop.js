@@ -50,6 +50,13 @@ var Shop = {
                 if (exit && Math.max(Math.abs(exit[0] - x), Math.abs(exit[1] - y)) <= 1) {
                     continue; // keep the way out clear
                 }
+                let secret = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(function (d) {
+                    let n = Game.map[(x + d[0]) + ',' + (y + d[1])];
+                    return n && n.secretDoor != null;
+                });
+                if (secret) {
+                    continue; // never right in front of a secret door
+                }
                 let walls = 0;
                 for (let i = -1; i <= 1; i++) {
                     for (let j = -1; j <= 1; j++) {

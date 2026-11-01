@@ -251,6 +251,12 @@ var Panel = {
         }
         let room = maxRows - hints.length;
         let basics = Math.min(4, head.length, room);
+        if (room - basics < mess.length && mess[0] == '') {
+            mess = mess.slice(1); // short on space: no blank line before MESS LEFT
+        }
+        if (room - basics < 2 && mess.length >= 2 && room >= 2) {
+            basics = room - 2; // the MESS LEFT title with no count is no use: take a basics row
+        }
         let messShown = mess.slice(0, room - basics);
         let headShown = head.slice(0, room - messShown.length);
         return headShown.concat(messShown).concat(hints);

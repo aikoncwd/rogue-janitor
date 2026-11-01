@@ -1791,14 +1791,16 @@ var Game = {
             if (t.facing && (x - t.x) * t.facing[0] + (y - t.y) * t.facing[1] <= 0) {
                 continue; // behind the wall it hangs on
             }
-            if (this.torchSees(t.x, t.y, x, y)) {
+            // the ray starts in front of the torch, so its own wall does not shade the floor along it
+            let fromX = t.facing ? t.x + t.facing[0] : t.x, fromY = t.facing ? t.y + t.facing[1] : t.y;
+            if (this.torchSees(fromX, fromY, x, y)) {
                 w = 1 - d / this.TORCH_RADIUS;
             }
         }
         return w;
     },
 
-    // A Bresenham line from the torch to x,y: every tile in between lets light through.
+    // A Bresenham line from x0,y0 to x1,y1: every tile in between lets light through.
     // Plain arithmetic, no RNG (it runs while drawing).
     torchSees: function(x0, y0, x1, y1) {
         let dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
