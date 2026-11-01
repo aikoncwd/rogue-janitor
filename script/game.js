@@ -47,6 +47,7 @@ var Game = {
     victory:false,
     pastHeroes:[], // every hero so far: their ghosts may visit
     todayEvent:null,
+    hintsToday:[], // easter-egg hints already given today
     amuletStolen:false,
     phase:'intro', // 'intro' | 'invasion' | 'cleaning'
     log: new MessageLog(),
@@ -95,6 +96,12 @@ var Game = {
         }
         Sfx.unlock();
         Music.resume();
+        if (this.phase == 'cleaning' && typeof EasterEggs != 'undefined') {
+            if (EasterEggs.prompt != null) {
+                return; // typing a #command: letters are letters, not music/sound/zoom keys
+            }
+            EasterEggs.track(code);
+        }
         // zoom: + / - (main keyboard or numpad), 0 = automatic size
         if (e.key == '+' || e.key == '=' || code == 107) {
             this.setFontSize(this.fontSize + this.FONT_STEP, true);
@@ -331,6 +338,14 @@ var Game = {
         this.drawChrome();
 
         this.transientMessage = null;
+        if (EasterEggs.prompt != null) {
+            if (Game.player.talking != null || this.phase != 'cleaning') {
+                EasterEggs.closePrompt(); // a conversation took over
+            }
+            else {
+                this.showTransient(EasterEggs.promptText());
+            }
+        }
         if (Game.player.examining != null) {
             this.display.draw(Game.player.examining[0]+Game.offset[0]-Game.player.x,Game.player.examining[1]+Game.offset[1]-Game.player.y,'X','#ff0');
             let lookKey=Game.player.examining[0]+','+Game.player.examining[1];
@@ -1520,6 +1535,7 @@ var Game = {
 
     nextDay() {
         Visitors.clear();
+        this.hintsToday = [];
         this.day++;
         this.dungeonRooms = Math.min(this.MAX_ROOMS, this.dungeonRooms + 1 + Math.floor(2*ROT.RNG.getUniform()));
         this.yendorPoints += this.cleanPercent();

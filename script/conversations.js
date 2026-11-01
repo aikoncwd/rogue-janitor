@@ -57,6 +57,14 @@ var ConversationBuilder = {
             Requests.offer(speaker, newConversation);
         }
 
+        // now and then, a hint about an easter egg (at most one per conversation)
+        if (!party && typeof EasterEggs != 'undefined' && Flavor.chance(0.3)) {
+            let hint = EasterEggs.pickHint();
+            if (hint != null) {
+                newConversation.push([{text: hint, any: -1}]);
+            }
+        }
+
         if (!speaker.metPlayer) {
             newConversation.push(this.meetingPlayer(speaker));
         }

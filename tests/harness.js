@@ -26,6 +26,7 @@ const DEFAULT_FILES = [
     'script/adventurer.js',
     'script/conversations.js',
     'script/dayevents.js',
+    'script/eastereggs.js',
 ];
 
 function makeContext() {
@@ -79,6 +80,16 @@ function makeContext() {
     };
     ctx.__press = function (keyCode, charCode = 0, key = undefined) {
         const ev = { keyCode, charCode, key, which: keyCode, preventDefault() {}, stopPropagation() {} };
+        for (const l of listeners.slice()) {
+            if (l.type !== 'keydown') continue;
+            if (typeof l.fn === 'function') l.fn(ev);
+            else if (l.fn && typeof l.fn.handleEvent === 'function') l.fn.handleEvent(ev);
+        }
+    };
+    // Sends a full keydown event (e.g. AltGr+3 = {keyCode:51, key:'#', ctrlKey:true, altKey:true}).
+    ctx.__pressEvent = function (fields) {
+        const ev = Object.assign({ keyCode: 0, charCode: 0, key: undefined, preventDefault() {}, stopPropagation() {} }, fields);
+        ev.which = ev.keyCode;
         for (const l of listeners.slice()) {
             if (l.type !== 'keydown') continue;
             if (typeof l.fn === 'function') l.fn(ev);

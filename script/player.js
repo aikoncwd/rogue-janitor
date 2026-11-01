@@ -172,6 +172,9 @@ Player.prototype.clean = function(verb) {
                 if (cleaned.bonusPoints) {
                     Game.yendorPoints += cleaned.bonusPoints;
                 }
+                if (tool == 'mop' && EasterEggs.mopName() != null && Flavor.chance(0.2)) {
+                    Game.sendMessage("You swish " + EasterEggs.mopName() + ".");
+                }
                 Game.shift.cleaned++;
                 cleaned.pickedUp=true;
                 Game.map[key].mess=null;
@@ -244,6 +247,14 @@ Player.prototype.handleEvent = function(e) {
         code = 191; // "?" sits on different physical keys depending on the keyboard layout
     }
     if (this.talking != null) {
+        EasterEggs.closePrompt();
+        return;
+    }
+    if (EasterEggs.handleKey(e)) {
+        return; // typing a #command or answering the quit question
+    }
+    if (e.key === '#') { // also AltGr+3 on Spanish keyboards
+        EasterEggs.openPrompt();
         return;
     }
     if (this.examining != null) {
@@ -293,6 +304,11 @@ Player.prototype.handleEvent = function(e) {
             case 69:
             case 88:
             this.examining=[this.x,this.y];
+            Game.drawMap();
+            return;
+            // Q: the quit joke
+            case 81:
+            EasterEggs.askQuit();
             Game.drawMap();
             return;
             // open help

@@ -226,6 +226,34 @@ var Lore = {
         },
     },
 
+    // Colleagues mention the easter eggs in passing, so the player tries them.
+    hints: {
+        pray: [
+            "Did you know if you type #pray the Mop God sometimes answers? Gary swears by it.",
+            "When the mess gets too much, I #pray. Doesn't help, but it's nice.",
+        ],
+        xyzzy: [
+            "Old janitors say xyzzy is a magic word. You type #xyzzy. Never worked for me.",
+            "My grandma used to whisper #xyzzy into the mop bucket. Nothing ever happened.",
+        ],
+        name: [
+            "Some folks name their mop. #name, I think? Mine is called Sir Swishalot.",
+            "A mop with a name cleans better. Science! Try #name.",
+        ],
+        konami: [
+            "Kevin keeps pressing up, up, down, down... on everything. Weird guy.",
+            "Somebody told me there's a code: up up down down left right left right B A. For what, though?",
+        ],
+        elbereth: [
+            "Heroes keep writing Elbereth everywhere. You could #elbereth too, if you wanted.",
+            "I bet if you typed #elbereth the floor would feel very safe.",
+        ],
+        quit: [
+            "Ever tried to quit? Press Q. Go on. The union has opinions.",
+            "Someone once tried to #quit mid-shift. Legendary.",
+        ],
+    },
+
     rumor: function () {
         return Flavor.rng.getItem(this.rumors);
     },
