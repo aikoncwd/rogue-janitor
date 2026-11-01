@@ -272,6 +272,8 @@ var Lore = {
         { id: 'brushGold', name: 'Gilded Toilet Brush', kind: 'tool', tool: 'brush', price: 22, desc: 'Fancy. Scrubs the same. Purely for show.' },
         { id: 'brushLuck', name: 'Lucky Scrub Brush', kind: 'tool', tool: 'brush', price: 15, desc: 'Luck not included. No effect.' },
     ],
+    keepsakes: ['Crayon Drawing of You', 'Pet Rock (Named Steve)', 'Badly Knitted Scarf', 'Friendship Bracelet',
+        'Lucky Kobold Tooth', 'Thank-You Card (Smudged)', 'Tiny Clay Mop', 'Pressed Cave Flower', 'Mixtape: "Dungeon Bangers"'],
     killedBy: [
         "a slippery puddle",
         "an unexpectedly heavy bucket",

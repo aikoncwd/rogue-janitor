@@ -112,3 +112,64 @@ var Inventory = {
 };
 
 if (typeof module !== 'undefined') module.exports = Inventory;
+
+// Little gifts from comrades whose requests you finished (from day 2).
+var Keepsakes = {
+    give: function (comrade) {
+        if (Game.day < 2 || comrade == null || comrade.keepsakeDay == Game.day || (comrade.tags && comrade.tags.visitor)) {
+            return null;
+        }
+        comrade.keepsakeDay = Game.day;
+        let first = comrade.name.split(' ')[0];
+        let gift = Flavor.rng.getItem(Lore.keepsakes);
+        let item = {kind: 'keepsake', id: 'keep-' + Game.day + '-' + first, name: first + "'s " + gift,
+            desc: 'A thank-you from ' + comrade.name + '. Purely sentimental: it does nothing, and that is fine.', placed: true};
+        Game.inventory.push(item);
+        Game.sendMessage('%c{#f8c}' + comrade.name + ' gives you a keepsake: ' + item.name + '!%c{} It will go up in the lounge.');
+        Achievements.unlock('keepsake');
+        return item;
+    },
+};
+
+// Each morning the things you chose to put up appear in the staff lounge.
+var Decor = {
+    MAX: 6,
+
+    make: function (item, x, y) {
+        let keepsake = item.kind == 'keepsake';
+        return {
+            x: x, y: y,
+            char: keepsake ? '♥' : '§',
+            color: keepsake ? '#f8c' : '#c9f',
+            name: item.name,
+            desc: item.desc,
+            tags: {decor: true},
+            getArt: function () {
+                let t = Game.map[this.x + ',' + this.y];
+                return [this.char, this.color, t ? t.bgColor : '#000'];
+            },
+            describe: function () {
+                return this.name + '. ' + this.desc;
+            },
+            cleanerAct: function () {
+                Game.sendMessage('You admire the ' + this.name + '. ' + this.desc);
+                Game.drawMap();
+            },
+        };
+    },
+
+    place: function () {
+        let items = Game.inventory.filter(function (i) { return i.placed && (i.kind == 'decor' || i.kind == 'keepsake'); });
+        if (items.length == 0) {
+            return 0;
+        }
+        let spots = Game.dayRng(6).shuffle(Shop.loungeSpots());
+        let n = 0;
+        for (let i = 0; i < items.length && n < this.MAX && n < spots.length; i++) {
+            let s = spots[n];
+            Game.map[s[0] + ',' + s[1]].entity = this.make(items[i], s[0], s[1]);
+            n++;
+        }
+        return n;
+    },
+};

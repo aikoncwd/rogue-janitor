@@ -1446,6 +1446,7 @@ var Game = {
             }
         }
         Shop.place(); // Mimsy sets up shop in the lounge
+        Decor.place(); // keepsakes and decorations you chose to put up
     },
 
     randomFarFromPlayer: function(tries=10) {

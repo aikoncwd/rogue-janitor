@@ -252,6 +252,9 @@ Entity.prototype.doConvo = function() {
             if ('tags' in thisConvo) {
                 let newTags=Object.getOwnPropertyNames(thisConvo.tags);
                 for (let i=0;i<newTags.length;i++) {
+                    if ((newTags[i]=='requestThanked' && !this.convoTags.requestThanked) || (newTags[i]=='questItemSuccess' && !this.convoTags.questItemSuccess)) {
+                        Keepsakes.give(this);
+                    }
                     if (newTags[i]=='requestThanked' && !this.convoTags.requestThanked) {
                         Game.shift.requestsDone++;
                     }
