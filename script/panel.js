@@ -177,7 +177,7 @@ var Panel = {
             let near = Game.nearestMess();
             head = [
                 '%c{#fff}── SHIFT ──%c{}',
-                'Day ' + Game.day + ' / ' + Game.LAST_DAY,
+                'Day ' + Game.day + ' / ' + Game.LAST_DAY + '   %c{#ff0}' + Game.zorkmids + ' zm%c{}',
                 'Clean ' + this.bar(pct, 100, '#0c0') + ' ' + pct + '%',
                 near ? 'Nearest mess %c{#ff0}' + near.arrow + '%c{} ' + near.d : '%c{#0c0}No mess left!%c{}',
                 '',

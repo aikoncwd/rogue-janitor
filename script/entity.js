@@ -270,6 +270,15 @@ Entity.prototype.doConvo = function() {
             if ('globalTags' in thisConvo) {
                 let newTags=Object.getOwnPropertyNames(thisConvo.globalTags);
                 for (let i=0;i<newTags.length;i++) {
+                    if (newTags[i]=='endShift') {
+                        Game.endShift();
+                        continue;
+                    }
+                    if (newTags[i]=='endRun') {
+                        delete thisConvo.globalTags.endRun;
+                        Game.endRun();
+                        continue;
+                    }
                     if (newTags[i]=='nextDay') {
                         delete thisConvo.globalTags.nextDay;
                         Game.nextDay();
@@ -464,7 +473,8 @@ Entity.prototype.cleanerAct = function() {
     else if ('exit' in this.tags) {
         Game.player.talking=this;
         this.convoIndex=0;
-        this.progressConvo(0);
+        this.convoInnerDex=0; // open directly: the key debounce must not swallow the question
+        this.lastConvoChange=Date.now();
         this.convos=[];
         this.convos.push(ConversationBuilder.exitPrompt());
         window.addEventListener("keydown",this);
@@ -820,7 +830,7 @@ function GetEntity(name,x,y) {
         newEntity = new Entity(x,y,'$','#ff0',name,1,{loot:true});
         break;
         case 'Chest':
-        newEntity = new Entity(x,y,'\u03C0','#fa0','Treasure Chest',1,{loot:true,mess:'BrokenChest',scatter:['GoldCoins',2]});
+        newEntity = new Entity(x,y,'\u03C0','#fa0','Treasure Chest',1,{loot:true,mess:'BrokenChest',scatter:['GoldCoins',3]});
         break;
         case 'Table':
         newEntity = new Entity(x,y,'\u2564','#fa0',"Table",1,{loot:true,mess:'BrokenTable'});

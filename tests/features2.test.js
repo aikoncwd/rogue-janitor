@@ -137,7 +137,7 @@ test('a comrade can ask for a favour, and thanks you once that mess is all gone'
     const R = ctx.Requests;
     const m = ctx.Game.monsterList.find(x => x.alive && x.retired && !x.partying);
     // make sure there is exactly some graffiti to clean
-    for (const t of Object.values(ctx.Game.map)) if (t.mess && t.mess.name === 'Graffiti') t.mess = null;
+    for (const t of Object.values(ctx.Game.map)) if (t.mess && t.mess.kind === 'Graffiti') t.mess = null;
     const wall = Object.values(ctx.Game.map).find(t => !t.passable && t.char === '#' && t.mess == null);
     ctx.makeMess(wall.x !== undefined ? Number(Object.keys(ctx.Game.map).find(k => ctx.Game.map[k] === wall).split(',')[0]) : 0,
         Number(Object.keys(ctx.Game.map).find(k => ctx.Game.map[k] === wall).split(',')[1]), 'Graffiti');
@@ -183,18 +183,15 @@ test('finishing a favour counts towards the shift report', () => {
 
 // ---------------------------------------------------------------- shift report
 
-test('the shift report has the grade, counts and best score, and records a new best', () => {
+test('the shift report has the grade, counts and pay', () => {
     const ctx = cleaningDay();
     ctx.Game.shift.cleaned = 12;
-    assert.match(ctx.Game.shiftReport(), /Clean a bit more/, '0% is never a best');
     ctx.Game.cleanPercent = () => 42;
     const report = ctx.Game.shiftReport();
     assert.match(report, /Shift report, day 1/);
     assert.match(report, /Grade: %c\{#ff0\}[SABCD]/);
     assert.match(report, /Messes cleaned: 12/);
-    assert.match(report, /New personal best/);
-    assert.equal(JSON.parse(ctx.__storage['rj-best']).pct, 42);
-    assert.match(ctx.Game.shiftReport(), /Best shift so far/);
+    assert.match(report, /Pay: \+6 zm/);
 });
 
 test('the exit prompt includes the shift report', () => {

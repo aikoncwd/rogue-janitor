@@ -41,6 +41,9 @@ var Game = {
     // decent ~ 80 (clean %) + 20 (chats) + 10 (secret door) + 50 (a request) = 160
     // -> ~800 over 5 days; lazy ~ 40 + 10 = 50 -> ~250. 650 leaves room for an off day.
     targetPoints:650,
+    zorkmids: 0,
+    run: {grades: [], cleanPcts: [], requestsDone: 0, zorkmidsEarned: 0, chattedWith: []},
+    shiftEnded: false,
     LAST_DAY: 5,
     // Rooms per day (the staff lounge counts as one of them).
     DAY_ROOMS: [5, 7, 10, 13, 16],
@@ -587,6 +590,7 @@ var Game = {
     generateDungeon: function() {
         var thetheme=this.dungeonTheme;
         this.shift = {cleaned:0, passes:0, requestsDone:0, startPoints:this.yendorPoints};
+        this.shiftEnded = false;
         this.coffeeThreshold = Math.floor(10*ROT.RNG.getUniform()+20*ROT.RNG.getUniform())+30;
         this.inviteOutThreshold =Math.floor(7*ROT.RNG.getUniform()+8*ROT.RNG.getUniform())+80;
         //thetheme=this.makeTheme(300.0/360);
@@ -1495,15 +1499,16 @@ var Game = {
         let lines = [
             '    ' + '_'.repeat(inner - 6) + '    ',
             '   /' + ' '.repeat(inner - 6) + '\\   ',
-            '  /' + ' '.repeat(Math.floor((inner - 8) / 2)) + 'REST' + ' '.repeat(inner - 4 - 4 - Math.floor((inner - 8) / 2)) + '\\  ',
-            ' /' + ' '.repeat(Math.floor((inner - 4) / 2)) + 'IN' + ' '.repeat(inner - 2 - 2 - Math.floor((inner - 4) / 2)) + '\\ ',
-            center('PEACE,'),
+            '  /' + ' '.repeat(Math.floor((inner - 8) / 2)) + 'HERE' + ' '.repeat(inner - 4 - 4 - Math.floor((inner - 8) / 2)) + '\\  ',
+            ' /' + ' '.repeat(Math.floor((inner - 6) / 2)) + 'LIES' + ' '.repeat(inner - 2 - 4 - Math.floor((inner - 6) / 2)) + '\\ ',
             center('YOUR BACK'),
+            center("(it's fine,"),
+            center('just sore)'),
             center(''),
             center('EMPLOYEE OF THE'),
             center('DAY ' + this.day),
             center('cleaned ' + pct + '%'),
-            center('killed by:'),
+            center('sore from:'),
         ];
         for (let i = 0; i < wrapped.length; i++) {
             lines.push(center(wrapped[i]));
@@ -1515,24 +1520,16 @@ var Game = {
         return lines;
     },
 
-    // Shift report shown when you head home: how today went, and your best day so far.
+    // Shift report shown when you head home: how today went and what it paid.
+    // Built when the exit is bumped; nothing is paid or recorded until endShift().
     shiftReport: function() {
         let pct = this.cleanPercent();
-        let grade = pct >= 95 ? 'S' : pct >= 85 ? 'A' : pct >= 70 ? 'B' : pct >= 50 ? 'C' : 'D';
+        let grade = this.gradeFor(pct);
         let chatted = this.monsterList.filter(function(m) { return m.alive && m.playerTalkedToday; }).length;
         let today = this.yendorPoints - this.shift.startPoints + pct;
-        let best = this.loadBest();
-        let bestLine;
-        if (pct > 0 && (best == null || pct > best.pct)) {
-            bestLine = "%c{#0c0}New personal best!%c{}";
-            this.saveBest({pct: pct, day: this.day});
-        }
-        else if (best != null) {
-            bestLine = "%c{#777}Best shift so far: " + best.pct + "% (day " + best.day + ")%c{}";
-        }
-        else {
-            bestLine = "%c{#777}Clean a bit more to set a personal best!%c{}";
-        }
+        let pay = this.payFor(grade);
+        let wallet = this.zorkmids + (this.shiftEnded ? 0 : pay);
+        let bestLine = "%c{#ff0}Pay: +" + pay + " zm%c{}   Wallet: " + wallet + " zm";
         return "%c{#ff0}Shift report, day " + this.day + "%c{}\n" +
             "Dungeon cleaned: " + pct + "%   Grade: %c{#ff0}" + grade + "%c{}\n" +
             "Messes cleaned: " + this.shift.cleaned + "   Stubborn scrubs: " + this.shift.passes + "\n" +
@@ -1541,21 +1538,55 @@ var Game = {
             bestLine;
     },
 
-    loadBest: function() {
-        try {
-            let b = JSON.parse(localStorage.getItem('rj-best'));
-            return (b && typeof b.pct == 'number') ? b : null;
-        } catch (e) {
-            return null;
+    gradeFor: function(pct) {
+        return pct >= 95 ? 'S' : pct >= 85 ? 'A' : pct >= 70 ? 'B' : pct >= 50 ? 'C' : 'D';
+    },
+
+    // End-of-day pay in zorkmids: always something, more for a cleaner dungeon.
+    PAY: {S: 40, A: 30, B: 20, C: 12, D: 6},
+    payFor: function(grade) {
+        return this.PAY[grade] || 0;
+    },
+
+    // What a pile of coins is worth: 1-3 zm, a little more for the odd ones.
+    coinValue: function(mess) {
+        let value = 1 + Math.floor(3 * Flavor.rng.getUniform());
+        if (mess && mess.name != mess.kind) {
+            value += 2;
+        }
+        return value;
+    },
+
+    freshRun: function() {
+        return {grades: [], cleanPcts: [], requestsDone: 0, zorkmidsEarned: 0, chattedWith: []};
+    },
+
+    // The shift is over (the player confirmed leaving): record the day and pay.
+    // Safe to call more than once a day.
+    endShift: function() {
+        if (this.shiftEnded) {
+            return;
+        }
+        this.shiftEnded = true;
+        let pct = this.cleanPercent();
+        let grade = this.gradeFor(pct);
+        let pay = this.payFor(grade);
+        this.zorkmids += pay;
+        this.run.zorkmidsEarned += pay;
+        this.run.grades.push(grade);
+        this.run.cleanPcts.push(pct);
+        this.run.requestsDone += this.shift.requestsDone;
+        for (let i = 0; i < this.monsterList.length; i++) {
+            let m = this.monsterList[i];
+            if (m.playerTalkedToday && !(m.tags && m.tags.visitor) && this.run.chattedWith.indexOf(m.name) < 0) {
+                this.run.chattedWith.push(m.name);
+            }
         }
     },
 
-    saveBest: function(b) {
-        try {
-            localStorage.setItem('rj-best', JSON.stringify(b));
-        } catch (e) {
-            // storage unavailable
-        }
+    // The last shift is over: the run ends (the ending itself is drawn by Ending).
+    endRun: function() {
+        this.phase = 'ending';
     },
 
     // Chebyshev distance and arrow towards the closest mess left in the dungeon.

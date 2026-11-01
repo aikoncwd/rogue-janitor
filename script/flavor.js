@@ -124,6 +124,11 @@ var Flavor = {
             "{hero} wrecks the {item}. The insurance forms will be long.",
             "{hero} rummages through the {item} and leaves it in ruins.",
         ],
+        purse: [
+            "{hero}'s coin purse has a hole in it. Zorkmids trickle onto the floor.",
+            "{hero} drops a handful of zorkmids and decides they are beneath a hero.",
+            "Coins jingle out of {hero}'s pocket. Nobody tells them.",
+        ],
         snack: [
             "{hero} eats a candy bar mid-battle and drops the wrapper.",
             "{hero} munches a snack. \"Heroing is hungry work.\"",

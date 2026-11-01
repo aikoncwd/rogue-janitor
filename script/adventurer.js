@@ -395,6 +395,12 @@ Adventurer.prototype.takeTurn = function () {
         Invasion.event('snack', {});
         this.hunger += Math.floor(15*ROT.RNG.getUniform())+20;
     }
+    // once per raid, the hero's coin purse springs a leak (more pocket money for you)
+    if (!this.purseLeaked && this.turns > 20 && ROT.RNG.getUniform() < 0.03) {
+        this.purseLeaked = true;
+        makeMess(this.x, this.y, 'GoldCoins');
+        Invasion.event('purse', {});
+    }
     this.smashWallDecor();
     this.trySpecial();
     this.tryEvent();

@@ -162,6 +162,12 @@ Player.prototype.clean = function(verb) {
                     else {
                         Game.sendMessage("You "+verb+" the "+Game.map[key].mess.displayName()+".");
                     }
+                    if (Game.map[key].mess.kind == 'Scattered Gold Coins') {
+                        let value = Game.coinValue(Game.map[key].mess);
+                        Game.zorkmids += value;
+                        Game.run.zorkmidsEarned += value;
+                        Game.sendMessage("Ka-ching! %c{#ff0}(+" + value + " zm)%c{}");
+                    }
                     if (Game.map[key].mess.pickup == 'fortune') {
                         Game.sendMessage("You crack the fortune cookie. It reads: \""+Lore.rumor()+"\"");
                     }

@@ -871,7 +871,7 @@ var ConversationBuilder = {
         }
         // the plaque, then the report (the report *is* the identification)
         Scenes.setPlaque(Game.plaqueLines());
-        messages.splice(2, 0, {message: 'Do you want your mess identified? [ynq]', scene: 'plaque'}, Game.shiftReport());
+        messages.splice(2, 0, {message: 'Do you want your mess identified? (You do. Here it is.)', scene: 'plaque'}, Game.shiftReport());
         if (Game.todayEvent == 'inspector') {
             let good = Game.cleanPercent() >= 80;
             let verdict = {message: Flavor.rng.getItem(good ? Lore.inspectorVerdict.good : Lore.inspectorVerdict.bad)};
@@ -880,8 +880,11 @@ var ConversationBuilder = {
             }
             messages.splice(4, 0, verdict);
         }
-        messages.push("In the morning, you wake up, and have a delicious breakfast.");
-        messages.push("Time for another day of work!");
+        let lastDay = Game.day >= Game.LAST_DAY;
+        if (!lastDay) {
+            messages.push("In the morning, you wake up, and have a delicious breakfast.");
+            messages.push("Time for another day of work!");
+        }
         for (let i=0;i<messages.length;i++) {
             // a line is either plain text or {message, scene} with an ASCII scene above it
             var nextMsg = typeof messages[i] == 'string' ? {message:messages[i]} : {message:messages[i].message, scene:messages[i].scene};
@@ -898,8 +901,11 @@ var ConversationBuilder = {
                     nextMsg.blackScreenMessage=true;
                 }
             }
+            if (i==1) {
+                nextMsg.globalTags=Object.assign({}, nextMsg.globalTags, {endShift:true}); // you said yes: the shift is over
+            }
             if (i==(messages.length-1)) {
-                nextMsg.globalTags={nextDay:true,invitationAccepted:false};
+                nextMsg.globalTags=lastDay ? {endRun:true,invitationAccepted:false} : {nextDay:true,invitationAccepted:false};
                 nextMsg.any=-1;
                 //if (Game.yendorPoints+Game.cleanPercent() > Game.targetPoints && !Game.victory) {
                 //    nextMsg.any=(i+1);

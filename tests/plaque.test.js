@@ -8,7 +8,7 @@ function dungeon() {
     return ctx;
 }
 
-const DYWYPI = 'Do you want your mess identified? [ynq]';
+const DYWYPI = 'Do you want your mess identified? (You do. Here it is.)';
 
 test('exit prompt shows the plaque before the report', () => {
     const ctx = dungeon();
@@ -28,7 +28,9 @@ test('the plaque names the day, the score and a funny cause', () => {
     assert.ok(text.includes('DAY 3'), text);
     assert.ok(text.includes('cleaned 87%'), text);
     assert.ok(text.includes('YOUR BACK'), text);
-    assert.ok(/killed by:/.test(text));
+    assert.ok(/sore from:/.test(text));
+    assert.ok(!/killed by/.test(text));
+    assert.ok(/HERE[\s\S]*LIES/.test(text) && text.includes("(it's fine,") && text.includes('just sore)'), text);
     const cause = ctx.Lore.killedBy.find(c => c.split(' ').every(w => text.includes(w)));
     assert.ok(cause, text);
 });
