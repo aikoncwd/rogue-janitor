@@ -27,6 +27,7 @@ const DEFAULT_FILES = [
     'script/conversations.js',
     'script/dayevents.js',
     'script/eastereggs.js',
+    'script/save.js',
 ];
 
 function makeContext() {

@@ -97,6 +97,16 @@ var Title = {
             Game.drawMap();
             return true;
         }
+        if (Save.exists()) {
+            if (e.keyCode == 67 || e.keyCode == 13) { // c / Enter: continue
+                Save.continueRun();
+                return true;
+            }
+            if (e.keyCode != 78) { // only n starts over
+                return true;
+            }
+            Game.newRun();
+        }
         this.stop();
         Game.phase = 'howto';
         Game.drawMap();
@@ -168,8 +178,18 @@ var Title = {
             out.push('%c{#ccc}' + this.tagline + '%c{}');
         }
         out.push('');
-        out.push('%c{#fff}Shall I pick a mop for you? [ynaq]%c{}');
-        out.push('%c{#777}(any key clocks you in)%c{}');
+        let saved = Save.read();
+        if (saved != null) {
+            out.push('%c{#fff}[c] Continue: day ' + saved.day + ' of ' + Game.LAST_DAY + '%c{}');
+            out.push('%c{#fff}[n] New game%c{}');
+        }
+        else {
+            if (Save.problem) {
+                out.push('%c{#f88}' + Save.problem + '%c{}');
+            }
+            out.push('%c{#fff}Shall I pick a mop for you? [ynaq]%c{}');
+            out.push('%c{#777}(any key clocks you in)%c{}');
+        }
         if (this.quitJoke) {
             out.push('%c{#f88}You can\'t quit before your shift. Union rules.%c{}');
         }

@@ -13,6 +13,11 @@ var Flavor = {
             "%c{#777}Press any key.%c{}",
         ],
 
+        saveLost: [
+            "Your old save was mopped up by accident. Fresh start!",
+            "We couldn't read your old timesheet. New shift, new you!",
+            "The save file slipped on a puddle. Let's start over.",
+        ],
         titleTaglines: [
             "Mop the dungeon. Retrieve the Amulet of Clean-dor.",
             "Procedurally generated mess. Hand-crafted mopping.",

@@ -1617,6 +1617,32 @@ var Game = {
         return best;
     },
 
+    // A brand new run from day 1 (title screen "New game", or after an ending).
+    newRun: function() {
+        Save.clear();
+        this.day = 1;
+        this.dungeonRooms = this.roomsForDay(1);
+        this.yendorPoints = 0;
+        this.zorkmids = 0;
+        this.run = this.freshRun();
+        this.convoTags = {};
+        this.unionist = null;
+        this.pastHeroes = [];
+        this.nameRegistry = [];
+        this.amuletStolen = false;
+        this.monsterList = [];
+        this.petList = [];
+        this.playerPet = null;
+        this.victory = false;
+        this.hintsToday = [];
+        this.player.talking = null;
+        this.player.examining = null;
+        this.player.instructions = false;
+        this.player.reach = 1;
+        this.player.cutscene = ConversationBuilder.startGameCutscene();
+        this.generateDungeon();
+    },
+
     roomsForDay: function(day) {
         return this.DAY_ROOMS[Math.max(0, Math.min(this.DAY_ROOMS.length, day) - 1)];
     },
@@ -1627,6 +1653,7 @@ var Game = {
         this.day++;
         this.dungeonRooms = this.roomsForDay(this.day);
         this.yendorPoints += this.cleanPercent(); // the Mop is decided at the end of the run
+        Save.write(); // a new morning: Continue starts here
         //this.engine.unlock();
         this.generateDungeon();
     },
