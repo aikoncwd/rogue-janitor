@@ -74,7 +74,7 @@ var DayEvents = {
         }
         Rooms.generate();
         Objectives.generate();
-        Game.log.push('%c{#ff0}MEMO:%c{} ' + Objectives.memo());
+        Objectives.memoLines().forEach(function (line) { Game.log.push('%c{#ff0}MEMO:%c{} ' + line); });
         if (Game.day < 2) {
             return;
         }

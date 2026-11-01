@@ -98,3 +98,21 @@ test('combo goal counts the combo', () => {
     ctx.Objectives.check();
     assert.strictEqual(ctx.Objectives.list[0].done, true);
 });
+
+test('long goals wrap in the panel instead of losing the room name', () => {
+    const ctx = cleaningDay();
+    ctx.Objectives.list = [{ type: 'fixRoom', room: 1, label: 'Fix everything in the Chamber of Loud Snoring', short: 'Fix all: Chamber of Loud Snoring', done: false }];
+    const lines = ctx.Objectives.lines(23).map(strip);
+    assert.ok(lines.length == 2, JSON.stringify(lines));
+    assert.ok(lines.join(' ').includes('Loud Snoring'), JSON.stringify(lines));
+    assert.ok(lines.every(l => l.length <= 23));
+    assert.ok(lines[1][0] != ' ', 'rot.js drops leading spaces: the second line starts with a visible mark');
+});
+
+test('each goal gets its own memo line', () => {
+    const ctx = cleaningDay();
+    ctx.Game.day = 2;
+    ctx.DayEvents.start();
+    const memos = ctx.Game.log.recent(2).map(l => strip(l.text)).filter(t => /^MEMO: Goal:/.test(t));
+    assert.strictEqual(memos.length, 2);
+});

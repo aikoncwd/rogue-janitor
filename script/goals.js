@@ -96,12 +96,14 @@ var Objectives = {
         let dirty = rooms.filter(function (i) { return Objectives.messesIn(i).length >= 3; });
         if (dirty.length > 0) {
             let r = Flavor.rng.getItem(dirty);
-            out.push({type: 'spotless', room: r, label: 'Leave ' + Rooms.name(r) + ' spotless'});
+            out.push({type: 'spotless', room: r, label: 'Leave ' + Rooms.name(r) + ' spotless',
+                short: 'Spotless: ' + Rooms.name(r).replace(/^the /, '')});
         }
         let broken = rooms.filter(function (i) { return Objectives.messesIn(i, 'fix').length >= 2; });
         if (broken.length > 0) {
             let r = Flavor.rng.getItem(broken);
-            out.push({type: 'fixRoom', room: r, label: 'Fix everything in ' + Rooms.name(r)});
+            out.push({type: 'fixRoom', room: r, label: 'Fix everything in ' + Rooms.name(r),
+                short: 'Fix all: ' + Rooms.name(r).replace(/^the /, '')});
         }
         if (this.coins() >= 3) {
             out.push({type: 'coins', label: 'Pick up every coin'});
@@ -143,15 +145,36 @@ var Objectives = {
         }
     },
 
-    memo: function () {
-        return "Today's goals: " + this.list.map(function (g) { return g.label; }).join('; ') + '.';
+    memoLines: function () {
+        return this.list.map(function (g) { return 'Goal: ' + g.label + '. (+' + Objectives.REWARD_POINTS + ' pts, +' + Objectives.REWARD_ZM + ' zm)'; });
     },
 
+    // Panel lines: each goal on up to two lines, so a room name is not cut off.
     lines: function (width) {
-        return this.list.map(function (g) {
+        let out = [];
+        let w = width - 4;
+        this.list.forEach(function (g) {
+            let words = (g.short || g.label).split(' ');
+            let rows = [''];
+            words.forEach(function (word) {
+                let row = rows[rows.length - 1];
+                if (row.length > 0 && (row + ' ' + word).length > w) {
+                    rows.push(word);
+                }
+                else {
+                    rows[rows.length - 1] = row.length > 0 ? row + ' ' + word : word;
+                }
+            });
+            if (rows.length > 2) {
+                rows = [rows[0], Panel.fit(rows.slice(1).join(' '), w)];
+            }
             let mark = g.done ? '%c{#0f0}[x]%c{} ' : '[ ] ';
-            return mark + Panel.fit(g.label, width - 4);
+            out.push(mark + Panel.fit(rows[0], w));
+            if (rows.length > 1) {
+                out.push('%c{#555}·%c{}   ' + rows[1]); // rot.js drops leading spaces
+            }
         });
+        return out;
     },
 };
 

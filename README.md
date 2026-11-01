@@ -23,6 +23,9 @@ A run is five working days, playable in one sitting. Clean well, help your comra
 - The game saves every morning: close the tab and pick up your run from the title screen.
 - Zorkmids: get paid at the end of every shift (better grade, better pay) and pocket the coins the heroes scatter around.
 - An end-of-shift plaque for your back. It's fine. It's just sore.
+- New equipment from HR as the week goes on: a vacuum (`Z`) for fluff, a squeegee for whole puddles and a scrub brush for stubborn stains.
+- Cleaning combos, two goals on the morning memo and funny names for every room ("the Slightly Haunted Pantry").
+- Heroes zap wands and staves of oak, glass or something sticky, and leave them broken on the floor, along with the odd unidentified ring for your pocket.
 - A classic, animated ASCII title screen (the janitor mops while the torches flicker) and a short "how your job works" screen.
 - The night invasion is last night's security-camera footage: a blinking `● REC` banner with a ticking clock reminds you it's a recording.
 - The replay has rhythm: it hurries through empty corridors and holds on potions, speeches, door kicks and dramatic faints.
