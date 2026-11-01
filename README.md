@@ -28,6 +28,8 @@ A run is five working days, playable in one sitting. Clean well, help your comra
 - Mimsy the Mimic runs a perfectly useless shop in the staff lounge: snacks, posters, a Turbo-Vac 3000 that works exactly like your old vacuum. Spend your zorkmids on nothing!
 - Your pockets (`I`): rings, purchases, cosmetic tools to "equip", and decorations or keepsakes from grateful colleagues to put up in the lounge.
 - Over 20 silly achievements, with a little pop-up when you earn one (see them all from the title screen with `A`).
+- New shift events: the fountain bursts and floods a room, a dragon naps in a corridor (squeeze past!) and Gribble the goblin intern shadows you, eagerly making little messes.
+- An end-of-shift report card, a clean bar that changes colour, a quick shine on every tile you clean, warm torchlight, a minimap and an automatic zoom that fits each day's dungeon on screen.
 - Heroes zap wands and staves of oak, glass or something sticky, and leave them broken on the floor, along with the odd unidentified ring for your pocket.
 - A classic, animated ASCII title screen (the janitor mops while the torches flicker) and a short "how your job works" screen.
 - The night invasion is last night's security-camera footage: a blinking `● REC` banner with a ticking clock reminds you it's a recording.
