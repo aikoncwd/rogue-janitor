@@ -312,11 +312,6 @@ var Flavor = {
             "{hero} unrolls a mysterious scroll and reads it out loud.",
             "{hero} reads a scroll labeled ZELGO MER. Brave.",
         ],
-        scrollOutcome_teleport: [
-            "{hero} vanishes in a puff of smoke! And reappears somewhere else, confused.",
-            "{hero} is teleported! \"I MEANT TO DO THAT.\"",
-            "Poof! {hero} is suddenly elsewhere.",
-        ],
         scrollOutcome_loss: [
             "{hero} feels a strange sense of loss.",
             "{hero} has a feeling they forgot something important. Like where they parked.",

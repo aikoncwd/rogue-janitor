@@ -105,16 +105,15 @@ test('save-scum happens once and replaces that potion', () => {
     assert.equal(ctx.Invasion.stats.potions, potions + 1, 'the next time it is a potion');
 });
 
-test('scroll teleport lands on a free floor tile', () => {
-    const ctx = dungeon();
-    const hero = ctx.Game.adventurer;
-    const from = hero.x + ',' + hero.y;
-    assert.ok(hero.doEvent('scroll', 'teleport'));
-    const tile = ctx.Game.map[hero.x + ',' + hero.y];
-    assert.ok(tile.passable);
-    assert.equal(tile.entity, hero);
-    assert.notEqual(hero.x + ',' + hero.y, from);
-    assert.notEqual(ctx.Game.map[from].entity, hero);
+test('a scroll never teleports the hero', () => {
+    for (let seed = 1; seed <= 20; seed++) {
+        const ctx = dungeon(seed);
+        const hero = ctx.Game.adventurer;
+        const from = hero.x + ',' + hero.y;
+        assert.ok(hero.doEvent('scroll'));
+        assert.equal(hero.x + ',' + hero.y, from, 'seed ' + seed);
+        assert.ok(!ctx.Game.log.lines.some(l => /teleport|vanishes|elsewhere/i.test(strip(l.text))));
+    }
 });
 
 test('Elbereth engraving is graffiti and apologises when erased', () => {

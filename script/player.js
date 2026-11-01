@@ -196,7 +196,7 @@ Player.prototype.clean = function(verb) {
                         Game.sendMessage("You pocket " + ring.name + ". Engraved inside: \"" + ring.ringLore + "\"");
                     }
                     if (Game.map[key].mess.pickup == 'fortune') {
-                        Game.sendMessage("You crack the fortune cookie. It reads: \""+Lore.rumor()+"\"");
+                        Game.sendMessage("%c{#fc6}You crack the fortune cookie. It reads:%c{} \""+Lore.rumor()+"\"");
                         Achievements.bump('fortunes');
                     }
                 }
@@ -407,6 +407,9 @@ Player.prototype.handleEvent = function(e) {
         if (code==88 || code==27 || code==8 || code == 191) {
             this.instructions=false;
         }
+        else if (code == 38 || code == 104 || code == 40 || code == 98) {
+            Ui.scrollBy('help', code == 38 || code == 104 ? -1 : 1);
+        }
         Game.drawMap();
         return;
     }
@@ -469,12 +472,16 @@ Player.prototype.handleEvent = function(e) {
             // open help
             case 191:
             this.instructions=true;
+            Ui.resetScroll('help');
             Game.drawMap();
             return
-            // wait
+            // wait: . or 5, on the main keyboard or the numpad (NumLock on or off)
             case 12:
             case 190:
             case 53:
+            case 101:
+            case 110:
+            case 46:
             this.endTurn();
             return;
         }

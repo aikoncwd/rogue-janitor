@@ -96,7 +96,7 @@ test('the hero never walks towards wall decoration and still leaves on time', ()
 
 test('dungeons are decorated with the new furniture', () => {
     const seen = new Set();
-    for (const seed of [1, 2, 3, 4]) {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
         const ctx = freshDungeon(seed);
         for (const t of Object.values(ctx.Game.map)) if (t.entity && t.entity.tags && t.entity.tags.loot) seen.add(t.entity.name);
     }
