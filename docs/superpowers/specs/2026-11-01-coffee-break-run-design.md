@@ -96,7 +96,7 @@ conversation. **`todo.txt` says the game ends on day 10; the user later changed 
 - The game ends after the **day 5** shift. When the player leaves on day 5 (exit door,
   confirmed), the usual night is replaced by the ending sequence (section 2).
 - **Dungeon growth** (rooms, staff lounge counted as one): day 1 = 5, day 2 = 7,
-  day 3 = 9, day 4 = 11, day 5 = 13. Replace the "+1 or 2 per day, max 16" rule.
+  day 3 = 10, day 4 = 13, day 5 = 16 (user's numbers). Replace the "+1 or 2 per day, max 16" rule.
 - The day counter is visible in the panel as `Day N / 5`.
 - **Mop of Yendor target**: lower `targetPoints` so a *decent* run reaches it: about
   80% average cleanliness, chatting with colleagues, doing a couple of requests and
@@ -252,6 +252,30 @@ availability rules style as `DayEvents`.
   never tiresome: at most ~10 messes per day, stops after a while (e.g. 60 turns) or
   as soon as you chat with them and send them to the lounge for "training".
 
+### 9b. Wands, staves and rings (user's request)
+
+Traditional roguelikes (NetHack, Brogue, Rogue) have wands and staffs of many
+materials, and rings. The hero should use some during the invasion and leave them
+behind as mess.
+
+- **Wands and staves**: during the invasion the hero sometimes **zaps** a wand or
+  staff (oak, balsa, glass, iron, bone, crystal, "suspiciously sticky"…) with a funny
+  log line and a visible effect that makes the usual kind of mess (scorch, frost
+  water, sparkles, a startled comrade fainting theatrically…). Afterwards the item is
+  left on the floor **broken or used up** ("Snapped Oak Wand", "Empty Glass Wand
+  (0:0)", "Staff of Slight Breeze, cracked"). They are litter, picked up with `P`/`G`
+  (or, for a snapped staff, fixed with `F`, builder's call), with examine text.
+- **Rings**: **at most 1–2 per day**. The hero drops or loses them (tried one on,
+  didn't like it, it was cursed and itchy…). A ring is a special pick-up: it goes to
+  the **inventory** with an unidentified name ("a jade ring") and funny lore once
+  examined ("Ring of Mildly Increased Snack Detection"). No gameplay effect, like
+  shop items. Finding one could count toward an achievement.
+- These are produced by the **invasion simulation** using the world RNG in the same
+  code path in normal, fast and skip modes (determinism rules unchanged).
+- Glyphs and colours follow roguelike tradition where free (`/` wand, `=` ring);
+  the builder checks for clashes with existing glyphs (the smashed candelabrum also
+  uses `/`) and picks colours by material.
+
 ### 10. Keepsakes and lounge decorations
 
 - When you finish a comrade's request (or find their lost item), they may give you a
@@ -330,6 +354,6 @@ availability rules style as `DayEvents`.
   text-screen style (help screen, how-to screen).
 - Splitting the work into phases. Suggested order, each phase playable on its own:
   1. fixes + 5-day run + endings + results card + save/continue + zorkmids;
-  2. tools + combos + objectives + room names;
+  2. tools + combos + objectives + room names + wands, staves and rings;
   3. shop + inventory + keepsakes/decorations + achievements;
   4. new events + UI pass (card, auto-zoom, minimap, shine, lighting).
