@@ -50,19 +50,20 @@ var ConversationBuilder = {
             newConversation.push(partyRoomDiscovery);
         }
 
-        delete speaker.convoTags.request;
-        delete speaker.convoTags.requestThanked;
-        delete speaker.convoTags.offerSeen;
-        if (!party) {
-            Requests.offer(speaker, newConversation);
-        }
-
-        // now and then, a hint about an easter egg (at most one per conversation)
+        // now and then, a hint about an easter egg (at most one per conversation;
+        // before the request offer, which must be heard first)
         if (!party && typeof EasterEggs != 'undefined' && Flavor.chance(0.3)) {
             let hint = EasterEggs.pickHint();
             if (hint != null) {
                 newConversation.push([{text: hint, any: -1}]);
             }
+        }
+
+        delete speaker.convoTags.request;
+        delete speaker.convoTags.requestThanked;
+        delete speaker.convoTags.offerSeen;
+        if (!party) {
+            Requests.offer(speaker, newConversation);
         }
 
         if (!speaker.metPlayer) {
@@ -650,7 +651,7 @@ var ConversationBuilder = {
     cleanConvo: function(mess) {
         let owner = mess.droppedBy;
         let item=false;
-        let messname=mess.name.toLowerCase();
+        let messname=mess.displayName();
         let messnamePlural=mess.plural().toLowerCase();
         if (mess.cleanMethod == 'get') {
             if (owner.dropMessConvo) {

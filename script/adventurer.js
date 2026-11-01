@@ -121,6 +121,8 @@ Adventurer.classes = {
     Necromancer:  { color:'#9a9', hp:5, dmg:1, every:30, special:'readAloud', stat:'Pages read aloud' },
 };
 
+var ELBERETH_NAME = 'Elbereth engraving';
+
 // Special events (lost hero, unknown scroll...): rare, and never two close together.
 Adventurer.EVENT_GAP = 25;
 Adventurer.EVENT_CHANCE = 0.06;
@@ -330,7 +332,7 @@ Adventurer.prototype.doEvent = function(name, outcome=null) {
         if (walls.length > 0) {
             let spot = ROT.RNG.getItem(walls);
             let mess = makeMess(spot[0], spot[1], 'Graffiti');
-            mess.name = 'Engraving: Elbereth';
+            mess.name = ELBERETH_NAME;
             mess.char = 'E';
             mess.elbereth = true;
             Invasion.event('elbereth', {monster: near.length > 0 ? ROT.RNG.getItem(near) : null});

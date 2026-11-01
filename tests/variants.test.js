@@ -121,7 +121,7 @@ test('variant names read well in cleaning messages', () => {
     ctx.makeVariant(x, y, 'GoldCoins', 'Scattered Zorkmids');
     p.clean('get');
     const text = ctx.Game.log.lines.map(l => strip(l.text)).join('\n');
-    assert.ok(text.includes('You pick up the scattered zorkmids.'), text);
+    assert.ok(text.includes('You pick up the Scattered Zorkmids.'), text);
     assert.ok(!/the the/i.test(text));
 });
 

@@ -531,7 +531,7 @@ var Game = {
             let sendIndex;
             do {
                 sendIndex = Math.floor(this.monsterList.length * ROT.RNG.getUniform());
-            } while (this.monsterList[sendIndex].alive == false || this.monsterList[sendIndex].retired == false || this.monsterList[sendIndex].partying);
+            } while (this.monsterList[sendIndex].alive == false || this.monsterList[sendIndex].retired == false || this.monsterList[sendIndex].partying || this.monsterList[sendIndex].tags.visitor);
 
             if (toReturn > this.inviteOutThreshold) {
                 this.inviteOutThreshold+=200;

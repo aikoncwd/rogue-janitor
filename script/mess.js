@@ -88,6 +88,12 @@ Mess.prototype.getAction = function() {
     }
 }
 
+// The name inside a sentence: ordinary messes in lower case ("the empty coffee mug"),
+// funny variants as written ("the Excalibur (rental)").
+Mess.prototype.displayName = function() {
+    return this.name == this.kind ? this.name.toLowerCase() : this.name;
+}
+
 // What examining it says: name, a funny description if it has one, and what to do.
 Mess.prototype.describe = function() {
     return this.name + ". " + (this.desc ? this.desc + " " : "") + this.getAction();

@@ -522,8 +522,8 @@ var Invasion = {
         }
         Game.player.cutscene = ConversationBuilder.chainCutscenes(this.reportCutscene(), Game.player.cutscene);
         Game.phase = 'cleaning';
+        DayEvents.start(); // the memo, and maybe a visitor or a birthday (or a ghost of an earlier hero)
         Game.pastHeroes.push({ full: this.hero.full, cls: this.hero.cls });
-        DayEvents.start(); // the memo, and maybe a visitor or a birthday
         Game.amuletStolen = Flavor.chance(0.25); // tomorrow's memo may mention it
     },
 };

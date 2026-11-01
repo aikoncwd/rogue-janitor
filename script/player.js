@@ -125,14 +125,14 @@ Player.prototype.clean = function(verb) {
                 let stain = Game.map[key].mess;
                 if (verb=='mop' && !stain.scrub()) {
                     let left = stain.passes;
-                    Game.sendMessage("You scrub the "+stain.name.toLowerCase()+". "+(left > 1 ? "It's stubborn! ("+left+" more passes)" : "It's fading... one more pass!"));
+                    Game.sendMessage("You scrub the "+stain.displayName()+". "+(left > 1 ? "It's stubborn! ("+left+" more passes)" : "It's fading... one more pass!"));
                     Game.shift.passes++;
                     Sfx.play('scrub');
                     Effects.clean(tool, this.x+i, this.y+j, stain.color);
                     return;
                 }
                 if (verb=='fix' && Game.map[key].mess.parent == null) {
-                    Game.sendMessage("You patch up the "+Game.map[key].mess.name.toLowerCase()+".");
+                    Game.sendMessage("You patch up the "+Game.map[key].mess.displayName()+".");
                 }
                 else if (verb=='fix') {
                     if (Game.map[key].entity==null) {
@@ -159,7 +159,7 @@ Player.prototype.clean = function(verb) {
                         Game.sendMessage("You "+verb+" "+Game.map[key].mess.name+"!");
                     }
                     else {
-                        Game.sendMessage("You "+verb+" the "+Game.map[key].mess.name.toLowerCase()+".");
+                        Game.sendMessage("You "+verb+" the "+Game.map[key].mess.displayName()+".");
                     }
                     if (Game.map[key].mess.pickup == 'fortune') {
                         Game.sendMessage("You crack the fortune cookie. It reads: \""+Lore.rumor()+"\"");
@@ -197,7 +197,7 @@ Player.prototype.clean = function(verb) {
             Game.sendMessage("Stand next to "+doSelf.name+" to "+verb+" it.");
         }
         else {
-            let message="Stand next to the "+doSelf.name.toLowerCase()+" to "+verb;
+            let message="Stand next to the "+doSelf.displayName()+" to "+verb;
             if (doSelf.name.charAt(doSelf.name.length-1)=='s') {
                 message+=" them.";
             }
@@ -253,7 +253,7 @@ Player.prototype.handleEvent = function(e) {
     if (EasterEggs.handleKey(e)) {
         return; // typing a #command or answering the quit question
     }
-    if (e.key === '#') { // also AltGr+3 on Spanish keyboards
+    if (e.key === '#' && !this.instructions && this.examining == null) { // also AltGr+3 on Spanish keyboards
         EasterEggs.openPrompt();
         return;
     }
@@ -357,7 +357,7 @@ Player.prototype.slide = function(diff) {
         return false;
     }
     this.moveTo(this.x+diff[0], this.y+diff[1]);
-    Game.sendMessage("Whoa! You slip on the "+here.mess.name.toLowerCase()+" and slide!");
+    Game.sendMessage("Whoa! You slip on the "+here.mess.displayName()+" and slide!");
     Sfx.play('slip');
     return true;
 }
