@@ -25,6 +25,9 @@ A run is five working days, playable in one sitting. Clean well, help your comra
 - An end-of-shift plaque for your back. It's fine. It's just sore.
 - New equipment from HR as the week goes on: a vacuum (`Z`) for fluff, a squeegee for whole puddles and a scrub brush for stubborn stains.
 - Cleaning combos, two goals on the morning memo and funny names for every room ("the Slightly Haunted Pantry").
+- Mimsy the Mimic runs a perfectly useless shop in the staff lounge: snacks, posters, a Turbo-Vac 3000 that works exactly like your old vacuum. Spend your zorkmids on nothing!
+- Your pockets (`I`): rings, purchases, cosmetic tools to "equip", and decorations or keepsakes from grateful colleagues to put up in the lounge.
+- Over 20 silly achievements, with a little pop-up when you earn one (see them all from the title screen with `A`).
 - Heroes zap wands and staves of oak, glass or something sticky, and leave them broken on the floor, along with the odd unidentified ring for your pocket.
 - A classic, animated ASCII title screen (the janitor mops while the torches flicker) and a short "how your job works" screen.
 - The night invasion is last night's security-camera footage: a blinking `● REC` banner with a ticking clock reminds you it's a recording.
