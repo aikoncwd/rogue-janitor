@@ -180,8 +180,11 @@ var Panel = {
                 'Day ' + Game.day + ' / ' + Game.LAST_DAY + '   %c{#ff0}' + Game.zorkmids + ' zm%c{}',
                 'Clean ' + this.bar(pct, 100, '#0c0') + ' ' + pct + '%',
                 near ? 'Nearest mess %c{#ff0}' + near.arrow + '%c{} ' + near.d : '%c{#0c0}No mess left!%c{}',
-                '',
             ];
+            if (Game.comboActive() && Game.combo.count >= 2) {
+                head.push('%c{#0ff}Combo x' + Game.combo.count + '%c{}');
+            }
+            head.push('');
             let requests = this.requestLines(w);
             if (requests.length > 0) {
                 head = head.concat(['%c{#fff}── REQUESTS ──%c{}']).concat(requests).concat(['']);

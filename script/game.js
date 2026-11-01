@@ -42,6 +42,9 @@ var Game = {
     // -> ~800 over 5 days; lazy ~ 40 + 10 = 50 -> ~250. 650 leaves room for an off day.
     targetPoints:650,
     zorkmids: 0,
+    turnCount: 0,
+    combo: {count: 0, lastTurn: -99, bestToday: 0},
+    COMBO_GAP: 3,
     run: {grades: [], cleanPcts: [], requestsDone: 0, zorkmidsEarned: 0, chattedWith: []},
     shiftEnded: false,
     LAST_DAY: 5,
@@ -607,6 +610,7 @@ var Game = {
         var thetheme=this.dungeonTheme;
         this.shift = {cleaned:0, passes:0, requestsDone:0, startPoints:this.yendorPoints};
         this.shiftEnded = false;
+        this.combo = {count: 0, lastTurn: -99, bestToday: 0};
         this.coffeeThreshold = Math.floor(10*ROT.RNG.getUniform()+20*ROT.RNG.getUniform())+30;
         this.inviteOutThreshold =Math.floor(7*ROT.RNG.getUniform()+8*ROT.RNG.getUniform())+80;
         //thetheme=this.makeTheme(300.0/360);
@@ -1563,6 +1567,36 @@ var Game = {
         return this.day >= this.TOOL_DAYS[name];
     },
 
+    // Cleaning combos: cleans within COMBO_GAP turns of each other chain up.
+    comboBonus: function(count) {
+        if (count == 5) { return 5; }
+        if (count == 10) { return 10; }
+        if (count > 10 && count % 10 == 0) { return 20; }
+        return 0;
+    },
+    comboActive: function() {
+        return this.combo.count > 0 && this.turnCount - this.combo.lastTurn <= this.COMBO_GAP;
+    },
+    comboHit: function() {
+        this.combo.count = this.comboActive() ? this.combo.count + 1 : 1;
+        this.combo.lastTurn = this.turnCount;
+        this.combo.bestToday = Math.max(this.combo.bestToday, this.combo.count);
+        this.run.bestCombo = Math.max(this.run.bestCombo || 0, this.combo.count);
+        let bonus = this.comboBonus(this.combo.count);
+        if (bonus > 0) {
+            this.yendorPoints += bonus;
+            this.sendMessage('%c{#0ff}Combo x' + this.combo.count + '!%c{} Squeaky clean streak. (+' + bonus + ')');
+        }
+    },
+    comboKeep: function() { // a scrub pass is work too: the streak stays alive
+        if (this.comboActive()) {
+            this.combo.lastTurn = this.turnCount;
+        }
+    },
+    comboBreak: function() {
+        this.combo.count = 0;
+    },
+
     gradeFor: function(pct) {
         return pct >= 95 ? 'S' : pct >= 85 ? 'A' : pct >= 70 ? 'B' : pct >= 50 ? 'C' : 'D';
     },
@@ -1583,7 +1617,7 @@ var Game = {
     },
 
     freshRun: function() {
-        return {grades: [], cleanPcts: [], requestsDone: 0, zorkmidsEarned: 0, chattedWith: []};
+        return {grades: [], cleanPcts: [], requestsDone: 0, zorkmidsEarned: 0, chattedWith: [], bestCombo: 0};
     },
 
     // The shift is over (the player confirmed leaving): record the day and pay.

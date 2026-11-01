@@ -57,6 +57,7 @@ Player.prototype.getArt = function() {
 
 Player.prototype.act = function() {
     Game.engine.lock();
+    Game.turnCount++;
     //console.log(this.x+','+this.y);
     if (this.spreadCount>0 && this.spreading != null) {
         let newMess = makeMess(this.x,this.y,this.spreading);
@@ -139,6 +140,7 @@ Player.prototype.clean = function(verb) {
                     let left = stain.passes;
                     Game.sendMessage("You scrub the "+stain.displayName()+". "+(left > 1 ? "It's stubborn! ("+left+" more passes)" : "It's fading... one more pass!"));
                     Game.shift.passes++;
+                    Game.comboKeep();
                     Sfx.play('scrub');
                     Effects.clean(tool, this.x+i, this.y+j, stain.color);
                     return;
@@ -234,6 +236,7 @@ Player.prototype.removeMess = function(key, tool, sound=null) {
     cleaned.pickedUp=true;
     tile.mess=null;
     Game.messNumbers[0]--;
+    Game.comboHit();
     Game.checkCleanMilestones();
     Sfx.play(cleaned.sound || sound || 'mop');
     let parts = key.split(',');
@@ -481,6 +484,9 @@ Player.prototype.moveTo = function(x,y) {
         this.x=x;
         this.y=y;
         if (Game.map[newKey].mess != null) {
+            if (Game.map[newKey].mess.spreads) {
+                Game.comboBreak(); // tracking dirt around ends the streak
+            }
             Game.map[newKey].mess.spread(this);
         }
     }
