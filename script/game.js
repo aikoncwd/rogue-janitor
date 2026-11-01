@@ -341,7 +341,7 @@ var Game = {
                     }
                 }
                 else if (this.map[lookKey].mess != null) {
-                    this.showTransient(this.map[lookKey].mess.name+". "+this.map[lookKey].mess.getAction());
+                    this.showTransient(this.map[lookKey].mess.describe());
                 }
                 else if (this.map[lookKey].door != null) {
                     if (this.map[lookKey].open) {

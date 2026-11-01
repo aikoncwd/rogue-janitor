@@ -5,6 +5,7 @@ function Mess(x,y,char,color,bgColor,name,importance,spreads=null,spreadCount=0,
     this.color=color;
     this.bgColor=bgColor;
     this.name=name;
+    this.kind=name; // what it really is; `name` may be a funny variant (logic uses kind)
     this.spreads=spreads;
     this.spreadCount=spreadCount;
     this.importance=importance;
@@ -85,6 +86,11 @@ Mess.prototype.getAction = function() {
     else if (this.cleanMethod=='fix') {
         return 'You can %c{#ff0}f%c{}ix it!';
     }
+}
+
+// What examining it says: name, a funny description if it has one, and what to do.
+Mess.prototype.describe = function() {
+    return this.name + ". " + (this.desc ? this.desc + " " : "") + this.getAction();
 }
 
 Mess.prototype.getArt = function() {
@@ -356,16 +362,32 @@ function makeMess(x,y,name) {
         break;
     }
 
-    if (newMess.name in TOUGH_STAINS && !newMess.passes) {
-        let passes = TOUGH_STAINS[newMess.name];
-        if (newMess.name == '"Blood"') {
+    if (newMess.kind in TOUGH_STAINS && !newMess.passes) {
+        let passes = TOUGH_STAINS[newMess.kind];
+        if (newMess.kind == '"Blood"') {
             passes = ROT.RNG.getUniform() < 0.25 ? 2 : 1; // some of it has had time to dry
         }
         if (passes > 1) {
             newMess.makeTough(passes);
         }
     }
+    if (name in Lore.variants && ROT.RNG.getUniform() < Lore.VARIANT_CHANCE) {
+        applyVariant(newMess, ROT.RNG.getItem(Lore.variants[name]));
+    }
     return newMess;
+}
+
+function applyVariant(mess, variant) {
+    mess.name = variant.name;
+    mess.desc = variant.desc || null;
+    mess.pickup = variant.pickup || null;
+}
+
+// A mess of `type` that is definitely called `variantName` (heroes' signature mess).
+function makeVariant(x,y,type,variantName) {
+    let mess = makeMess(x,y,type);
+    applyVariant(mess, Lore.variantNamed(type, variantName) || {name: variantName});
+    return mess;
 }
 
 // Passes needed to scrub away the stubborn stuff.

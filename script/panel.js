@@ -29,7 +29,7 @@ var Panel = {
             if (mess == null) {
                 continue;
             }
-            let name = mess.name;
+            let name = mess.kind;
             if (mess.cleanMethod == 'fix') {
                 c.broken++;
             }

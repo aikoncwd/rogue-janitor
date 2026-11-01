@@ -8,6 +8,7 @@ const ROOT = path.join(__dirname, '..');
 
 const DEFAULT_FILES = [
     'script/flavor.js',
+    'script/lore.js',
     'script/messagelog.js',
     'script/sound.js',
     'script/music.js',

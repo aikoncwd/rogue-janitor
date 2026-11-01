@@ -73,11 +73,22 @@ var Title = {
             }
             self.frame++;
             if (self.frame % self.TAGLINE_FRAMES == 0) {
-                self.tagline = Flavor.line('titleTaglines');
+                self.tagline = self.nextTagline();
             }
             Game.drawMap();
             self.schedule();
         }, this.TICK_MS);
+    },
+
+    // A tagline, or now and then a rumor (if it fits on the screen).
+    nextTagline: function () {
+        if (typeof Lore != 'undefined' && Flavor.chance(0.25)) {
+            let rumor = Lore.rumor();
+            if (Game.screenSize == null || rumor.length <= Game.screenSize[0]) {
+                return rumor;
+            }
+        }
+        return Flavor.line('titleTaglines');
     },
 
     handleKey: function (e) {

@@ -154,6 +154,9 @@ Player.prototype.clean = function(verb) {
                     else {
                         Game.sendMessage("You "+verb+" the "+Game.map[key].mess.name.toLowerCase()+".");
                     }
+                    if (Game.map[key].mess.pickup == 'fortune') {
+                        Game.sendMessage("You crack the fortune cookie. It reads: \""+Lore.rumor()+"\"");
+                    }
                 }
                 let cleaned = Game.map[key].mess;
                 if (cleaned.droppedBy != null) {

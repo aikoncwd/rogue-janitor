@@ -469,7 +469,7 @@ var Invasion = {
         Game.forgetMap();
         this.stats.bloodPuddles = 0;
         for (let key in Game.map) {
-            if (Game.map[key].mess != null && Game.map[key].mess.name == '"Blood"') {
+            if (Game.map[key].mess != null && Game.map[key].mess.kind == '"Blood"') {
                 this.stats.bloodPuddles++;
             }
         }
