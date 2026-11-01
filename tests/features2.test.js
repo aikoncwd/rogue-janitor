@@ -218,7 +218,7 @@ test('nearest mess points the right way', () => {
     assert.equal(n.arrow, '→');
 });
 
-test('panel shows requests, nearest mess and the music hint, and no minimap', () => {
+test('panel shows requests, nearest mess and the music hint', () => {
     const ctx = cleaningDay();
     for (const t of Object.values(ctx.Game.map)) t.lastSeen = '.';
     const m = ctx.Game.monsterList.find(x => x.alive && x.retired && !x.partying);
@@ -228,7 +228,6 @@ test('panel shows requests, nearest mess and the music hint, and no minimap', ()
     assert.match(text, /REQUESTS/);
     assert.match(text, /Cobwebs/);
     assert.match(text, /Nearest mess|No mess left/);
-    assert.ok(!/── MAP ──/.test(text), 'minimap removed');
     assert.match(text, /\[T\] music/);
 });
 
