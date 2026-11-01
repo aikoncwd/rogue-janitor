@@ -359,11 +359,19 @@ var Game = {
             }
         }
         let shining = false;
+        let torches = invading ? [] : this.torches();
         this.fov.compute(cam.x,cam.y,50,function(x,y,r,visibility) {
             let key=x+','+y;
             if (key in Game.map) {
                 let art = Game.map[key].getArt();
                 let bg = (invading && key in Invasion.flashes) ? '#a00' : art[2];
+                let tile = Game.map[key];
+                if (torches.length > 0 && tile.passable && tile.entity == null && tile.door == null) {
+                    let warm = Game.warmth(x, y, torches);
+                    if (warm > 0) {
+                        bg = Game.blend(bg, Game.TORCH_COLOR, 0.8 * warm); // warm torchlight on the floor
+                    }
+                }
                 let glow = invading ? 0 : Game.shineAt(key);
                 if (glow > 0 && Game.map[key].passable && Game.map[key].entity == null) {
                     bg = Game.blend(bg, '#2a3f5a', glow); // a quick sparkle where you just cleaned
@@ -1742,6 +1750,29 @@ var Game = {
                 self.drawMap();
             }
         }, 250);
+    },
+
+    // Torch light: wall torches warm up the floor around them (walls keep their colours).
+    TORCH_RADIUS: 4,
+    TORCH_COLOR: '#3a2400',
+    torches: function() {
+        let list = [];
+        for (let key in this.map) {
+            let e = this.map[key].entity;
+            if (e instanceof Entity && e.name == 'Wall Torch' && e.alive) {
+                list.push(e);
+            }
+        }
+        return list;
+    },
+    // How warm the floor at x,y is (0..1) given a list of torches.
+    warmth: function(x, y, torches) {
+        let w = 0;
+        for (let i = 0; i < torches.length; i++) {
+            let d = Math.sqrt((torches[i].x - x) * (torches[i].x - x) + (torches[i].y - y) * (torches[i].y - y));
+            w = Math.max(w, 1 - d / this.TORCH_RADIUS);
+        }
+        return w;
     },
 
     // Mixes colour a towards b by f (0..1).
