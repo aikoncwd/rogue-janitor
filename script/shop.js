@@ -54,7 +54,7 @@ var Shop = {
                 for (let i = -1; i <= 1; i++) {
                     for (let j = -1; j <= 1; j++) {
                         let n = Game.map[(x + i) + ',' + (y + j)];
-                        if (n && !n.passable) {
+                        if (n && !n.passable && n.secretDoor == null) { // a secret door must stay clear
                             walls++;
                         }
                     }

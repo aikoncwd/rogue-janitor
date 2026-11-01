@@ -181,7 +181,7 @@ DayEvents.tick = function () {
         for (let a = -1; a <= 1; a++) {
             for (let b = -1; b <= 1; b++) {
                 let t = Game.map[(d.x + a) + ',' + (d.y + b)];
-                if (t && t.passable && t.entity == null && t.mess == null && t.door == null) {
+                if (t && t.passable && t.entity == null && t.mess == null && t.door == null && !t.important) {
                     spots.push([d.x + a, d.y + b]);
                 }
             }
@@ -204,7 +204,7 @@ DayEvents.tick = function () {
     let p = Game.player;
     if (p.prevX != null && Math.max(Math.abs(it.x - p.x), Math.abs(it.y - p.y)) > 1) {
         let t = Game.map[p.prevX + ',' + p.prevY];
-        if (t && t.passThrough()) {
+        if (t && t.passThrough() && t.door == null) { // never stops in a doorway (C must still close it)
             Game.map[it.x + ',' + it.y].entity = null;
             it.x = p.prevX;
             it.y = p.prevY;

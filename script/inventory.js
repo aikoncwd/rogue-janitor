@@ -25,7 +25,7 @@ var Inventory = {
         });
     },
 
-    // Letters for the items in order, skipping i and x (they close the screen).
+    // Letters for the items in order, skipping i/I and x/X (they close the screen).
     letters: function () {
         let out = [];
         for (let c = 97; c <= 122; c++) {
@@ -34,7 +34,9 @@ var Inventory = {
             }
         }
         for (let c = 65; c <= 90; c++) { // then capitals, for a very full pocket
-            out.push(String.fromCharCode(c));
+            if (c != 73 && c != 88) {
+                out.push(String.fromCharCode(c));
+            }
         }
         return out;
     },
@@ -103,7 +105,7 @@ var Inventory = {
                 tag = ' %c{#0f0}[equipped]%c{}';
             }
             if (item.placed) {
-                tag = ' %c{#0f0}[in the lounge]%c{}';
+                tag = item.noRoomDay == Game.day ? ' %c{#777}[no room today]%c{}' : ' %c{#0f0}[in the lounge]%c{}';
             }
             out.push(this.letters()[i] + ') ' + item.name + tag);
             let info = item.kind == 'ring' ? item.lore : item.desc;
@@ -180,7 +182,12 @@ var Decor = {
         }
         let spots = Game.dayRng(6).shuffle(Shop.loungeSpots());
         let n = 0;
-        for (let i = 0; i < items.length && n < this.MAX && n < spots.length; i++) {
+        for (let i = 0; i < items.length; i++) {
+            if (n >= this.MAX || n >= spots.length) {
+                items[i].noRoomDay = Game.day; // still wanted up, but not today
+                continue;
+            }
+            delete items[i].noRoomDay;
             let s = spots[n];
             Game.map[s[0] + ',' + s[1]].entity = this.make(items[i], s[0], s[1]);
             n++;

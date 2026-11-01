@@ -313,9 +313,19 @@ Player.prototype.squeegee = function(startKey) {
         this.removeMess(key, 'mop', 'mop', false);
         n++;
         let parts = key.split(',').map(Number);
+        let floor = function(x, y) {
+            let t = Game.map[x+','+y];
+            return t != null && t.passable;
+        };
         for (let i=-1;i<=1;i++) {
             for (let j=-1;j<=1;j++) {
                 let next = (parts[0]+i)+','+(parts[1]+j);
+                if (!floor(parts[0]+i, parts[1]+j)) {
+                    continue; // only over floor
+                }
+                if (i != 0 && j != 0 && (!floor(parts[0]+i, parts[1]) || !floor(parts[0], parts[1]+j))) {
+                    continue; // never through the corner of a wall
+                }
                 if (!seen[next] && next != this.x+','+this.y) {
                     seen[next] = true;
                     queue.push(next);
