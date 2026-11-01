@@ -58,6 +58,9 @@ Player.prototype.getArt = function() {
 Player.prototype.act = function() {
     Game.engine.lock();
     Game.turnCount++;
+    if (Game.phase == 'cleaning') {
+        DayEvents.tick(); // the dragon snores, the intern tags along
+    }
     //console.log(this.x+','+this.y);
     if (this.spreadCount>0 && this.spreading != null) {
         let newMess = makeMess(this.x,this.y,this.spreading);
@@ -532,6 +535,8 @@ Player.prototype.moveTo = function(x,y) {
 
     if (newKey in Game.map && Game.map[newKey].passThrough()) {
         Game.map[newKey].entity=this;
+        this.prevX=this.x;
+        this.prevY=this.y;
         this.x=x;
         this.y=y;
         if (Game.map[newKey].mess != null) {

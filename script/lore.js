@@ -149,7 +149,14 @@ var Lore = {
     amuletMemo: "The Amulet of Yendor has been stolen again. Rodney says it's fine, he has spares.",
 
     // What a shift event says when it starts.
+    dragonLines: [
+        "The dragon snores. A little flame curls out of its nose. It does not move.",
+        "The dragon mumbles \"five more minutes...\" and hugs its tail tighter.",
+    ],
     eventNews: {
+        flood: "Somebody used the fountain as a bathtub again. It burst. Bring the squeegee!",
+        dragon: "A dragon from the night shift fell asleep in a corridor. Do not wake it. Squeeze past.",
+        intern: "Say hi to Gribble, our new intern! Gribble will shadow you today. Gribble is very eager.",
         inspector: "A health inspector is visiting the staff lounge today. Better make it shine!",
         birthday: "It's {monster}'s birthday today! There's cake in the lounge.",
         mimicStain: "One of today's stains looks... suspiciously smug.",

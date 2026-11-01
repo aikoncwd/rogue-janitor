@@ -33,6 +33,7 @@ const DEFAULT_FILES = [
     'script/achievements.js',
     'script/shop.js',
     'script/inventory.js',
+    'script/events.js',
 ];
 
 function makeContext() {
