@@ -275,6 +275,8 @@ Pet.prototype.petAction = function(action) {
             break;
         case 'pet':
             this.doAnimation('pet');
+            Game.player.wait(1000);
+            break;
         case 'hug':
             this.doAnimation('hug');
             //this.runAnimation();

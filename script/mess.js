@@ -182,7 +182,7 @@ function makeMess(x,y,name) {
         newMess = new Mess(x,y,';','#ccc',"#000","Smashed Statue",12,null,0,"","fix");
         break;
         case 'SmashedCandle':
-        newMess = new Mess(x,y,'/','#ff0',"#000","Smashed Candleabrum",12,null,0,"","fix");
+        newMess = new Mess(x,y,'/','#ff0',"#000","Smashed Candelabrum",12,null,0,"","fix");
         break;
         case 'SmashedBarrel':
         newMess = new Mess(x,y,'%','#a62',"#000","Smashed Barrel",12,"Splinters",2,"","fix");

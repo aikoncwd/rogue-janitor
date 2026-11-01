@@ -134,7 +134,7 @@ var ConversationBuilder = {
                                 {text:"That's real. I'm glad you're doing alright, though :)",any:4},
                                 {text:"Oof. I'm sorry to hear that. I'm having a rough time, too. My anxiety is through the roof.",any:5},
                                 {text:"I'm having a hard time today. My anxiety is through the roof.",any:5},
-                                {text:"Is it okay if I talk it?",y:7,n:6},
+                                {text:"Is it okay if I talk about it?",y:7,n:6},
                                 {text:"That's legit! Maybe we can chat another time :)",any:-1},
                                 {text:"I'm terrified I'll just never amount to anything, and nothing I do will ever matter.",any:8},
                                 {text:"And like... what if other folks in the dungeon are only pretending to be nice to me?",any:9},
@@ -186,10 +186,10 @@ var ConversationBuilder = {
                             {
                                 text: "Heck yeah! What colour do you think I should go with?",
                                 "How about a nice dark purple?": 3,
-                                "Lets make everything red!": 4,
-                                "Hmm... Lets make it green!": 5,
+                                "Let's make everything red!": 4,
+                                "Hmm... Let's make it green!": 5,
                                 "Blue, like the sky!": 6,
-                                "Lets make it a nice golden yellow!": 7,
+                                "Let's make it a nice golden yellow!": 7,
                                 "Honestly, it's rustic, but I like the classic colours!": 8,
                                 globalTags:{yendorPoints:20}
                             },
@@ -234,11 +234,11 @@ var ConversationBuilder = {
             ],
             [
                 "The dungeon is run as a workers co-op.",
-                "We used to have a Boss but... well, lets just say these teeth and claws aren't just for show!",
+                "We used to have a Boss but... well, let's just say these teeth and claws aren't just for show!",
                 "I don't know about you, but I for one think things run a lot better when there's no bosses!"
             ],
         ];
-        if (Game.unionist != null && Game.union != this.name) {
+        if (Game.unionist != null && Game.unionist != speaker.name) {
             possibilities.push([
                 "This dungeon used to have a really bad boss. They were a mean wizard who hoarded wealth and kept docking our pay.",
                 "At some point, it got to be too much.",
@@ -374,7 +374,7 @@ var ConversationBuilder = {
             possibilities.push([
                 "Spitting acid is fun. It is pretty messy though.",
                 "On the bright side, it kills just about any bacteria that might be growing on a surface?",
-                "I havn't been sick in at least a few decades."
+                "I haven't been sick in at least a few decades."
             ]);
         }
 
@@ -435,7 +435,7 @@ var ConversationBuilder = {
         if (speaker.playerInteractions>1) {
             possibilities.push([
                 "I worked some pretty friggin bad jobs before I got this one.",
-                "Capitalism does it's damndest to make us all miserable.",
+                "Capitalism does its damnedest to make us all miserable.",
                 "Makes you think your worth is tied into how well you do your job, and nothing else.",
                 "Well nuts to that! You're awesome for your own sake! We all are!",
                 "Financial circumstance might mean you have to do a bad job, but never forget:",
@@ -497,7 +497,7 @@ var ConversationBuilder = {
                     break;
                 case 1:
                     toReturn = [{ text: "Gee whiz I love dogs. And cats. Humans have good taste in critters.", any: 1, conditions: { animal: false } },
-                    { text: "What's your favourite type of critter?", "I love cats!": 2, "Dog's are good and I like to pet them!": 3, "Rabbits are great!": 4, "Rats are my favourite!": 5, "I love horses. Neigh!": 6, "I'm not really an animal person...": 7 },
+                    { text: "What's your favourite type of critter?", "I love cats!": 2, "Dogs are good and I like to pet them!": 3, "Rabbits are great!": 4, "Rats are my favourite!": 5, "I love horses. Neigh!": 6, "I'm not really an animal person...": 7 },
                     { text: "Wow! Cats! Me too!", any: -1, globalTags: { animal: 'cat' } },
                     { text: "Wow! Dogs! Me too!", any: -1, globalTags: { animal: 'dog' } },
                     { text: "Wow! Rabbits! Me too!", any: -1, globalTags: { animal: 'rabbit' } },
@@ -535,7 +535,6 @@ var ConversationBuilder = {
             }
             breaker++;
         } while (breaker < 20 && this.usedGenericOptions.indexOf(toReturn[0].text)>=0);
-        console.log("convobreaker:"+breaker);
         this.usedGenericOptions.push(toReturn[0].text);
 
         return toReturn;
@@ -805,7 +804,7 @@ var ConversationBuilder = {
             "You've been here for a couple of weeks, and have already made a fantastic impression!",
             "Everyone has banded together, and given you the best gift the dungeon has to offer:",
             "You have been gifted the legendary %c{#ff0}Mop of Yendor%c{}!",
-            "It's mystic energies flow through your hands. You feel like your cleaning abilities have become supercharged. No mess will stand in your way again!",
+            "Its mystic energies flow through your hands. You feel like your cleaning abilities have become supercharged. No mess will stand in your way again!",
             "%c{#ff0}You have won the hearts of your comrades and, by extension, this game. Thank you for playing!%c{}"
         ];
         for (let i = 0; i < victoryScene.length; i++) {
@@ -831,7 +830,7 @@ var ConversationBuilder = {
             ];
             switch(Game.convoTags.dinnerPlan) {
                 default:
-                description.push('The barbeque is so good! Lot of fantastic flamed food!');
+                description.push('The barbeque is so good! Lots of fantastic flamed food!');
                 description.push('The barbeque melts when the hellfire gets a bit too warm. You roast marshmallows on the remains though, so it is still good!');
                 description.push('Who knew monster fire was better than propane AND charcoal? So good!');
                 break;
@@ -846,8 +845,8 @@ var ConversationBuilder = {
                 description.push("Some wicked good music from the 90's plays. Such nostalgia! Wow! ");
                 break;
                 case 'drinks':
-                description.push("You have a beverage called a 'Gin and '"+RandomName(false)+"'. It's surprisingly "+ROT.RNG.getItem(this.words)+"?");
-                description.push("Everyone has a round and boisterously jokes about the days events. It's fun!");
+                description.push("You have a beverage called a 'Gin and "+RandomName(false)+"'. It's surprisingly "+ROT.RNG.getItem(this.words)+"?");
+                description.push("Everyone has a round and boisterously jokes about the day's events. It's fun!");
                 description.push("It's actually pretty quiet; lots of folks stayed in tonight, so it's a relatively quiet night with 3 or 4 of you.");
                 break;
             }

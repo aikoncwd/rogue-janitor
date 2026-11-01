@@ -526,12 +526,13 @@ var Game = {
     cleanPercent: function() {
         let cleaned = Game.messNumbers[1] - Game.messNumbers[0];
         let toReturn = 100 * cleaned / Game.messNumbers[1];
-        if (toReturn > this.coffeeThreshold || toReturn > this.inviteOutThreshold) {
+        let canAsk = function(m) { return m.alive && m.retired && !m.partying && !m.tags.visitor; };
+        if ((toReturn > this.coffeeThreshold || toReturn > this.inviteOutThreshold) && this.monsterList.some(canAsk)) {
             this.coffeeThreshold+=200;
             let sendIndex;
             do {
                 sendIndex = Math.floor(this.monsterList.length * ROT.RNG.getUniform());
-            } while (this.monsterList[sendIndex].alive == false || this.monsterList[sendIndex].retired == false || this.monsterList[sendIndex].partying || this.monsterList[sendIndex].tags.visitor);
+            } while (!canAsk(this.monsterList[sendIndex]));
 
             if (toReturn > this.inviteOutThreshold) {
                 this.inviteOutThreshold+=200;
@@ -553,7 +554,7 @@ var Game = {
     },
 
     makeTheme: function(hueint,sat=0.5) {
-        hue=parseFloat(hueint)/360.0;
+        let hue=parseFloat(hueint)/360.0;
         //offsethue=parseFloat(hueint+60 % 360)/360.0;
         var colors=[
             ROT.Color.hsl2rgb([hue,0.1*sat,0.6]),
@@ -856,13 +857,13 @@ var Game = {
                 //console.log(key);
                 if (i>=0 && i<roomSize[0] && j>=0 && j<roomSize[1]) {
                     //this.map[key]='.';
-                    this.map[key] = new Tile(i,j,'.',theme.floorColor,'#000',true,true);
+                    this.map[key] = new Tile(i+roomCorner[0],j+roomCorner[1],'.',theme.floorColor,'#000',true,true);
                     this.freeCells.push(key);
                 }
                 else {
                     //this.map[key]='#';
                     if (!(key in this.map) || !this.map[key].passable) {
-                        this.map[key] = new Tile(i,j,'#',theme.roomWalls[0],theme.roomWalls[1],false,false);
+                        this.map[key] = new Tile(i+roomCorner[0],j+roomCorner[1],'#',theme.roomWalls[0],theme.roomWalls[1],false,false);
                     }
                     if (i+roomCorner[0] < this.corners[0][0]) {
                         this.corners[0][0] = i+roomCorner[0];
@@ -942,11 +943,11 @@ var Game = {
                                 this.hallCells.push(key);
                             }
                             //this.map[key]='.';
-                            this.map[key] = new Tile(i,j,'.',theme.floorColor,'#000',true,true);
+                            this.map[key] = new Tile(lastCenter[0]+i,lastCenter[1]+j,'.',theme.floorColor,'#000',true,true);
                         }
                         else if (!(key in this.map)) {
                             //this.map[key]='#';
-                            this.map[key] = new Tile(i,j,'#',theme.corridorWalls[0],theme.corridorWalls[1],false,false);
+                            this.map[key] = new Tile(lastCenter[0]+i,lastCenter[1]+j,'#',theme.corridorWalls[0],theme.corridorWalls[1],false,false);
                         }
                     }
                 }
@@ -982,7 +983,6 @@ var Game = {
                     best[0]=i;
                     best[1]=j;
                     best[2]=dist;
-                    console.log(best[0]+','+best[1]+','+best[2]);
                 }
             }
         }
@@ -1000,7 +1000,6 @@ var Game = {
         this.map[key2].important=true;
         this.map[key2].char='>';
         this.stairs=[ [center1[0],center1[1],best[0]] , [center2[0],center2[1],best[1]] ];
-        console.log(this.stairs);
     },
 
     getCenter(roomID) {
@@ -1124,7 +1123,7 @@ var Game = {
                 doorSound="You hear the sound of thumping.";
                 break;
                 case 'horse':
-                doorSound="You hear sound of galloping."
+                doorSound="You hear the sound of galloping."
                 break;
             }
             this.addSecretRoom([5,5],this.makeTheme(200,0.75),1,doorSound);
@@ -1246,7 +1245,6 @@ var Game = {
                 }
                 if (suitableForTable) {
                     //let key=x+','+y;
-                    console.log("??");
                     GetEntity('Table', x, y);
                 }
             }
@@ -1372,7 +1370,7 @@ var Game = {
                 let letters = ['*', 'E', 'X', 'I', 'T', '*'];
                 for (let ii = -3; ii < 3; ii++) {
                     let testKey = (exitDoor.x + best[0] + ii) + ',' + (exitDoor.y + best[1]);
-                    Game.map[testKey] = new Tile(best[0], best[1], letters[ii + 3], '#fff', '#000', false, false);
+                    Game.map[testKey] = new Tile(exitDoor.x + best[0] + ii, exitDoor.y + best[1], letters[ii + 3], '#fff', '#000', false, false);
                     Game.map[testKey].lastSeen = letters[ii + 3];
                 }
             }
@@ -1393,7 +1391,8 @@ var Game = {
     randomFarFromPlayer: function(tries=10) {
         var best=[0,0,0];
         var i=0;
-        while (i<tries) {
+        var attempts=0;
+        while (i<tries && attempts++ < 1000) { // give up rather than hang on a crowded map
             let testKey = ROT.RNG.getItem(this.freeCells);
 
             if (testKey in Game.map && Game.map[testKey].entity == null && Game.map[testKey].mess==null && !(Game.map[testKey].important)) {
@@ -1429,14 +1428,12 @@ var Game = {
         }
 
         if ('questItemGot' in conditions && speaker!=null) {
-            console.log(conditions.questItemGot+','+speaker.questItem.pickedUp);
             if (speaker.questItem != null && conditions.questItemGot == speaker.questItem.pickedUp) {
                 success&=true;
             }
             else {
                 success=false;
             }
-            console.log("success:"+success);
         }
 
         let keys = Object.getOwnPropertyNames(conditions);

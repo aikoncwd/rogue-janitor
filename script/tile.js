@@ -36,7 +36,7 @@ Tile.prototype.getArt = function() {
     if (this.secretDoor != null && Game.phase == 'cleaning') {
         let dist = Math.abs(this.x - Game.player.x)+Math.abs(this.y-Game.player.y);
         let probability=1.0/parseFloat(0.5*dist);//Math.pow(0.7,parseFloat(dist));
-        if (ROT.RNG.getUniform()<probability) {
+        if (Flavor.rng.getUniform()<probability) { // drawing must not move the world RNG
             Game.sendMessage(this.secretDoor.sound,false);
         }
     }

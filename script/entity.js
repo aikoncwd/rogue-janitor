@@ -213,8 +213,12 @@ Entity.prototype.cancelConvo = function() {
     if (this.convos.length<=0) {
         this.convos.unshift([{action:"is vaping.",any:-1}]);
     }
-    Game.player.endTurn();
-    //Game.drawMap();
+    if (Game.engine._lock > 0) {
+        Game.player.endTurn();
+    }
+    else {
+        Game.drawMap(); // opened from a comrade's turn: the engine is already running
+    }
 }
 
 Entity.prototype.progressConvo = function(newInnerDex) {
@@ -392,8 +396,7 @@ Entity.prototype.handleEvent = function(e) {
         }
     }
     if (success) {
-        Game.drawMap();
-        this.doConvo();
+        Game.drawMap(); // runs this.doConvo() for the new node
     }
 }
 
@@ -425,8 +428,10 @@ Entity.prototype.cleanerAct = function() {
             } while(!acceptable);
             this.convoIndex=choice;
             if (choice>=0) {
-                //this.convoInnerDex=0;
-                this.progressConvo(0);
+                // open directly: the 200 ms key debounce must never swallow the first line
+                this.convoInnerDex=0;
+                this.lastConvoChange=Date.now();
+                Sfx.play('blip');
             }
         }
         else {
@@ -610,7 +615,7 @@ Entity.prototype.moveTo=function(x,y,questing) {
                     Game.map[newKey].open=true;
                     return true;
                 }
-                if (Game.map[newKey].entity != null && Game.map[newKey].entity instanceof Entity && oldKey in Game.map && Game.map[oldKey]==this) {
+                if (Game.map[newKey].entity != null && Game.map[newKey].entity instanceof Entity && oldKey in Game.map && Game.map[oldKey].entity==this) {
                     Game.map[oldKey].entity=null;
                     if (Game.map[newKey].entity.moveTo(this.x,this.y)) {
                         Game.map[newKey].entity=this;
@@ -860,7 +865,7 @@ function GetEntity(name,x,y) {
         newEntity = new Entity(x,y,'\u03A9','#ccc','Statue',1,{loot:true,mess:'SmashedStatue'});
         break;
         case 'Candleabra':
-        newEntity = new Entity(x,y,'\u03A8','#ff0','Candleabrum',1,{loot:true,mess:'SmashedCandle',splashes:'Scorch'});
+        newEntity = new Entity(x,y,'\u03A8','#ff0','Candelabrum',1,{loot:true,mess:'SmashedCandle',splashes:'Scorch'});
         break;
         case 'ExitDoor':
         newEntity = new Entity(x,y,'X','#fff','Exit Door',1,{exit:true},1,'#c33',true);
