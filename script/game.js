@@ -289,52 +289,8 @@ var Game = {
         Music.play(this.musicTrack());
         this.display.clear();
 
-        if (Game.player.instructions) {
-            let instructions=[
-                ["--- Rogue Janitor ---",0],
-                ["A game about cleaning dungeons.",0],
-                ["",0],
-                ["--- Movement ---",0],
-                ["Move with arrow keys, numpad, or with VI keys (hjkl, yubn)",0],
-                ["Wait with %c{#ff0}.%c{} or %c{#ff0}5%c{}",24],
-                ["",0],
-                ["--- Cleaning ---",0],
-                ["(%c{#ff0}M%c{})op messes.",12],
-                ["(%c{#ff0}P%c{})ick up or (%c{#ff0}G%c{})et garbage or other items.",24],
-                ["(%c{#ff0}F%c{})ix or (%c{#ff0}R%c{})epair broken furniture.",24],
-                ["Va(%c{#ff0}Z%c{})uum fluff around you (from day 2).",12],
-                ["All cleaning methods affect tiles you are next to.",0],
-                ["All cleaning methods can reveal hidden doors!",0],
-                ["Careful: slime puddles are slippery!",0],
-                ["",0],
-                ["--- Other ---",0],
-                ["(%c{#ff0}O%c{})pen or (%c{#ff0}C%c{})lose doors.",24],
-                ["(%c{#ff0}EX%c{})amine your surroundings.",12],
-                ["Walk into monsters and other objects to interact with them.",0],
-                ["Toggle sound with %c{#ff0}V%c{}, music with %c{#ff0}T%c{}",24],
-                ["Zoom with %c{#ff0}+%c{} and %c{#ff0}-%c{}, automatic size with %c{#ff0}0%c{}",36],
-                ["Display this help prompt with %c{#ff0}?%c{}",12]
-            ];
-            let halfLength=Math.floor(instructions.length/2);
-            for (let i=0;i<instructions.length;i++) {
-                let halfwidth=Math.floor((instructions[i][0].length - instructions[i][1])/2);
-                this.display.drawText(this.offset[0]-halfwidth,this.offset[1]-halfLength+i,instructions[i][0]);
-            }
-            return;
-        }
-
         if (this.phase == 'title') {
             Title.draw();
-            return;
-        }
-
-        if (this.phase == 'cleaning' && Shop.isOpen) {
-            Shop.draw();
-            return;
-        }
-
-        if (this.phase == 'cleaning' && Inventory.isOpen) {
-            Inventory.draw();
             return;
         }
 
@@ -495,6 +451,64 @@ var Game = {
             Game.player.talking.doConvo();
         }
         this.drawLog();
+        this.drawWindows();
+    },
+
+    // The help, Mimsy's shop and your pockets open as windows over the map.
+    drawWindows: function() {
+        if (this.phase != 'cleaning') {
+            return;
+        }
+        if (this.player.instructions) {
+            Ui.window({
+                id: 'help', title: 'Rogue Janitor: How to Clean', width: 64,
+                body: this.helpLines(),
+                footer: Ui.key('[↑↓]') + ' scroll   ' + Ui.key('[?]') + ' or ' + Ui.key('[Esc]') + ' back to work',
+            });
+        }
+        else if (Shop.isOpen) {
+            Shop.draw();
+        }
+        else if (Inventory.isOpen) {
+            Inventory.draw();
+        }
+    },
+
+    helpLines: function() {
+        let k = function(key) { return '%c{#ff0}' + key + '%c{}'; };
+        let head = function(t) { return '%c{#0ff}' + t + '%c{}'; };
+        let row = function(keys, what) { return k(keys) + ' '.repeat(Math.max(1, 12 - keys.length)) + what; };
+        let later = function(day) { return ' %c{#777}(day ' + day + ')%c{}'; };
+        return [
+            '%c{#bbb}A game about cleaning dungeons. Nobody dies, nobody loses.%c{}',
+            '',
+            head('MOVING'),
+            row('arrows', 'move (also numpad, WASD or hjkl yubn)'),
+            row('. or 5', 'wait a turn (numpad 5 and numpad . too)'),
+            '',
+            head('CLEANING') + ' %c{#777}(the tiles next to you)%c{}',
+            row('M', 'mop stains, puddles and footprints'),
+            row('P or G', 'pick up litter and lost things'),
+            row('F or R', 'fix broken furniture'),
+            row('Z', 'vacuum all the fluff around you') + later(2),
+            row('M on water', 'the squeegee clears the whole puddle') + later(3),
+            row('M on stain', 'the scrub brush: tough ones in one pass') + later(4),
+            '%c{#777}Cleaning can reveal secret doors. Slime is slippery!%c{}',
+            '%c{#777}Clean one mess after another (3 turns apart at most)%c{}',
+            '%c{#777}to build a combo. Walking through dirt breaks it.%c{}',
+            '',
+            head('EVERYTHING ELSE'),
+            row('walk into', 'chat with colleagues, pet animals, shop'),
+            row('E or X', 'examine what is around you'),
+            row('O / C', 'open / close doors'),
+            row('I', 'your pockets and achievements'),
+            row('#', 'extended commands, for the curious'),
+            '',
+            head('SETTINGS'),
+            row('V / T', 'sound on/off / music on/off'),
+            row('+ / -', 'zoom in / out   ' + k('0') + ' automatic size'),
+            row('?', 'this help'),
+        ];
     },
 
     // True while a comrade has a quest you have not taken yet: a favour they are about
@@ -881,6 +895,10 @@ var Game = {
         this.staffRoomID=-1;
         while (this.freeCells.length<targSize && this.rooms.length<maxRooms && breaker<10000) {
             let roomSize = [ Math.floor((minMax[1]-minMax[0])*ROT.RNG.getUniform())+minMax[0], Math.floor((minMax[1]-minMax[0])*ROT.RNG.getUniform())+minMax[0] ];
+            let lastRoom = this.rooms.length + 1 >= maxRooms;
+            if (lastRoom) {
+                roomSize = this.loungeSize(roomSize);
+            }
             let roomCorner=[0,0];
             var breaker2=0;
             while (!this.checkFits(roomSize,roomCorner,spacing)) {
@@ -890,6 +908,9 @@ var Game = {
                 if (this.freeCells.length + roomSize[0] * roomSize[1] >= targSize) {
                     roomSize[0]=minMax[1];
                     roomSize[1] = minMax[1];
+                }
+                if (lastRoom) {
+                    roomSize = this.loungeSize(roomSize);
                 }
                 breaker2++;
             }
@@ -911,6 +932,13 @@ var Game = {
         }
         this.staffRoomID = this.rooms.length-1;
         this.player.moveTo(this.roomCenters[this.roomCenters.length-1][0],this.roomCenters[this.roomCenters.length-1][1]);
+    },
+
+    // The last room becomes the staff lounge: big enough for everyone, Mimsy and
+    // a good few decorations.
+    LOUNGE_MIN: [10, 8],
+    loungeSize: function(size) {
+        return [Math.max(size[0], this.LOUNGE_MIN[0]), Math.max(size[1], this.LOUNGE_MIN[1])];
     },
 
     addDoors: function(theme=this.dungeonTheme) {

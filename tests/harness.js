@@ -17,6 +17,7 @@ const DEFAULT_FILES = [
     'script/effects.js',
     'script/scenes.js',
     'script/title.js',
+    'script/ui.js',
     'script/game.js',
     'script/player.js',
     'script/tile.js',

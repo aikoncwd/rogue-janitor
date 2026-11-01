@@ -375,9 +375,9 @@ function makeMess(x,y,name) {
         case 'Cello':
         newMess = new Mess(x,y,'\u03A6','#fa0','#000','Cello',50,null,0,"",'get');
         break;
-        case 'Gender':
+        case 'YoYo':
         let color=ROT.Color.toHex(ROT.Color.hsl2rgb([ROT.RNG.getUniform(),1,0.5]));
-        newMess = new Mess(x,y,'\u26A7',color,'#000','Gender',50,null,0,"",'get');
+        newMess = new Mess(x,y,'\u0398',color,'#000','Lucky Yo-Yo',50,null,0,"",'get');
         break;
     }
 
@@ -422,7 +422,7 @@ var TOUGH_STAINS = {
 };
 
 function QuestMess(dropper,x,y) {
-    var options=['Purse','Vuvuzela','Umbrella','DiceBag','Cello','Gender'];
+    var options=['Purse','Vuvuzela','Umbrella','DiceBag','Cello','YoYo'];
     if (dropper.species=='Dragon') {
         options.push('DiceBag');
         options.push('DiceBag');

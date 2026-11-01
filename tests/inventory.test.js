@@ -34,7 +34,7 @@ test('I opens and Esc closes', () => {
     const ctx = cleaningDay();
     ctx.__press(73);
     assert.strictEqual(ctx.Inventory.isOpen, true);
-    assert.match(drawnText(ctx), /POCKETS/);
+    assert.match(drawnText(ctx), /Your Pockets/);
     ctx.__press(27);
     assert.strictEqual(ctx.Inventory.isOpen, false);
 });
@@ -58,7 +58,9 @@ test('equipping renames the vacuum in messages', () => {
     G.day = 2;
     G.inventory = [{ kind: 'tool', id: 'vacTurbo', name: 'Turbo-Vac 3000', tool: 'vacuum', desc: 'No effect.' }];
     ctx.__press(73);
-    ctx.__press(65, 97); // a: equip
+    ctx.__press(65, 97, 'a'); // a: pick it
+    assert.strictEqual(G.equipped.vacuum, undefined, 'a letter only picks the item');
+    ctx.__press(13); // Enter: equip
     assert.strictEqual(G.equipped.vacuum, 'vacTurbo');
     ctx.__press(27);
     clearAround(ctx);
@@ -73,10 +75,11 @@ test('decor can be marked to place', () => {
     const G = ctx.Game;
     G.inventory = [{ kind: 'decor', id: 'plant', name: 'Potted Mandrake (Muted)', desc: 'Decorative.' }];
     ctx.__press(73);
-    ctx.__press(65, 97);
+    ctx.__press(65, 97, 'a');
+    ctx.__press(13);
     assert.strictEqual(G.inventory[0].placed, true);
     assert.match(drawnText(ctx), /in the lounge/);
-    ctx.__press(65, 97);
+    ctx.__press(13);
     assert.strictEqual(G.inventory[0].placed, false);
 });
 
@@ -84,5 +87,7 @@ test('rings show their lore', () => {
     const ctx = cleaningDay();
     ctx.Game.inventory = [{ kind: 'ring', name: 'a jade ring', lore: 'Ring of Slow Digestion, for long shifts.' }];
     ctx.__press(73);
+    assert.doesNotMatch(drawnText(ctx), /Slow Digestion/, 'no descriptions until you pick an item');
+    ctx.__press(65, 97, 'a');
     assert.match(drawnText(ctx), /Slow Digestion/);
 });

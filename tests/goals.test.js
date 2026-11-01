@@ -112,7 +112,8 @@ test('long goals wrap in the panel instead of losing the room name', () => {
 test('each goal gets its own memo line', () => {
     const ctx = cleaningDay();
     ctx.Game.day = 2;
+    ctx.Game.log.clear(); // only the memos of this morning
     ctx.DayEvents.start();
-    const memos = ctx.Game.log.recent(2).map(l => strip(l.text)).filter(t => /^MEMO: Goal:/.test(t));
+    const memos = ctx.Game.log.lines.map(l => strip(l.text)).filter(t => /^MEMO: Goal:/.test(t)); // other memos may follow
     assert.strictEqual(memos.length, 2);
 });

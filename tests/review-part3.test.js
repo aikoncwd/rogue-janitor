@@ -36,6 +36,7 @@ test('every inventory item can be used, including the 9th and the 24th', () => {
     assert.ok(!letters.includes('i') && !letters.includes('x'), 'i and x close the screen, so they are not item letters');
     const ninth = ctx.Inventory.items()[8];
     ctx.__press(letters[8].toUpperCase().charCodeAt(0), letters[8].charCodeAt(0));
+    ctx.__press(13);
     assert.strictEqual(ctx.Inventory.isOpen, true);
     assert.strictEqual(ninth.placed, true);
     const text = (() => { G.drawMap(); return ctx.__drawn.filter(d => d.text).map(d => strip(d.text)).join('\n'); })();

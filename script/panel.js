@@ -225,11 +225,6 @@ var Panel = {
             ];
             tail = ['', '%c{#fff}── MESS LEFT ──%c{}'].concat(messLines);
             messTail = tail;
-            // the minimap, only when the lounge list keeps a few rows
-            let spare = maxRows - head.length - tail.length - hints.length - Math.min(list.length, 3) - 2;
-            if (spare >= 4) {
-                tail = tail.concat(['', '%c{#fff}── MAP ──%c{}']).concat(this.minimapLines(w, Math.min(this.MINIMAP_MAX_ROWS, spare)));
-            }
             tail = tail.concat(hints);
         }
         let room = maxRows - head.length - tail.length;
@@ -242,7 +237,7 @@ var Panel = {
         return head.concat(this.listLines(list, room)).concat(tail);
     },
 
-    // A cleaning panel that does not fit: no minimap and no lounge list. The help
+    // A cleaning panel that does not fit: no lounge list. The help
     // keys always stay; then the shift basics (day, clean %, nearest mess), then
     // MESS LEFT, then whatever else of the top part fits (combo, room, goals...).
     shortLines: function (head, mess, hints, maxRows) {
@@ -277,59 +272,6 @@ var Panel = {
             k++;
         }
         return [line, '%c{#555}·%c{} ' + this.fit(words.slice(k).join(' '), w - 2)];
-    },
-
-    MINIMAP_MAX_ROWS: 8,
-
-    // A scaled-down map of what you have explored: @ you, ░ explored floor,
-    // ▒ explored floor with mess left, the lounge in warm yellow.
-    minimapLines: function (width, height) {
-        let c = Game.corners;
-        let w = Math.max(1, width - 1);
-        let dw = c[1][0] - c[0][0] + 1;
-        let dh = c[1][1] - c[0][1] + 1;
-        let sx = Math.max(1, Math.ceil(dw / w));
-        let sy = Math.max(1, Math.ceil(dh / height));
-        let cols = Math.ceil(dw / sx);
-        let rows = Math.ceil(dh / sy);
-        let lounge = Game.rooms[Game.staffRoomID];
-        let out = [];
-        for (let r = 0; r < rows; r++) {
-            let line = '%c{#333}|%c{}';
-            for (let q = 0; q < cols; q++) {
-                let x0 = c[0][0] + q * sx, y0 = c[0][1] + r * sy;
-                let seen = false, mess = false, me = false;
-                for (let x = x0; x < x0 + sx; x++) {
-                    for (let y = y0; y < y0 + sy; y++) {
-                        if (x == Game.player.x && y == Game.player.y) {
-                            me = true;
-                        }
-                        let t = Game.map[x + ',' + y];
-                        if (t && t.passable && t.lastSeen != null && t.lastSeen != ' ') {
-                            seen = true;
-                            if (t.mess != null) {
-                                mess = true;
-                            }
-                        }
-                    }
-                }
-                let inLounge = lounge && x0 + sx > lounge[0] && x0 < lounge[2] && y0 + sy > lounge[1] && y0 < lounge[3];
-                if (me) {
-                    line += '%c{#ff0}@%c{}';
-                }
-                else if (!seen) {
-                    line += ' ';
-                }
-                else if (mess) {
-                    line += '%c{#a55}▒%c{}';
-                }
-                else {
-                    line += '%c{' + (inLounge ? '#a83' : '#666') + '}░%c{}';
-                }
-            }
-            out.push(line);
-        }
-        return out;
     },
 
     barColor: function (pct) {

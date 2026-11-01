@@ -132,15 +132,18 @@ var Achievements = {
             if (Game.display != null && Effects.canRedraw()) {
                 Game.drawMap();
             }
-            if (self.queue.length > 0 && self.canShow()) {
+            if (self.queue.length > 0 && self.canShow() && Effects.canRedraw()) {
                 self.scheduleRedraw(); // otherwise the next drawToast() starts it again
             }
         }, 500);
     },
 
-    // Toasts only show on the plain cleaning screen (no conversation, shop or pockets).
+    // Toasts show over the map while you clean or chat (not over the shop, the
+    // pockets, the help or a black night-time screen). In a chat the toast goes
+    // when you press a key after its time is up.
     canShow: function () {
-        return Game.phase == 'cleaning' && Game.player != null && Game.player.talking == null &&
+        return Game.phase == 'cleaning' && Game.player != null && !Game.player.instructions &&
+            !(Game.player.talking != null && Game.onBlackScreen()) &&
             !(typeof Shop != 'undefined' && Shop.isOpen) && !(typeof Inventory != 'undefined' && Inventory.isOpen);
     },
 
@@ -177,6 +180,27 @@ var Achievements = {
         Game.display.drawText(x0 + 2, y0 + 1, '%c{#ff0}%b{#222}' + t.title);
         Game.display.drawText(x0 + 2, y0 + 2, '%c{#fff}%b{#222}' + t.name);
         this.scheduleRedraw(); // to take it down when its time is up
+    },
+
+    // For the pockets' achievements tab: name, then the description below it.
+    entries: function (width) {
+        let got = this.load();
+        let out = [];
+        this.LIST.forEach(function (a) {
+            if (got[a.id]) {
+                out.push('%c{#ff0}★ ' + Panel.fit(a.name, width - 2) + '%c{}');
+                out.push('  %c{#bbb}' + Panel.fit(a.desc, width - 2) + '%c{}');
+            }
+            else if (a.hidden) {
+                out.push('%c{#555}☆ ???%c{}');
+                out.push('  %c{#555}A secret. Keep poking around.%c{}');
+            }
+            else {
+                out.push('%c{#888}☆ ' + Panel.fit(a.name, width - 2) + '%c{}');
+                out.push('  %c{#666}' + Panel.fit(a.desc, width - 2) + '%c{}');
+            }
+        });
+        return out;
     },
 
     listLines: function (width) {

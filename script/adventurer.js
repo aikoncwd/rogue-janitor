@@ -349,21 +349,9 @@ Adventurer.prototype.doEvent = function(name, outcome=null) {
         }
         break;
         case 'scroll':
-        outcome = outcome || ROT.RNG.getItem(['teleport', 'loss', 'menu', 'confetti']);
+        outcome = outcome || ROT.RNG.getItem(['loss', 'menu', 'confetti']);
         makeMess(this.x, this.y, 'SpentScroll');
-        if (outcome == 'teleport') {
-            let spots = [];
-            for (let key in Game.map) {
-                let t = Game.map[key];
-                if (t.passable && t.entity == null && t.door == null && !t.important) {
-                    spots.push(key);
-                }
-            }
-            let parts = ROT.RNG.getItem(spots).split(',');
-            this.moveTo(parseInt(parts[0]), parseInt(parts[1]));
-            this.recalculate = true;
-        }
-        else if (outcome == 'confetti') {
+        if (outcome == 'confetti') {
             this.splat('LoosePages', 1, 3);
         }
         Invasion.event('scroll', {outcome: outcome});

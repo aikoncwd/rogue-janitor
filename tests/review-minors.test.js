@@ -183,14 +183,15 @@ test('a secret door is not a wall for lounge decorations', () => {
 test('decorations that did not fit say "no room today"', () => {
     const ctx = cleaningDay();
     const G = ctx.Game;
-    for (let i = 0; i < 9; i++) {
+    const total = ctx.Decor.MAX + 3;
+    for (let i = 0; i < total; i++) {
         G.inventory.push({ kind: 'decor', id: 'd' + i, name: 'Gnome ' + i, desc: 'A gnome.', placed: true });
     }
     const n = ctx.Decor.place();
-    assert.ok(n <= ctx.Decor.MAX && n < 9);
+    assert.ok(n <= ctx.Decor.MAX && n < total);
     const text = ctx.Inventory.lines().map(strip).join('\n');
     assert.strictEqual((text.match(/\[in the lounge\]/g) || []).length, n, text);
-    assert.strictEqual((text.match(/no room today/g) || []).length, 9 - n, text);
+    assert.strictEqual((text.match(/no room today/g) || []).length, total - n, text);
 });
 
 // 6. toast on a narrow map

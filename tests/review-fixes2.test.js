@@ -28,11 +28,12 @@ test('visitors are never asked to coffee or dinner', () => {
 });
 
 test('a hint never hides a colleague request', () => {
-    const ctx = cleaningDay();
+    let checked = 0;
+    for (const seed of [1234, 1, 2, 3, 4, 5]) {
+    const ctx = cleaningDay(seed);
     ctx.Flavor.chance = () => true;
     ctx.Requests.CHANCE = 1;
     const hints = [].concat(...Object.values(ctx.Lore.hints));
-    let checked = 0;
     for (const m of ctx.Game.monsterList.filter(m => m.alive && !m.tags.visitor)) {
         m.metPlayer = true;
         ctx.ConversationBuilder.buildConvos(m);
@@ -42,6 +43,7 @@ test('a hint never hides a colleague request', () => {
             assert.ok(iHint < iOffer, 'the offer is heard first');
             checked++;
         }
+    }
     }
     assert.ok(checked > 0, 'at least one colleague had both');
 });

@@ -77,7 +77,9 @@ var Shop = {
     // Each morning: Mimsy takes a spot in the lounge and sets out today's stock.
     place: function () {
         this.isOpen = false;
-        this.stock = Game.dayRng(3).shuffle(Lore.shopItems.slice()).slice(0, this.STOCK_SIZE).map(function (i) { return Object.assign({}, i); });
+        let self = this;
+        let fresh = Lore.shopItems.filter(function (i) { return !self.owned(i); }); // nothing you already bought
+        this.stock = Game.dayRng(3).shuffle(fresh).slice(0, this.STOCK_SIZE).map(function (i) { return Object.assign({}, i); });
         let spots = this.loungeSpots();
         if (spots.length == 0) {
             this.keeper = null;
@@ -107,7 +109,7 @@ var Shop = {
         if (item.sold) {
             return '"Sold out! I only had the one. Of course I did."';
         }
-        if (item.kind == 'tool' && Game.inventory.some(function (i) { return i.id == item.id; })) {
+        if (this.owned(item)) {
             return '"You already have the ' + item.name + '! One is plenty. Zero would also be plenty."';
         }
         if (Game.zorkmids < item.price) {
@@ -145,23 +147,50 @@ var Shop = {
         return true;
     },
 
+    WIDTH: 62,
+    MESSAGE_ROWS: 3,
+
+    // Non-food things you already carry (bought on an earlier day).
+    owned: function (item) {
+        return item.kind != 'food' && Game.inventory.some(function (i) { return i.id == item.id; });
+    },
+
+    // The stock, one line per item and one for its description.
     lines: function () {
-        let out = ['%c{#fd0}--- Mimsy\'s Perfectly Useless Shop ---%c{}', '', this.lastMessage, '',
-            'Your wallet: %c{#ff0}' + Game.zorkmids + ' zm%c{}', ''];
+        let inner = this.WIDTH - 4;
+        let out = [];
         for (let i = 0; i < this.stock.length; i++) {
             let item = this.stock[i];
             let letter = String.fromCharCode(97 + i);
-            let price = item.sold ? '%c{#777}sold%c{}' : (Game.zorkmids >= item.price ? '%c{#ff0}' : '%c{#f88}') + item.price + ' zm%c{}';
-            out.push(letter + ') ' + item.name + '  ' + price);
-            out.push('%c{#777}   ' + item.desc + '%c{}');
+            let price;
+            if (item.sold) {
+                price = '%c{#777}sold%c{}';
+            }
+            else if (this.owned(item)) {
+                price = '%c{#777}owned%c{}';
+            }
+            else {
+                price = (Game.zorkmids >= item.price ? '%c{#ff0}' : '%c{#f88}') + item.price + ' zm%c{}';
+            }
+            let name = Panel.fit(item.name, inner - 4 - 8);
+            let pad = ' '.repeat(Math.max(1, inner - 3 - name.length - Ui.plainLength(price)));
+            out.push('%c{#ff0}' + letter + ')%c{} ' + name + pad + price);
+            out.push('   %c{#777}' + Panel.fit(item.desc, inner - 3) + '%c{}');
         }
-        out.push('');
-        out.push('%c{#777}[a-' + String.fromCharCode(96 + this.stock.length) + '] buy   [Esc] leave the shop%c{}');
         return out;
     },
 
     draw: function () {
-        Title.drawLines(this.lines(), true);
+        let inner = this.WIDTH - 4;
+        let top = ['%c{#fd0}$%c{} %c{#fff}Mimsy says:%c{}']
+            .concat(Ui.fixedLines(this.lastMessage, inner, this.MESSAGE_ROWS, '#ffc'))
+            .concat(['%c{#444}' + '─'.repeat(inner) + '%c{}']);
+        let wallet = 'Your wallet: %c{#ff0}' + Game.zorkmids + ' zm%c{}';
+        Ui.window({
+            id: 'shop', title: 'Mimsy\'s Perfectly Useless Shop', color: '#fd0', width: this.WIDTH,
+            top: top, body: this.lines(), bottom: ['', wallet],
+            footer: Ui.key('[a-' + String.fromCharCode(96 + this.stock.length) + ']') + ' buy   ' + Ui.key('[Esc]') + ' leave the shop',
+        });
     },
 };
 
