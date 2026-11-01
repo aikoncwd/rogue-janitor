@@ -42,7 +42,8 @@ var Game = {
     // -> ~800 over 5 days; lazy ~ 40 + 10 = 50 -> ~250. 650 leaves room for an off day.
     targetPoints:650,
     zorkmids: 0,
-    inventory: [], // things in your pockets: rings for now, shop items later
+    inventory: [], // things in your pockets: rings, shop items, keepsakes
+    equipped: {}, // cosmetic tool skins: {vacuum: itemId, ...}
     turnCount: 0,
     combo: {count: 0, lastTurn: -99, bestToday: 0},
     COMBO_GAP: 3,
@@ -278,6 +279,11 @@ var Game = {
 
         if (this.phase == 'cleaning' && Shop.isOpen) {
             Shop.draw();
+            return;
+        }
+
+        if (this.phase == 'cleaning' && Inventory.isOpen) {
+            Inventory.draw();
             return;
         }
 
@@ -1737,6 +1743,7 @@ var Game = {
         this.yendorPoints = 0;
         this.zorkmids = 0;
         this.inventory = [];
+        this.equipped = {};
         this.run = this.freshRun();
         this.convoTags = {};
         this.unionist = null;

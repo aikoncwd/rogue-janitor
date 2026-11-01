@@ -128,13 +128,13 @@ Player.prototype.clean = function(verb) {
                 let brushed = false;
                 if (verb=='mop' && Game.WATER_KINDS.indexOf(stain.kind) >= 0 && Game.hasTool('squeegee')) {
                     let n = this.squeegee(key);
-                    Game.sendMessage("Shhhhk! You squeegee away " + (n > 1 ? n + " tiles of " : "the ") + stain.displayName() + ".");
+                    Game.sendMessage("Shhhhk! The " + (Inventory.toolName('squeegee') || 'squeegee') + " wipes away " + (n > 1 ? n + " tiles of " : "the ") + stain.displayName() + ".");
                     return;
                 }
                 if (verb=='mop' && stain.passes > 1 && Game.hasTool('brush')) {
                     stain.passes = 0; // the scrub brush does it in one go
                     brushed = true;
-                    Game.sendMessage("Your scrub brush makes short work of the " + stain.displayName() + ".");
+                    Game.sendMessage("Your " + (Inventory.toolName('brush') || 'scrub brush') + " makes short work of the " + stain.displayName() + ".");
                 }
                 if (verb=='mop' && !stain.scrub()) {
                     let left = stain.passes;
@@ -199,6 +199,9 @@ Player.prototype.clean = function(verb) {
                 }
                 if (tool == 'mop' && EasterEggs.mopName() != null && Flavor.chance(0.2)) {
                     Game.sendMessage("You swish " + EasterEggs.mopName() + ".");
+                }
+                else if (tool == 'mop' && Inventory.toolName('mop') != null && Flavor.chance(0.2)) {
+                    Game.sendMessage("The " + Inventory.toolName('mop') + " swishes with exactly the same results. Stylishly.");
                 }
                 this.removeMess(key, tool, sound);
                 return;
@@ -285,7 +288,7 @@ Player.prototype.vacuum = function() {
         Achievements.unlock('vacuum4');
     }
     Game.comboHit(); // one press, one link in the chain
-    Game.sendMessage("VRRRRRM! The vacuum swallows " + n + (n > 1 ? " bits of fluff." : " bit of fluff."));
+    Game.sendMessage("VRRRRRM! The " + (Inventory.toolName('vacuum') || 'vacuum') + " swallows " + n + (n > 1 ? " bits of fluff." : " bit of fluff."));
     return true;
 };
 
@@ -371,6 +374,10 @@ Player.prototype.handleEvent = function(e) {
         Shop.handleKey(e); // the shop screen owns the keys while it is open
         return;
     }
+    if (Inventory.isOpen) {
+        Inventory.handleKey(e);
+        return;
+    }
     if (EasterEggs.handleKey(e)) {
         return; // typing a #command or answering the quit question
     }
@@ -420,6 +427,10 @@ Player.prototype.handleEvent = function(e) {
             case 70:
             this.clean('fix');
             this.endTurn();
+            return;
+            // i: your pockets
+            case 73:
+            Inventory.openInv();
             return;
             // z: the vacuum (from day 2)
             case 90:

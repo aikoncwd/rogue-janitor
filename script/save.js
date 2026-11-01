@@ -102,6 +102,7 @@ var Save = {
             yendorPoints: G.yendorPoints,
             zorkmids: G.zorkmids,
             inventory: JSON.parse(JSON.stringify(G.inventory || [])),
+            equipped: JSON.parse(JSON.stringify(G.equipped || {})),
             run: JSON.parse(JSON.stringify(G.run)),
             convoTags: this.encode(G.convoTags, seen),
             unionist: G.unionist,
@@ -136,6 +137,7 @@ var Save = {
         G.yendorPoints = data.yendorPoints;
         G.zorkmids = data.zorkmids;
         G.inventory = Array.isArray(data.inventory) ? data.inventory : []; // older saves had none
+        G.equipped = data.equipped && typeof data.equipped == 'object' ? data.equipped : {};
         G.run = data.run;
         G.convoTags = prepared.convoTags;
         G.unionist = data.unionist;
