@@ -101,6 +101,9 @@ var Ending = {
         out.push(row('Zorkmids earned', String(s.zorkmids)));
         let ach = Achievements.count();
         out.push(row('Achievements', (Game.run.newAchievements || []).length + ' new (' + ach.got + ' / ' + ach.total + ')'));
+        if (Game.run.silliest) {
+            out.push(row('Silliest purchase', Panel.fit(Game.run.silliest, W - 25)));
+        }
         let mop = typeof EasterEggs != 'undefined' ? EasterEggs.mopName() : null;
         if (mop) {
             out.push(row('Your mop', mop));

@@ -31,6 +31,7 @@ const DEFAULT_FILES = [
     'script/ending.js',
     'script/goals.js',
     'script/achievements.js',
+    'script/shop.js',
 ];
 
 function makeContext() {

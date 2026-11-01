@@ -276,6 +276,11 @@ var Game = {
             return;
         }
 
+        if (this.phase == 'cleaning' && Shop.isOpen) {
+            Shop.draw();
+            return;
+        }
+
         if (this.phase == 'ending') {
             Ending.draw();
             return;
@@ -1424,7 +1429,7 @@ var Game = {
                 }
             }
         }
-        //let newPet = new Pet(this.player.x,this.player.y,'d','red','Dog');
+        Shop.place(); // Mimsy sets up shop in the lounge
     },
 
     randomFarFromPlayer: function(tries=10) {

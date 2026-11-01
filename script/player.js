@@ -347,6 +347,10 @@ Player.prototype.handleEvent = function(e) {
         EasterEggs.closePrompt();
         return;
     }
+    if (Shop.isOpen) {
+        Shop.handleKey(e); // the shop screen owns the keys while it is open
+        return;
+    }
     if (EasterEggs.handleKey(e)) {
         return; // typing a #command or answering the quit question
     }
