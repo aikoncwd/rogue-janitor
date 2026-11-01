@@ -238,6 +238,7 @@ Player.prototype.removeMess = function(key, tool, sound=null) {
     Game.messNumbers[0]--;
     Game.comboHit();
     Game.checkCleanMilestones();
+    Objectives.check();
     Sfx.play(cleaned.sound || sound || 'mop');
     let parts = key.split(',');
     Effects.clean(tool, parseInt(parts[0]), parseInt(parts[1]), cleaned.color);

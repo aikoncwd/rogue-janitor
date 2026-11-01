@@ -419,6 +419,7 @@ Entity.prototype.cleanerAct = function() {
             this.playerInteractions++;
             Game.yendorPoints+=3;
             this.playerTalkedToday=true;
+            Objectives.check();
         }
         this.metPlayer=true;
         Game.player.talking=this;

@@ -29,6 +29,7 @@ const DEFAULT_FILES = [
     'script/eastereggs.js',
     'script/save.js',
     'script/ending.js',
+    'script/goals.js',
 ];
 
 function makeContext() {

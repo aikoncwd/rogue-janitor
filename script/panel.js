@@ -184,7 +184,11 @@ var Panel = {
             if (Game.comboActive() && Game.combo.count >= 2) {
                 head.push('%c{#0ff}Combo x' + Game.combo.count + '%c{}');
             }
+            head.push('Room: ' + this.fit(Rooms.at(Game.player.x, Game.player.y), w - 6));
             head.push('');
+            if (Objectives.list.length > 0) {
+                head = head.concat(['%c{#fff}── GOALS ──%c{}']).concat(Objectives.lines(w)).concat(['']);
+            }
             let requests = this.requestLines(w);
             if (requests.length > 0) {
                 head = head.concat(['%c{#fff}── REQUESTS ──%c{}']).concat(requests).concat(['']);
