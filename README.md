@@ -1,65 +1,79 @@
 # Rogue Janitor
 
-A game about cleaning dungeons and hanging out with your comrades. It is playable either on [GitHub](https://laurheth.github.io/rogue-janitor/) or on [itch.io](https://laurheth.itch.io/rogue-janitor)
+```
+  ####################################
+  #..............  ~~ .  ,,  ....... #
+  #  .  @-   ,,,   ~~~~    "  §   ♥  #
+  #   . ' .  !   , , ~~  .   $  D z  #
+  ####################################
+     somebody has to clean this up.
+```
 
-## The Dungeon is a messy place...
+**A cozy roguelike about the morning after.** Every night a hero raids the dungeon. Every morning, you grab the mop.
 
-It's your first day of work at your new job: Cleaner of the Comrade Dungeon!
+You are the janitor of the Comrade Dungeon. You don't fight, you don't loot and you can't die. You watch last night's security footage, sigh, and get to work: mop the fake blood, pick up the empty potions, fix the smashed barrels and take long breaks in the staff lounge with the monsters, who are honestly lovely people.
 
-By day, your monstrous colleagues protect treasure and beat up adventurers, but by night, every tile of it must be scrubbed by your expert hands. Or as much of it as you have patience for; it's actually a pretty chill job.
+A run is **five working days**, about the length of a coffee break.
 
-## Socialize with the biggest, softest monsters
+> This is a fork of [laurheth/rogue-janitor](https://github.com/laurheth/rogue-janitor), the original 7DRL-style game by Lauren Hetherington ([play the original](https://laurheth.itch.io/rogue-janitor)). This fork expands it into a short, replayable run full of extra silliness.
 
-Your monstrous friends hang out in the staff lounge while you work. Take lots of breaks to chat with them about their lives, or how their work day went. Sometimes they'll bring you a little something for lunch; it's a very supportive work environment!
+## A day at work
 
-When the day is done, go out for dinner with your colleagues, or have a relaxing night in. The choice is yours!
+1. **Night.** A hero kicks the door in. You aren't playing yet: it's a recording, with a blinking `● REC` and a ticking clock. Fast-forward with `Space` or skip with `Esc`.
+2. **Morning.** A memo on the corkboard sets the day's goals. The mess is all yours: puddles to mop, litter to pick up, furniture to fix, footprints that spread if you walk through them.
+3. **Breaks.** The fainted monsters dust themselves off and retire to the staff lounge. Chat with them, do them favours, find what they lost and spend your zorkmids at Mimsy's shop.
+4. **Evening.** You get a report card and a plaque for your poor back, then a night out (or in) with your colleagues.
 
-## A coffee-break run
+Do well all week and they may hand you the legendary **Mop of Yendor**. Do badly and... you get promoted anyway. Nobody loses here.
 
-A run is five working days, playable in one sitting. Clean well, help your comrades and they may hand you the legendary Mop of Yendor. Clean less and... you get promoted anyway. Nobody loses their job here.
+## Highlights
 
-## Features
-- A five-day run with two happy endings and a results card made for screenshots; press `C` to copy your result as text and share it.
-- The game saves every morning: close the tab and pick up your run from the title screen.
-- Zorkmids: get paid at the end of every shift (better grade, better pay) and pocket the coins the heroes scatter around.
-- An end-of-shift plaque for your back. It's fine. It's just sore.
-- New equipment from HR as the week goes on: a vacuum (`Z`) for fluff, a squeegee for whole puddles and a scrub brush for stubborn stains.
-- Cleaning combos, two goals on the morning memo and funny names for every room ("the Slightly Haunted Pantry").
-- Mimsy the Mimic runs a perfectly useless shop in the staff lounge: snacks, posters, a Turbo-Vac 3000 that works exactly like your old vacuum. Spend your zorkmids on nothing!
-- Your pockets (`I`): rings, purchases, cosmetic tools to "equip", and decorations or keepsakes from grateful colleagues to put up in the lounge (they go up at once).
-- Over 20 silly achievements, with a little pop-up when you earn one (see them all from the title screen with `A`, or mid-shift in your pockets with `Tab`).
-- New shift events: the fountain bursts and floods a room, a dragon naps in a corridor (squeeze past!) and Gribble the goblin intern shadows you, eagerly making little messes.
-- An end-of-shift report card, a clean bar that changes colour, a quick shine on every tile you clean, warm torchlight and an automatic zoom that fits each day's dungeon on screen.
-- Heroes zap wands and staves of oak, glass or something sticky, and leave them broken on the floor, along with the odd unidentified ring for your pocket.
-- A classic, animated ASCII title screen (the janitor mops while the torches flicker) and a short "how your job works" screen.
-- The night invasion is last night's security-camera footage: a blinking `● REC` banner with a ticking clock reminds you it's a recording.
-- The replay has rhythm: it hurries through empty corridors and holds on potions, speeches, door kicks and dramatic faints.
-- Three new tunes: a calm title theme, a livelier second raid march and a second cozy cleaning loop, rotating by day.
-- Litter with personality: pages of the Necronomicon, scrolls labeled KLAATU BARADA NIKTO, scattered zorkmids, "I <3 PERMADEATH" mugs... and fortune cookies full of roguelike rumors.
-- Four new heroes (Tourist, Valkyrie, Speedrunner, Necromancer) and new invasion moments: lost heroes asking for directions, unidentified scrolls, save-scumming, Elbereth on the walls, and everyone asking where the Amulet is (Rodney has it. Again.).
-- A memo on the corkboard every morning, and cozy shift events: a health inspector, birthdays with cake, a stain that is secretly a mimic, a rubber duck in the fountain, ghosts of past heroes, and tea with Rodney.
-- NetHack-style extended commands (`#pray`, `#xyzzy`, `#name` your mop, `#elbereth`, `#chat`), a quit joke on `Q`, a certain famous code... and colleagues who drop hints about them.
-- An end-of-shift plaque: rest in peace, your back. Do you want your mess identified?
-- A dynamic, procedurally generated dungeon.
-- A fully simulated dungeon adventure that you miss entirely but get to see the messy aftermath of.
-- A detailed mess system; walk through puddles and track prints everywhere! Gross!
-- Seriously the monsters leave empty coffee mugs and bottles EVERYWHERE.
-- Fake blood; real violence is a strict violation of workplace safety regulations.
-- Furniture worth smashing (and fixing): barrels of ale, bookshelves, clay pots, weapon racks, fountains, columns, rocks, banners and wall torches.
-- Heroes who scatter the gold, spray graffiti on your walls and leave every chest in pieces.
-- Slimes. Their puddles are slippery. You have been warned.
-- More monsters, more mess: myconids (spores), harpies (feathers), mimics (drool), skeletons (bones) and ghosts (ectoplasm).
-- Eight hero classes, each messy in their own way: wizards scorch, rangers miss, bards leave sheet music, archeologists dig holes...
-- Stubborn stains: acid, ectoplasm and graffiti glow bright and fade a little with every pass of the mop.
-- Favours from your comrades, an end-of-shift report with your best score and a "nearest mess" compass.
-- Comrades with a favour or a lost item show a `!` over their head (green once you can hand it in).
-- The dungeon starts small on day 1 and grows by one or two rooms every day.
-- Animated ASCII scenes for your nights: barbecues on hellfire, dinners, drinks, dancing, a cosy night in and a good sleep.
-- An original chiptune soundtrack, synthesized live (toggle with T).
-- Watch your broom (`- \ | /`) swish over every tile you mop.
-- A secret room with cute fuzzy animals in it. Find them and pet them!
-- A supportive work environment.
+- **A different mess every night.** A procedurally generated dungeon, a fully simulated adventure you only see the aftermath of, and twelve hero classes who each make a mess in their own way (wizards scorch, rangers miss, bards leave sheet music everywhere...).
+- **New gear as the week goes on.** A vacuum for fluff, a squeegee for whole puddles and a scrub brush for stubborn stains.
+- **Combos and goals.** Clean one thing after another to build a streak, and tick off the morning memo for points and zorkmids.
+- **Colleagues worth talking to.** Favours, lost items (watch for the `!`), keepsakes when you help, and gossip about how their shift went.
+- **Mimsy the Mimic's Perfectly Useless Shop.** Snacks, posters and a Turbo-Vac 3000 that works exactly like your old vacuum. Hang the decorations up in the lounge.
+- **Shift events.** A fountain that floods a room, a dragon napping in a corridor and Gribble the goblin intern, who is very eager to help.
+- **Over 20 achievements**, some of them secret, plus NetHack-style `#commands` and a famous code or two.
+- **Chiptune music and sound effects** synthesized live in the browser, with no audio files at all.
+- **Saves every morning.** Close the tab and pick the run up later.
+- **A shareable results card** at the end of the week (`C` copies it as text).
+
+## Controls
+
+| Key | What it does |
+| --- | --- |
+| arrows, numpad, WASD, `hjkl yubn` | move |
+| `.` or `5` | wait a turn |
+| `M` | mop |
+| `P` / `G` | pick up |
+| `F` / `R` | fix |
+| `Z` | vacuum (from day 2) |
+| `E` / `X` | examine |
+| `I` | your pockets (`Tab` for achievements) |
+| walk into someone | chat, pet, shop |
+| `?` | full help |
+| `V` / `T` | sound / music |
+| `+` / `-` / `0` | zoom / auto-fit |
+
+## Running it
+
+It is plain HTML and JavaScript, so there is no build step. Serve the folder with any static server and open `index.html`:
+
+```sh
+npx serve .            # or: python -m http.server
+```
+
+[rot.js](https://ondras.github.io/rot.js/hp/) is loaded from a CDN, so the first load needs an internet connection.
+
+The tests run with Node's built-in runner, with no dependencies:
+
+```sh
+node --test tests/
+```
 
 ## Credits
 
-Made by Lauren H in about a week and a half, using [rot.js](http://ondras.github.io/rot.js/hp/).
+- Original game: **Lauren Hetherington** ([laurheth/rogue-janitor](https://github.com/laurheth/rogue-janitor)), made in about a week and a half.
+- This fork: **AikonCWD**.
+- Built with [rot.js](https://ondras.github.io/rot.js/hp/). Released under the [MIT License](LICENSE).

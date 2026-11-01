@@ -265,6 +265,7 @@ Entity.prototype.doConvo = function() {
                 let newTags=Object.getOwnPropertyNames(thisConvo.tags);
                 for (let i=0;i<newTags.length;i++) {
                     if ((newTags[i]=='requestThanked' && !this.convoTags.requestThanked) || (newTags[i]=='questItemSuccess' && !this.convoTags.questItemSuccess)) {
+                        Sfx.play('requestDone'); // a favour done or a lost thing handed back
                         Keepsakes.give(this);
                     }
                     if (newTags[i]=='requestThanked' && !this.convoTags.requestThanked) {

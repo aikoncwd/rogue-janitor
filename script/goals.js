@@ -148,6 +148,7 @@ var Objectives = {
                 Achievements.unlock('goals2');
             }
             Game.sendMessage('%c{#0f0}Goal done:%c{} ' + g.label + '! (+' + this.REWARD_POINTS + ' pts, +' + this.REWARD_ZM + ' zm)');
+            Sfx.play('goalDone');
         }
     },
 
