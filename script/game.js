@@ -319,14 +319,23 @@ var Game = {
                 }
             }
         }
+        let shining = false;
         this.fov.compute(cam.x,cam.y,50,function(x,y,r,visibility) {
             let key=x+','+y;
             if (key in Game.map) {
                 let art = Game.map[key].getArt();
                 let bg = (invading && key in Invasion.flashes) ? '#a00' : art[2];
+                let glow = invading ? 0 : Game.shineAt(key);
+                if (glow > 0 && Game.map[key].passable && Game.map[key].entity == null) {
+                    bg = Game.blend(bg, '#2a3f5a', glow); // a quick sparkle where you just cleaned
+                    shining = true;
+                }
                 Game.drawCell(x-cam.x,y-cam.y,art[0],art[1],bg);
             }
         });
+        if (shining) {
+            this.keepShining();
+        }
         if (invading) {
             // fainted monsters lie where they fell until the hero leaves
             for (let i=0;i<Invasion.bodies.length;i++) {
@@ -1566,6 +1575,41 @@ var Game = {
         return lines;
     },
 
+    // The end-of-shift report card (a scene above a short line), every line the same width.
+    reportCardLines: function() {
+        let W = 34;
+        let pct = this.cleanPercent();
+        let grade = this.gradeFor(pct);
+        let row = function(text) { return '\u2551 ' + text + ' '.repeat(Math.max(0, W - 2 - text.length)) + ' \u2551'; };
+        let center = function(text) { let l = Math.floor((W - 2 - text.length) / 2); return row(' '.repeat(Math.max(0, l)) + text); };
+        let filled = Math.round(pct / 100 * 12);
+        let goals = typeof Objectives != 'undefined' ? Objectives.list : [];
+        let chatted = this.monsterList.filter(function(m) { return m.alive && m.playerTalkedToday && !(m.tags && m.tags.visitor); }).length;
+        return [
+            '\u2554' + '\u2550'.repeat(W) + '\u2557',
+            center('SHIFT REPORT \u00B7 DAY ' + this.day),
+            row(''),
+            center('\u2605  ' + grade + '  \u2605'),
+            row(''),
+            row('Clean  ' + '\u2588'.repeat(filled) + '\u2591'.repeat(12 - filled) + '  ' + pct + '%'),
+            row('Points today    +' + (this.yendorPoints - this.shift.startPoints + pct)),
+            row('Pay             +' + this.payFor(grade) + ' zm'),
+            row('Best combo      x' + (this.combo ? this.combo.bestToday : 0)),
+            row('Goals done      ' + goals.filter(function(g) { return g.done; }).length + ' / ' + goals.length),
+            row('Messes cleaned  ' + this.shift.cleaned),
+            row('Chats           ' + chatted),
+            '\u255A' + '\u2550'.repeat(W) + '\u255D',
+        ];
+    },
+
+    // One line under the card.
+    shiftReportLine: function() {
+        let pct = this.cleanPercent();
+        let grade = this.gradeFor(pct);
+        let pay = this.payFor(grade);
+        return '%c{#ff0}Shift report, day ' + this.day + '%c{}: grade ' + grade + '. Pay +' + pay + ' zm (wallet: ' + (this.zorkmids + (this.shiftEnded ? 0 : pay)) + ' zm).';
+    },
+
     // Shift report shown when you head home: how today went and what it paid.
     // Built when the exit is bumped; nothing is paid or recorded until endShift().
     shiftReport: function() {
@@ -1623,6 +1667,50 @@ var Game = {
     },
     comboBreak: function() {
         this.combo.count = 0;
+    },
+
+    // Freshly cleaned tiles shine for a moment.
+    SHINE_MS: 2500,
+    shine: {},
+    shineTimer: null,
+    now: function() {
+        return Date.now();
+    },
+    addShine: function(key) {
+        this.shine[key] = this.now();
+    },
+    // How much a tile still shines: 1 just cleaned ... 0 not any more.
+    shineAt: function(key) {
+        if (!(key in this.shine)) {
+            return 0;
+        }
+        let left = 1 - (this.now() - this.shine[key]) / this.SHINE_MS;
+        if (left <= 0) {
+            delete this.shine[key];
+            return 0;
+        }
+        return left;
+    },
+    keepShining: function() {
+        if (this.shineTimer != null) {
+            return;
+        }
+        let self = this;
+        this.shineTimer = setTimeout(function() {
+            self.shineTimer = null;
+            if (self.phase == 'cleaning' && Effects.canRedraw()) {
+                self.drawMap();
+            }
+        }, 250);
+    },
+
+    // Mixes colour a towards b by f (0..1).
+    blend: function(a, b, f) {
+        try {
+            return ROT.Color.toHex(ROT.Color.interpolate(ROT.Color.fromString(a || '#000'), ROT.Color.fromString(b), f));
+        } catch (e) {
+            return a;
+        }
     },
 
     gradeFor: function(pct) {

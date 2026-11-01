@@ -178,7 +178,7 @@ var Panel = {
             head = [
                 '%c{#fff}── SHIFT ──%c{}',
                 'Day ' + Game.day + ' / ' + Game.LAST_DAY + '   %c{#ff0}' + Game.zorkmids + ' zm%c{}',
-                'Clean ' + this.bar(pct, 100, '#0c0') + ' ' + pct + '%',
+                'Clean ' + this.bar(pct, 100, this.barColor(pct)) + ' ' + pct + '%',
                 near ? 'Nearest mess %c{#ff0}' + near.arrow + '%c{} ' + near.d : '%c{#0c0}No mess left!%c{}',
             ];
             if (Game.comboActive() && Game.combo.count >= 2) {
@@ -246,6 +246,10 @@ var Panel = {
             k++;
         }
         return [line, '%c{#555}·%c{} ' + this.fit(words.slice(k).join(' '), w - 2)];
+    },
+
+    barColor: function (pct) {
+        return pct < 50 ? '#c33' : (pct < 80 ? '#cc3' : '#0c0');
     },
 
     draw: function (display, info, cols, rows) {

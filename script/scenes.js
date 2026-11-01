@@ -177,6 +177,28 @@ var Scenes = {
 
     // Which scene goes with tonight's plan ('dinner', 'drinks', 'dancing' or "Name's barbeque").
     // The end-of-shift plaque: text as it is (no cast substitution), flowers that sway.
+    // The end-of-shift report card: a framed box; the grade and the clean bar get colour.
+    setReport: function (lines, pct) {
+        let palette = { '\u2551': '#777', '\u2554': '#777', '\u2557': '#777', '\u255A': '#777', '\u255D': '#777', '\u2550': '#777',
+            '\u2605': '#ff0', '\u2591': '#444' };
+        for (let y = 0; y < lines.length; y++) {
+            let star = lines[y].indexOf('\u2605');
+            if (star >= 0) { // the grade row: the letter between the stars
+                let m = lines[y].match(/\u2605\s+(\S+)\s+\u2605/);
+                if (m) {
+                    let x = lines[y].indexOf(m[1], star + 1);
+                    for (let k = 0; k < m[1].length; k++) {
+                        palette[y + ':' + (x + k)] = '#ff0';
+                    }
+                }
+            }
+            if (lines[y].indexOf('\u2588') >= 0) {
+                palette[y + ':\u2588'] = Panel.barColor(pct);
+            }
+        }
+        this.art.report = { literal: true, frames: [lines], palette: palette };
+    },
+
     setPlaque: function (lines) {
         let palette = { '/': '#999', '\\': '#999', '|': '#999' };
         let flowers = lines.findIndex(function (l) { return l.indexOf('*') >= 0; });

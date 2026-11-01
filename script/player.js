@@ -255,6 +255,7 @@ Player.prototype.removeMess = function(key, tool, sound=null, countCombo=true) {
     cleaned.pickedUp=true;
     tile.mess=null;
     Game.messNumbers[0]--;
+    Game.addShine(key);
     if (countCombo) {
         Game.comboHit();
     }

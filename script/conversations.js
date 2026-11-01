@@ -871,7 +871,9 @@ var ConversationBuilder = {
         }
         // the plaque, then the report (the report *is* the identification)
         Scenes.setPlaque(Game.plaqueLines());
-        messages.splice(2, 0, {message: 'Do you want your mess identified? (You do. Here it is.)', scene: 'plaque'}, Game.shiftReport());
+        Scenes.setReport(Game.reportCardLines(), Game.cleanPercent());
+        messages.splice(2, 0, {message: 'Do you want your mess identified? (You do. Here it is.)', scene: 'plaque'},
+            {message: Game.shiftReportLine(), scene: 'report'});
         if (Game.todayEvent == 'inspector') {
             let good = Game.cleanPercent() >= 80;
             let verdict = {message: Flavor.rng.getItem(good ? Lore.inspectorVerdict.good : Lore.inspectorVerdict.bad)};
