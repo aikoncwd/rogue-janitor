@@ -70,13 +70,13 @@ var Shop = {
     // Each morning: Mimsy takes a spot in the lounge and sets out today's stock.
     place: function () {
         this.isOpen = false;
-        this.stock = Flavor.rng.shuffle(Lore.shopItems.slice()).slice(0, this.STOCK_SIZE).map(function (i) { return Object.assign({}, i); });
+        this.stock = Game.dayRng(3).shuffle(Lore.shopItems.slice()).slice(0, this.STOCK_SIZE).map(function (i) { return Object.assign({}, i); });
         let spots = this.loungeSpots();
         if (spots.length == 0) {
             this.keeper = null;
             return;
         }
-        let s = Flavor.rng.getItem(spots);
+        let s = Game.dayRng(4).getItem(spots);
         this.keeper = this.makeKeeper(s[0], s[1]);
         Game.map[s[0] + ',' + s[1]].entity = this.keeper;
     },

@@ -184,7 +184,7 @@ var Panel = {
             if (Game.comboActive() && Game.combo.count >= 2) {
                 head.push('%c{#0ff}Combo x' + Game.combo.count + '%c{}');
             }
-            head.push('Room: ' + this.fit(Rooms.at(Game.player.x, Game.player.y), w - 6));
+            head = head.concat(this.roomLines(Rooms.at(Game.player.x, Game.player.y), w));
             head.push('');
             if (Objectives.list.length > 0) {
                 head = head.concat(['%c{#fff}── GOALS ──%c{}']).concat(Objectives.lines(w)).concat(['']);
@@ -229,6 +229,23 @@ var Panel = {
             return head.concat(tail).slice(0, Math.max(0, maxRows));
         }
         return head.concat(this.listLines(list, room)).concat(tail);
+    },
+
+    // "Room: the Gallery of Loud Snoring" on up to two lines (rot.js drops leading
+    // spaces, so the second one starts with a dim mark).
+    roomLines: function (name, w) {
+        let first = 'Room: ' + name;
+        if (first.length <= w) {
+            return [first];
+        }
+        let words = name.split(' ');
+        let line = 'Room:';
+        let k = 0;
+        while (k < words.length && (line + ' ' + words[k]).length <= w) {
+            line += ' ' + words[k];
+            k++;
+        }
+        return [line, '%c{#555}·%c{} ' + this.fit(words.slice(k).join(' '), w - 2)];
     },
 
     draw: function (display, info, cols, rows) {

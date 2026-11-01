@@ -1145,7 +1145,17 @@ var Game = {
         }
     },
 
+    // A generator for one kind of daily pick (room names, goals, shop...), seeded from
+    // today's daySeed, so the picks don't depend on how many flavor lines were rolled.
+    daySeed: 0,
+    dayRng: function(stream) {
+        let rng = ROT.RNG.clone();
+        rng.setSeed(this.daySeed * 31 + stream);
+        return rng;
+    },
+
     moveMonstersToLounge: function() {
+        this.daySeed = Math.floor(ROT.RNG.getUniform() * 1000000000); // one world roll: same in every mode
         // build the party room
         this.addSecretRoom([5,5],this.makeTheme(300,0.9),1,"You hear the sound of muffled music.");
         this.partyRoomID=this.rooms.length-1;

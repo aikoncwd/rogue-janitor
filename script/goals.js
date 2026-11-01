@@ -1,5 +1,6 @@
 // Funny names for the rooms (new every morning), and the day's goals on the memo.
-// Both are flavor and use Flavor.rng: they never change the dungeon itself.
+// They use the day's own seeded generators (Game.dayRng): the same whether the raid
+// was watched or skipped, and the same after a Continue. They never touch ROT.RNG.
 var Rooms = {
     PLACES: ['Hall', 'Pantry', 'Vault', 'Gallery', 'Crypt', 'Cellar', 'Chamber', 'Den', 'Annex', 'Parlour', 'Atrium', 'Nook'],
     OF: ['Mild Peril', 'Lost Socks', 'Regret', 'Snacks', 'Echoes', 'Sticky Floors', 'Gentle Doom', 'Many Doors',
@@ -8,16 +9,17 @@ var Rooms = {
 
     generate: function () {
         let used = {};
+        let rng = Game.dayRng(1);
         Game.roomNames = [];
         for (let i = 0; i < Game.rooms.length; i++) {
             let name;
             let tries = 0;
             do {
-                if (Flavor.rng.getUniform() < 0.6) {
-                    name = 'the ' + Flavor.rng.getItem(this.PLACES) + ' of ' + Flavor.rng.getItem(this.OF);
+                if (rng.getUniform() < 0.6) {
+                    name = 'the ' + rng.getItem(this.PLACES) + ' of ' + rng.getItem(this.OF);
                 }
                 else {
-                    name = 'the ' + Flavor.rng.getItem(this.ADJ) + ' ' + Flavor.rng.getItem(this.PLACES);
+                    name = 'the ' + rng.getItem(this.ADJ) + ' ' + rng.getItem(this.PLACES);
                 }
             } while (used[name] && tries++ < 50);
             used[name] = true;
@@ -87,6 +89,7 @@ var Objectives = {
 
     candidates: function () {
         let out = [];
+        let rng = Game.dayRng(5);
         let rooms = [];
         for (let i = 0; i < Game.rooms.length; i++) {
             if (i != Game.staffRoomID && i != Game.partyRoomID && i != Game.animalRoomID) {
@@ -95,13 +98,13 @@ var Objectives = {
         }
         let dirty = rooms.filter(function (i) { return Objectives.messesIn(i).length >= 3; });
         if (dirty.length > 0) {
-            let r = Flavor.rng.getItem(dirty);
+            let r = rng.getItem(dirty);
             out.push({type: 'spotless', room: r, label: 'Leave ' + Rooms.name(r) + ' spotless',
                 short: 'Spotless: ' + Rooms.name(r).replace(/^the /, '')});
         }
         let broken = rooms.filter(function (i) { return Objectives.messesIn(i, 'fix').length >= 2; });
         if (broken.length > 0) {
-            let r = Flavor.rng.getItem(broken);
+            let r = rng.getItem(broken);
             out.push({type: 'fixRoom', room: r, label: 'Fix everything in ' + Rooms.name(r),
                 short: 'Fix all: ' + Rooms.name(r).replace(/^the /, '')});
         }
@@ -114,7 +117,7 @@ var Objectives = {
     },
 
     generate: function () {
-        let options = Flavor.rng.shuffle(this.candidates());
+        let options = Game.dayRng(2).shuffle(this.candidates());
         let n = Game.day <= 1 ? 1 : 2;
         this.list = options.slice(0, n).map(function (g) { g.done = false; return g; });
     },

@@ -72,7 +72,11 @@ test('wands are the same watched or skipped', () => {
         else {
             ctx.__press(13);
             let n = 0;
-            while (ctx.Game.phase == 'invasion' && n++ < 3000) ctx.__runTimers();
+            while (ctx.Game.phase == 'invasion' && n++ < 4000) {
+                if (ctx.Invasion.stage != null) ctx.__press(13);
+                else ctx.__runTimers();
+            }
+            assert.strictEqual(ctx.Game.phase, 'cleaning');
         }
         return ['Used Wand', 'Cracked Staff', 'Lost Ring'].map(k => messes(ctx, k).map(m => m.name).sort().join(',')).join('|');
     };

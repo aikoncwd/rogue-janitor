@@ -171,6 +171,9 @@ Player.prototype.clean = function(verb) {
                         Game.sendMessage("The stain was a mimic! It giggles and scurries off to the lounge.");
                         Achievements.unlock('mimic');
                     }
+                    else if (Game.map[key].mess.kind == 'Lost Ring') {
+                        // said below, when it goes in your pocket
+                    }
                     else if (Game.map[key].mess.unique) {
                         Game.sendMessage("You "+verb+" "+Game.map[key].mess.name+"!");
                     }
@@ -233,7 +236,7 @@ Player.prototype.clean = function(verb) {
 }
 
 // Everything that happens when a mess is gone, whatever tool took it.
-Player.prototype.removeMess = function(key, tool, sound=null) {
+Player.prototype.removeMess = function(key, tool, sound=null, countCombo=true) {
     let tile = Game.map[key];
     let cleaned = tile.mess;
     if (cleaned.droppedBy != null) {
@@ -246,7 +249,9 @@ Player.prototype.removeMess = function(key, tool, sound=null) {
     cleaned.pickedUp=true;
     tile.mess=null;
     Game.messNumbers[0]--;
-    Game.comboHit();
+    if (countCombo) {
+        Game.comboHit();
+    }
     Game.checkCleanMilestones();
     Objectives.check();
     Sfx.play(cleaned.sound || sound || 'mop');
@@ -266,7 +271,8 @@ Player.prototype.vacuum = function() {
             let key = (this.x+i)+','+(this.y+j);
             let tile = Game.map[key];
             if ((i != 0 || j != 0) && tile && tile.mess != null && Game.VACUUM_KINDS.indexOf(tile.mess.kind) >= 0) {
-                this.removeMess(key, 'vacuum', 'pickup');
+                this.mimicCheck(tile.mess);
+                this.removeMess(key, 'vacuum', 'pickup', false);
                 n++;
             }
         }
@@ -278,6 +284,7 @@ Player.prototype.vacuum = function() {
     if (n >= 4) {
         Achievements.unlock('vacuum4');
     }
+    Game.comboHit(); // one press, one link in the chain
     Game.sendMessage("VRRRRRM! The vacuum swallows " + n + (n > 1 ? " bits of fluff." : " bit of fluff."));
     return true;
 };
@@ -295,7 +302,8 @@ Player.prototype.squeegee = function(startKey) {
         if (!tile || tile.mess == null || Game.WATER_KINDS.indexOf(tile.mess.kind) < 0) {
             continue;
         }
-        this.removeMess(key, 'mop', 'mop');
+        this.mimicCheck(tile.mess);
+        this.removeMess(key, 'mop', 'mop', false);
         n++;
         let parts = key.split(',').map(Number);
         for (let i=-1;i<=1;i++) {
@@ -308,7 +316,19 @@ Player.prototype.squeegee = function(startKey) {
             }
         }
     }
+    if (n > 0) {
+        Game.comboHit();
+    }
     return n;
+};
+
+// The day's mimic stain giggles whatever you clean it with.
+Player.prototype.mimicCheck = function(mess) {
+    if (mess && mess.mimic) {
+        Game.sendMessage("Hehe, that tickles!");
+        Game.sendMessage("The stain was a mimic! It giggles and scurries off to the lounge.");
+        Achievements.unlock('mimic');
+    }
 };
 
 Player.prototype.doExamine = function(code) {
