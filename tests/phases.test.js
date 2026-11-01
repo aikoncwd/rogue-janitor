@@ -49,16 +49,6 @@ test('turn delay: walking 90, action 200, small extras, space makes it 4x faster
     ctx.__press(KEY.SPACE);
     assert.equal(inv.fast, false);
 });
-    const held = inv.turnDelay();
-    assert.ok(held >= inv.BEATS.potion);
-    ctx.__press(KEY.SPACE);
-    assert.equal(inv.fast, true);
-    assert.equal(inv.turnDelay(), held / inv.FAST_FACTOR);
-    ctx.__runTimers();
-    assert.ok(ctx.__timers[0].ms <= held / inv.FAST_FACTOR);
-    ctx.__press(KEY.SPACE);
-    assert.equal(inv.fast, false);
-});
 
 test('esc skips to cleaning with no double unlock', () => {
     const ctx = bootDay1();
