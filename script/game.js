@@ -499,6 +499,9 @@ var Game = {
     },
 
     drawLog: function() {
+        if (this.phase == 'ending' || this.phase == 'title' || this.phase == 'howto') {
+            return; // full-screen text pages have no message log
+        }
         if (this.onBlackScreen()) {
             return; // night cutscenes are a plain black screen
         }

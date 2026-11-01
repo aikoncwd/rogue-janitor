@@ -142,3 +142,12 @@ test('leaving on day 5 plays the ending after the night', () => {
     assert.ok(ctx.Ending.kind === 'mop' || ctx.Ending.kind === 'senior');
     assert.strictEqual(ctx.Ending.page, 0, 'the closing Enter did not skip the first page');
 });
+
+test('the message log is not drawn over the ending', () => {
+    const ctx = lastDay(100);
+    ctx.Game.endRun();
+    ctx.Game.drawMap();
+    ctx.Game.sendMessage('A leftover line from the shift.');
+    const text = ctx.__drawn.filter(d => d.text).map(d => strip(d.text)).join('\n');
+    assert.ok(!/leftover line/.test(text), 'log drawn over the ending');
+});

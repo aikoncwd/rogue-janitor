@@ -14,7 +14,15 @@ Your monstrous friends hang out in the staff lounge while you work. Take lots of
 
 When the day is done, go out for dinner with your colleagues, or have a relaxing night in. The choice is yours!
 
+## A coffee-break run
+
+A run is five working days, playable in one sitting. Clean well, help your comrades and they may hand you the legendary Mop of Yendor. Clean less and... you get promoted anyway. Nobody loses their job here.
+
 ## Features
+- A five-day run with two happy endings and a results card made for screenshots; press `C` to copy your result as text and share it.
+- The game saves every morning: close the tab and pick up your run from the title screen.
+- Zorkmids: get paid at the end of every shift (better grade, better pay) and pocket the coins the heroes scatter around.
+- An end-of-shift plaque for your back. It's fine. It's just sore.
 - A classic, animated ASCII title screen (the janitor mops while the torches flicker) and a short "how your job works" screen.
 - The night invasion is last night's security-camera footage: a blinking `● REC` banner with a ticking clock reminds you it's a recording.
 - The replay has rhythm: it hurries through empty corridors and holds on potions, speeches, door kicks and dramatic faints.
