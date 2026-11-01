@@ -4,72 +4,89 @@ const { bootHeadless, toIntro } = require('./harness');
 
 const KEY = { ENTER: 13, SPACE: 32, ESC: 27 };
 
+// Into the invasion, with a fresh, quiet turn (nothing happened, nobody in view).
 function invading(seed = 1234) {
     const ctx = toIntro(bootHeadless({ seed, begin: true }));
     ctx.__press(KEY.ENTER);
     assert.equal(ctx.Game.phase, 'invasion');
-    ctx.Invasion.hold = 0;
+    ctx.Invasion.busy = false;
+    ctx.Invasion.extra = 0;
     ctx.Invasion.speaking = false;
+    ctx.Game.adventurer.targets = [];
     return ctx;
 }
 
-test('quiet turns are fast', () => {
+test('walking turns use the original walking speed', () => {
     const ctx = invading();
-    assert.equal(ctx.Invasion.turnDelay(), ctx.Invasion.BEATS.quiet);
+    assert.equal(ctx.Invasion.WALK_MS, 90);
+    assert.equal(ctx.Invasion.turnDelay(), 90);
 });
 
-test('a potion holds long enough to read', () => {
+test('turns with action use the original action speed', () => {
+    for (const ev of ['door', 'loot', 'heroHurt']) {
+        const ctx = invading();
+        ctx.Invasion.event(ev, ev == 'loot' ? { entity: { name: 'Barrel' } } : {});
+        assert.equal(ctx.Invasion.turnDelay(), 200, ev);
+    }
+});
+
+test('monsters in view make it an action turn', () => {
     const ctx = invading();
+    ctx.Game.adventurer.targets = [ctx.Game.monsterList[0]];
+    assert.equal(ctx.Invasion.turnDelay(), 200);
+});
+
+test('special actions add a little on top', () => {
+    const cases = { potion: 320, snack: 300, special: 350, enter: 350 };
+    for (const ev in cases) {
+        const ctx = invading();
+        ctx.Invasion.event(ev, ev == 'special' ? { cls: 'Paladin' } : {});
+        assert.equal(ctx.Invasion.turnDelay(), cases[ev], ev);
+    }
+});
+
+test('the longest extra wins, no stacking', () => {
+    const ctx = invading();
+    ctx.Invasion.event('snack', {});
     ctx.Invasion.event('potion', {});
-    assert.ok(ctx.Invasion.turnDelay() >= ctx.Invasion.BEATS.potion);
+    assert.equal(ctx.Invasion.turnDelay(), 320);
     assert.equal(ctx.Invasion.speaking, true);
 });
 
-test('longer lines hold a bit longer, capped', () => {
+test('no turn is longer than MAX_TURN_MS', () => {
     const ctx = invading();
-    const inv = ctx.Invasion;
-    inv.beat('potion', 'short');
-    const a = inv.turnDelay();
-    inv.hold = 0;
-    inv.beat('potion', 'x'.repeat(200));
-    assert.ok(inv.turnDelay() > a);
-    assert.equal(inv.turnDelay(), inv.BEATS.potion + 250);
+    assert.equal(ctx.Invasion.MAX_TURN_MS, 350);
+    for (const k in ctx.Invasion.EXTRA_MS) {
+        ctx.Invasion.beat(k);
+        assert.ok(ctx.Invasion.turnDelay() <= 350, k);
+    }
 });
 
-test('holds take the longest beat of the turn', () => {
-    const ctx = invading();
-    ctx.Invasion.event('door', {});
-    ctx.Invasion.event('potion', {});
-    ctx.Invasion.event('door', {});
-    assert.ok(ctx.Invasion.turnDelay() >= ctx.Invasion.BEATS.potion);
-});
-
-test('fast mode divides holds', () => {
+test('fast mode divides the whole turn', () => {
     const ctx = invading();
     ctx.Invasion.event('potion', {});
-    const d = ctx.Invasion.turnDelay();
     ctx.__press(KEY.SPACE);
-    assert.equal(ctx.Invasion.turnDelay(), d / ctx.Invasion.FAST_FACTOR);
+    assert.equal(ctx.Invasion.turnDelay(), 320 / ctx.Invasion.FAST_FACTOR);
 });
 
-test('hold resets after the hero turn is scheduled', () => {
+test('pacing state resets after the hero turn is scheduled', () => {
     const ctx = invading();
     ctx.Invasion.event('potion', {});
     ctx.__runTimers(); // monsters and the hero take their turns, next turn is scheduled
     const next = ctx.__timers[ctx.__timers.length - 1];
-    assert.ok(next.ms >= ctx.Invasion.BEATS.potion, 'scheduled ' + next.ms);
-    assert.equal(ctx.Invasion.hold, 0);
+    assert.ok(next.ms >= 320, 'scheduled ' + next.ms);
+    assert.equal(ctx.Invasion.busy, false);
+    assert.equal(ctx.Invasion.extra, 0);
     assert.equal(ctx.Invasion.speaking, false);
 });
 
 test('skipping schedules no hero timers', () => {
     const ctx = invading();
     ctx.__press(KEY.ESC);
-    const beats = Object.values(ctx.Invasion.BEATS);
-    assert.equal(ctx.__timers.filter(t => beats.includes(t.ms)).length, 0);
+    assert.equal(ctx.__timers.filter(t => t.ms >= 90 && t.ms <= 350).length, 0);
 });
 
-test('a paced invasion uses many different delays', () => {
+test('a paced invasion walks at 90, acts at 200 and holds a little more now and then', () => {
     const ctx = invading(7);
     const seen = new Set();
     for (let i = 0; i < 400 && ctx.Game.phase == 'invasion' && ctx.Invasion.stage == null; i++) {
@@ -77,33 +94,26 @@ test('a paced invasion uses many different delays', () => {
         if (t) seen.add(t.ms);
         ctx.__runTimers();
     }
-    assert.ok(seen.has(ctx.Invasion.BEATS.quiet), 'quick corridor steps');
-    assert.ok([...seen].some(ms => ms >= 350), 'some long holds: ' + [...seen].join(','));
-    assert.ok(seen.size >= 4, 'varied rhythm: ' + [...seen].join(','));
+    assert.ok(seen.has(90), 'walking: ' + [...seen].join(','));
+    assert.ok(seen.has(200), 'action: ' + [...seen].join(','));
+    assert.ok([...seen].some(ms => ms > 200 && ms <= 350), 'small holds: ' + [...seen].join(','));
+    assert.ok([...seen].every(ms => ms <= 350), 'never too long: ' + [...seen].join(','));
 });
 
-test('turning fast mode on during a long hold shortens the wait right away', () => {
+test('turning fast mode on during a hold shortens the wait right away', () => {
     const ctx = invading();
     let t = 1000;
     ctx.Invasion.now = () => t;
     ctx.Invasion.event('enter', {});
-    ctx.__runTimers(); // next hero turn scheduled with the long hold
-    const held = ctx.__timers.find(x => x.ms >= ctx.Invasion.BEATS.enter);
-    assert.ok(held, 'a long hold is pending');
-    t += 200; // 200 ms into the hold
+    ctx.__runTimers(); // next hero turn scheduled with the hold
+    const held = ctx.__timers.find(x => x.ms >= 300);
+    assert.ok(held, 'a hold is pending');
+    t += 100;
     ctx.__press(KEY.SPACE);
-    const pending = ctx.__timers.filter(x => x.ms >= ctx.Invasion.BEATS.quiet && x.ms !== ctx.Game.QUEST_BLINK_MS);
+    const pending = ctx.__timers.filter(x => x.ms !== ctx.Game.QUEST_BLINK_MS);
     assert.equal(pending.length, 1, 'only one hero timer');
-    assert.ok(pending[0].ms <= (held.ms - 200) / ctx.Invasion.FAST_FACTOR + 1, 'rescheduled at x4: ' + pending[0].ms);
+    assert.ok(pending[0].ms <= (held.ms - 100) / ctx.Invasion.FAST_FACTOR + 1, 'rescheduled at x4: ' + pending[0].ms);
     const turns = ctx.Game.adventurer.turns;
     ctx.__runTimers();
     assert.equal(ctx.Game.adventurer.turns, turns + 1, 'engine resumes once');
-});
-
-test('beats are gentle: half of the first, too marked, rhythm', () => {
-    const ctx = invading();
-    assert.deepEqual(JSON.parse(JSON.stringify(ctx.Invasion.BEATS)), {
-        quiet: 25, spot: 200, hit: 100, combo: 75, faint: 350, loot: 225, door: 175, heroHurt: 125,
-        snack: 450, potion: 550, special: 550, graffiti: 550, enter: 600, cry: 450,
-    });
 });

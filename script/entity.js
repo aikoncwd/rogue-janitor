@@ -95,6 +95,9 @@ function Entity(x,y,char,color,species,hp=1,tags={},level=1,bgColor='#000',attac
             this.x+=best[0];
             this.y+=best[1];
             Game.map[newKey].entity=this;
+            if (this.bgColor=='#000') {
+                this.bgColor=Game.map[newKey].bgColor; // hang on the wall, not in a hole
+            }
         }
     }
 };

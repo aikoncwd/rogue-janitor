@@ -5,16 +5,17 @@
 var Invasion = {
     instant: false, // run every hero turn without delay (tests)
     FAST_FACTOR: 4,
-    // Rhythm of the replay (ms): quick through empty corridors, a beat when
-    // something comes into view, and holds long enough to read the good bits.
-    BEATS: { quiet: 25, spot: 200, hit: 100, combo: 75, faint: 350, loot: 225, door: 175, heroHurt: 125,
-        snack: 450, potion: 550, special: 550, graffiti: 550, enter: 600, cry: 450 },
-    SPEECH: ['snack', 'potion', 'special', 'graffiti', 'enter', 'cry'],
-    hold: 0,
-    combo: 0,
-    hitThisTurn: false,
+    // Rhythm of the replay: every turn plays at the original speed (90 ms walking,
+    // 200 ms when something is going on); a few special moments add a little on top.
+    WALK_MS: 90,
+    ACTION_MS: 200,
+    MAX_TURN_MS: 350,
+    EXTRA_MS: { potion: 120, snack: 100, cry: 100, faint: 120, special: 150, graffiti: 100, enter: 150,
+        lost: 150, scroll: 150, saveScum: 150, elbereth: 120, backIn5: 100, quip: 100 },
+    SPEECH: ['snack', 'potion', 'special', 'graffiti', 'enter', 'cry', 'lost', 'scroll', 'saveScum', 'elbereth', 'backIn5', 'quip'],
+    busy: false,
+    extra: 0,
     speaking: false,
-    lastTargets: 0,
     fast: false,
     skipping: false,
     timer: null,
@@ -32,12 +33,11 @@ var Invasion = {
         }
     },
 
-    // Records a beat this turn: the turn waits for its longest beat, and a line
-    // to read adds a little time (capped).
-    beat: function (name, line) {
-        let plainLength = line ? line.replace(/%c\{[^}]*\}/g, '').length : 0;
-        let ms = this.BEATS[name] + Math.min(250, plainLength * 5);
-        this.hold = Math.max(this.hold, ms);
+    // Records something happening this turn: it becomes an action turn, and the
+    // biggest extra of the turn is added on top (extras do not stack).
+    beat: function (name) {
+        this.busy = true;
+        this.extra = Math.max(this.extra, this.EXTRA_MS[name] || 0);
         if (this.SPEECH.indexOf(name) >= 0) {
             this.speaking = true;
         }
@@ -45,7 +45,9 @@ var Invasion = {
 
     // Delay before the next hero turn.
     turnDelay: function () {
-        let ms = this.hold || this.BEATS.quiet;
+        let targets = Game.adventurer ? Game.adventurer.targets.length : 0;
+        let base = (this.busy || targets > 0) ? this.ACTION_MS : this.WALK_MS;
+        let ms = Math.min(this.MAX_TURN_MS, base + this.extra);
         return this.fast ? ms / this.FAST_FACTOR : ms;
     },
 
@@ -53,22 +55,17 @@ var Invasion = {
     // Beats are reset only after scheduling, so what monsters do between hero
     // turns counts toward the next one.
     afterHeroTurn: function () {
-        let targets = Game.adventurer ? Game.adventurer.targets.length : 0;
-        if (targets > this.lastTargets) {
-            this.beat('spot');
-        }
-        this.lastTargets = targets;
-        this.combo = this.hitThisTurn ? this.combo + 1 : 0;
-        this.hitThisTurn = false;
         if (this.instant || this.skipping || Game.phase != 'invasion') {
-            this.hold = 0;
+            this.busy = false;
+            this.extra = 0;
             this.speaking = false;
             return;
         }
         let ms = this.turnDelay();
         Game.engine.lock();
         Game.drawMap();
-        this.hold = 0;
+        this.busy = false;
+        this.extra = 0;
         this.speaking = false;
         this.resumeIn(ms);
     },
@@ -152,11 +149,9 @@ var Invasion = {
         this.clockMinutes = 60 + Flavor.rng.getUniformInt(0, 90);
         this.camera = Flavor.rng.getUniformInt(1, 9);
         this.lastNag = -Infinity;
-        this.hold = 0;
-        this.combo = 0;
-        this.hitThisTurn = false;
+        this.busy = false;
+        this.extra = 0;
         this.speaking = false;
-        this.lastTargets = 0;
     },
 
     // --- Playback banner: the invasion is last night's security footage ---
@@ -270,8 +265,7 @@ var Invasion = {
                 break;
             case 'hit':
                 this.stats.hits++;
-                this.beat(this.combo >= 2 ? 'combo' : 'hit');
-                this.hitThisTurn = true;
+                this.beat('hit');
                 this.flash(data.monster.x, data.monster.y);
                 this.say('heroHit', { monster: this.monsterName(data.monster) });
                 this.sound('hit');

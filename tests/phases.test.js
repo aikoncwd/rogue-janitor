@@ -34,13 +34,21 @@ test('timer advances one hero turn', () => {
     assert.equal(ctx.__timers.length, 1);
 });
 
-test('turn delay: quiet turns are quick, holds for the good bits, space makes it 4x faster', () => {
+test('turn delay: walking 90, action 200, small extras, space makes it 4x faster', () => {
     const ctx = bootDay1();
     ctx.__press(KEY.ENTER);
     const inv = ctx.Invasion;
-    inv.hold = 0;
-    assert.equal(inv.turnDelay(), inv.BEATS.quiet);
+    inv.busy = false; inv.extra = 0;
+    ctx.Game.adventurer.targets = [];
+    assert.equal(inv.turnDelay(), 90);
     inv.event('potion', {});
+    assert.equal(inv.turnDelay(), 320);
+    ctx.__press(KEY.SPACE);
+    assert.equal(inv.fast, true);
+    assert.equal(inv.turnDelay(), 320 / inv.FAST_FACTOR);
+    ctx.__press(KEY.SPACE);
+    assert.equal(inv.fast, false);
+});
     const held = inv.turnDelay();
     assert.ok(held >= inv.BEATS.potion);
     ctx.__press(KEY.SPACE);
