@@ -420,6 +420,10 @@ Entity.prototype.cleanerAct = function() {
             Game.yendorPoints+=3;
             this.playerTalkedToday=true;
             Objectives.check();
+            let lounge = Game.monsterList.filter(function(m) { return m.alive && m.retired && !m.partying && !(m.tags && m.tags.visitor); });
+            if (lounge.length >= 3 && lounge.every(function(m) { return m.playerTalkedToday; })) {
+                Achievements.unlock('synergy');
+            }
         }
         this.metPlayer=true;
         Game.player.talking=this;

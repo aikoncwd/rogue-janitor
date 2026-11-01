@@ -141,6 +141,9 @@ var Objectives = {
             Game.zorkmids += this.REWARD_ZM;
             Game.run.zorkmidsEarned += this.REWARD_ZM;
             Game.run.goalsDone = (Game.run.goalsDone || 0) + 1;
+            if (this.list.length >= 2 && this.list.every(function (x) { return x.done; })) {
+                Achievements.unlock('goals2');
+            }
             Game.sendMessage('%c{#0f0}Goal done:%c{} ' + g.label + '! (+' + this.REWARD_POINTS + ' pts, +' + this.REWARD_ZM + ' zm)');
         }
     },

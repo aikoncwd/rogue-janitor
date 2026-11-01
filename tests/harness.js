@@ -30,6 +30,7 @@ const DEFAULT_FILES = [
     'script/save.js',
     'script/ending.js',
     'script/goals.js',
+    'script/achievements.js',
 ];
 
 function makeContext() {

@@ -99,6 +99,8 @@ var Ending = {
         out.push(row('Requests done', String(s.requests)));
         out.push(row('Comrades befriended', String(s.friends)));
         out.push(row('Zorkmids earned', String(s.zorkmids)));
+        let ach = Achievements.count();
+        out.push(row('Achievements', (Game.run.newAchievements || []).length + ' new (' + ach.got + ' / ' + ach.total + ')'));
         let mop = typeof EasterEggs != 'undefined' ? EasterEggs.mopName() : null;
         if (mop) {
             out.push(row('Your mop', mop));

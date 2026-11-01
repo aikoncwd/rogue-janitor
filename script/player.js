@@ -164,10 +164,12 @@ Player.prototype.clean = function(verb) {
                     }
                     if (Game.map[key].mess.elbereth) {
                         Game.sendMessage("You erase the engraving. Sorry, Elbereth.");
+                        Achievements.unlock('elbereth');
                     }
                     else if (Game.map[key].mess.mimic) {
                         Game.sendMessage("Hehe, that tickles!");
                         Game.sendMessage("The stain was a mimic! It giggles and scurries off to the lounge.");
+                        Achievements.unlock('mimic');
                     }
                     else if (Game.map[key].mess.unique) {
                         Game.sendMessage("You "+verb+" "+Game.map[key].mess.name+"!");
@@ -184,10 +186,12 @@ Player.prototype.clean = function(verb) {
                     if (Game.map[key].mess.kind == 'Lost Ring') {
                         let ring = Game.map[key].mess;
                         Game.inventory.push({kind: 'ring', name: ring.name, lore: ring.ringLore});
+                        Achievements.unlock('ring');
                         Game.sendMessage("You pocket " + ring.name + ". Engraved inside: \"" + ring.ringLore + "\"");
                     }
                     if (Game.map[key].mess.pickup == 'fortune') {
                         Game.sendMessage("You crack the fortune cookie. It reads: \""+Lore.rumor()+"\"");
+                        Achievements.bump('fortunes');
                     }
                 }
                 if (tool == 'mop' && EasterEggs.mopName() != null && Flavor.chance(0.2)) {
@@ -201,6 +205,7 @@ Player.prototype.clean = function(verb) {
                 Effects.add(this.x+i, this.y+j, Effects.framesFor('sparkle'));
                 Game.yendorPoints+=10;
                 Game.sendMessage("%c{#ff0}You found a secret passageway!%c{}");
+                Achievements.unlock('secret');
                 return;
             }
         }
@@ -269,6 +274,9 @@ Player.prototype.vacuum = function() {
     if (n == 0) {
         Game.sendMessage("Vrrrr... nothing here the vacuum can take.");
         return false;
+    }
+    if (n >= 4) {
+        Achievements.unlock('vacuum4');
     }
     Game.sendMessage("VRRRRRM! The vacuum swallows " + n + (n > 1 ? " bits of fluff." : " bit of fluff."));
     return true;
@@ -456,6 +464,7 @@ Player.prototype.slide = function(diff) {
     }
     this.moveTo(this.x+diff[0], this.y+diff[1]);
     Game.sendMessage("Whoa! You slip on the "+here.mess.displayName()+" and slide!");
+    Achievements.bump('slips');
     Sfx.play('slip');
     return true;
 }
@@ -482,6 +491,7 @@ Player.prototype.moveTo = function(x,y) {
         Game.map[newKey].openSecretDoor();
         Game.yendorPoints+=10;
         Game.sendMessage("%c{#ff0}You found a secret passageway!%c{}");
+        Achievements.unlock('secret');
         return true;
     }
 

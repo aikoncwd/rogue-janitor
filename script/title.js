@@ -92,6 +92,16 @@ var Title = {
     },
 
     handleKey: function (e) {
+        if (this.showAchievements) { // any key closes the list
+            this.showAchievements = false;
+            Game.drawMap();
+            return true;
+        }
+        if (e.keyCode == 65) { // a: achievements
+            this.showAchievements = true;
+            Game.drawMap();
+            return true;
+        }
         if (e.keyCode == 81) { // q
             this.quitJoke = true;
             Game.drawMap();
@@ -195,6 +205,8 @@ var Title = {
         if (this.quitJoke) {
             out.push('%c{#f88}You can\'t quit before your shift. Union rules.%c{}');
         }
+        let ach = Achievements.count();
+        out.push('%c{#777}[a] achievements (' + ach.got + ' / ' + ach.total + ')%c{}');
         out.push('');
         out.push('%c{#555}Original game by Lauren H · rot.js%c{}');
         return out;
@@ -217,6 +229,10 @@ var Title = {
     },
 
     draw: function () {
+        if (this.showAchievements) {
+            this.drawLines(Achievements.listLines(Game.screenSize[0]), true);
+            return;
+        }
         this.drawLines(this.lines(Game.screenSize[0]), false);
     },
 };

@@ -46,7 +46,7 @@ var Game = {
     turnCount: 0,
     combo: {count: 0, lastTurn: -99, bestToday: 0},
     COMBO_GAP: 3,
-    run: {grades: [], cleanPcts: [], requestsDone: 0, zorkmidsEarned: 0, chattedWith: []},
+    run: {grades: [], cleanPcts: [], requestsDone: 0, zorkmidsEarned: 0, chattedWith: [], bestCombo: 0, newAchievements: [], counts: {slips: 0, fortunes: 0}},
     shiftEnded: false,
     LAST_DAY: 5,
     // Rooms per day (the staff lounge counts as one of them).
@@ -358,6 +358,9 @@ var Game = {
         }
 
         this.drawChrome();
+        if (this.phase == 'cleaning' && this.player.talking == null) {
+            Achievements.drawToast(); // toasts wait for the cleaning screen
+        }
 
         this.transientMessage = null;
         if (EasterEggs.prompt != null) {
@@ -1583,6 +1586,8 @@ var Game = {
         this.combo.lastTurn = this.turnCount;
         this.combo.bestToday = Math.max(this.combo.bestToday, this.combo.count);
         this.run.bestCombo = Math.max(this.run.bestCombo || 0, this.combo.count);
+        if (this.combo.count >= 10) { Achievements.unlock('combo10'); }
+        if (this.combo.count >= 30) { Achievements.unlock('combo30'); }
         let bonus = this.comboBonus(this.combo.count);
         if (bonus > 0) {
             this.yendorPoints += bonus;
@@ -1618,7 +1623,8 @@ var Game = {
     },
 
     freshRun: function() {
-        return {grades: [], cleanPcts: [], requestsDone: 0, zorkmidsEarned: 0, chattedWith: [], bestCombo: 0};
+        return {grades: [], cleanPcts: [], requestsDone: 0, zorkmidsEarned: 0, chattedWith: [], bestCombo: 0,
+            newAchievements: [], counts: {slips: 0, fortunes: 0}};
     },
 
     // The shift is over (the player confirmed leaving): record the day and pay.
@@ -1635,6 +1641,10 @@ var Game = {
         this.run.zorkmidsEarned += pay;
         this.run.grades.push(grade);
         this.run.cleanPcts.push(pct);
+        Achievements.unlock('firstDay');
+        if (pct >= 100) {
+            Achievements.unlock('zeroWaste');
+        }
         this.run.requestsDone += this.shift.requestsDone;
         for (let i = 0; i < this.monsterList.length; i++) {
             let m = this.monsterList[i];
@@ -1653,6 +1663,7 @@ var Game = {
             this.saveBestRun({points: this.yendorPoints, ending: this.victory ? 'mop' : 'senior'});
         }
         Save.clear();
+        Achievements.unlock(this.victory ? 'endingMop' : 'endingSenior');
         window.removeEventListener('keydown', this.player); // the world stops here
         Ending.start(this.victory ? 'mop' : 'senior');
     },

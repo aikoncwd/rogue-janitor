@@ -66,5 +66,5 @@ test('opening a secret door plays the secret sound', () => {
     t.mess = null;
     t.secretDoor = { door: '+', char: '.', color: '#fff', bgColor: '#000', sound: '' };
     ctx.Game.player.clean('mop');
-    assert.deepEqual(played, ['secret']);
+    assert.deepEqual(played.filter(s => s !== 'fanfareIn'), ['secret']); // the first secret also unlocks an achievement jingle
 });

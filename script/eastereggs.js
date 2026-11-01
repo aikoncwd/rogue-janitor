@@ -81,6 +81,7 @@ var EasterEggs = {
                 break;
             case 'xyzzy':
                 this.tried.xyzzy = true;
+                Achievements.unlock('xyzzy');
                 Game.sendMessage("Nothing happens.");
                 break;
             case 'elbereth':
@@ -137,6 +138,7 @@ var EasterEggs = {
         if (this.history.join(',') == this.KONAMI.join(',')) {
             this.history = [];
             this.tried.konami = true;
+            Achievements.unlock('konami');
             Game.sendMessage("You feel like you have 30 extra lives. You still only have one mop.");
             Sfx.play('fanfareIn');
         }

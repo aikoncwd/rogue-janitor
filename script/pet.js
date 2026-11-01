@@ -55,6 +55,7 @@ Pet.prototype = Object.create(Entity.prototype);
 
 Pet.prototype.cleanerAct = function() {
     this.playerInteractions++;
+    Achievements.unlock('petting');
     if (!this.playerTalkedToday) {
         Game.yendorPoints+=2;
         this.playerTalkedToday=true;
