@@ -140,6 +140,7 @@ var Panel = {
     lines: function (phase, maxRows = Infinity) {
         let w = this.WIDTH - 1;
         let head, list, tail;
+        let hints = null, messTail = null; // cleaning: what a short panel must keep
         if (phase == 'invasion' || phase == 'intro') {
             let hero = Game.adventurer;
             let hp = hero ? Math.max(0, Math.min(hero.hp, this.HERO_HP_MAX)) : 0;
@@ -215,7 +216,7 @@ var Panel = {
             if (messLines.length == 0) {
                 messLines = ['%c{#0c0}Spotless!%c{}'];
             }
-            let hints = [
+            hints = [
                 '',
                 '%c{#777}[?] help%c{}',
                 '%c{#777}[V] sound: ' + (Sfx.enabled ? 'on' : 'off') + '%c{}',
@@ -223,6 +224,7 @@ var Panel = {
                 '%c{#777}[+/-] zoom  [0] auto%c{}',
             ];
             tail = ['', '%c{#fff}── MESS LEFT ──%c{}'].concat(messLines);
+            messTail = tail;
             // the minimap, only when the lounge list keeps a few rows
             let spare = maxRows - head.length - tail.length - hints.length - Math.min(list.length, 3) - 2;
             if (spare >= 4) {
@@ -231,10 +233,33 @@ var Panel = {
             tail = tail.concat(hints);
         }
         let room = maxRows - head.length - tail.length;
+        if (room < 1 && hints != null) {
+            return this.shortLines(head.slice(0, -1), messTail, hints, maxRows); // minus the lounge title
+        }
         if (room < 1) {
             return head.concat(tail).slice(0, Math.max(0, maxRows));
         }
         return head.concat(this.listLines(list, room)).concat(tail);
+    },
+
+    // A cleaning panel that does not fit: no minimap and no lounge list. The help
+    // keys always stay; then the shift basics (day, clean %, nearest mess), then
+    // MESS LEFT, then whatever else of the top part fits (combo, room, goals...).
+    shortLines: function (head, mess, hints, maxRows) {
+        if (maxRows <= hints.length) {
+            return hints.slice(hints.length - Math.max(0, maxRows));
+        }
+        let room = maxRows - hints.length;
+        let basics = Math.min(4, head.length, room);
+        if (room - basics < mess.length && mess[0] == '') {
+            mess = mess.slice(1); // short on space: no blank line before MESS LEFT
+        }
+        if (room - basics < 2 && mess.length >= 2 && room >= 2) {
+            basics = room - 2; // the MESS LEFT title with no count is no use: take a basics row
+        }
+        let messShown = mess.slice(0, room - basics);
+        let headShown = head.slice(0, room - messShown.length);
+        return headShown.concat(messShown).concat(hints);
     },
 
     // "Room: the Gallery of Loud Snoring" on up to two lines (rot.js drops leading

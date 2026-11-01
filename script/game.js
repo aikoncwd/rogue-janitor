@@ -62,6 +62,7 @@ var Game = {
     phase:'intro', // 'intro' | 'invasion' | 'cleaning'
     log: new MessageLog(),
     fontSize: 16,
+    manualZoom: false, // the player picked a zoom with +/- this session
     MIN_FONT: 12,
     MAX_FONT: 48,
     FONT_STEP: 2,
@@ -110,7 +111,9 @@ var Game = {
             if (EasterEggs.prompt != null) {
                 return; // typing a #command: letters are letters, not music/sound/zoom keys
             }
-            EasterEggs.track(code);
+            if (!this.screenOpen()) {
+                EasterEggs.track(code);
+            }
         }
         // zoom: + / - (main keyboard or numpad), 0 = automatic size
         if (e.key == '+' || e.key == '=' || code == 107) {
@@ -124,6 +127,9 @@ var Game = {
         if (e.key == '0' || code == 96) { // main keyboard or numpad 0 (NumLock on or off)
             this.setFontSize(this.fitFontSize() || this.autoFontSize(), false);
             return;
+        }
+        if (this.screenOpen()) {
+            return; // the shop and the pockets own the letters (their own listener handles them)
         }
         if (e.keyCode == 84 && !this.typingInConvo()) { // T: music on/off
             Music.toggle();
@@ -168,6 +174,11 @@ var Game = {
         }
     },
 
+    // Mimsy's shop or your pockets are on screen.
+    screenOpen: function() {
+        return this.phase == 'cleaning' && ((typeof Shop != 'undefined' && Shop.isOpen) || (typeof Inventory != 'undefined' && Inventory.isOpen));
+    },
+
     // Font size that gives roughly TARGET_ROWS rows in the current window.
     autoFontSize: function() {
         let h = (this.screen && this.screen.clientHeight) ? this.screen.clientHeight : 640;
@@ -202,7 +213,7 @@ var Game = {
 
     // Every morning (unless you chose a zoom): fit the new dungeon on screen.
     applyAutoZoom: function() {
-        if (this.hasSavedZoom()) {
+        if (this.manualZoom || this.hasSavedZoom()) {
             return;
         }
         let size = this.fitFontSize();
@@ -228,6 +239,7 @@ var Game = {
 
     setFontSize: function(size, remember) {
         this.fontSize = Math.max(this.MIN_FONT, Math.min(this.MAX_FONT, size));
+        this.manualZoom = !!remember; // kept in memory too, for browsers that block localStorage
         try {
             if (remember) {
                 localStorage.setItem('rj-font', String(this.fontSize));
@@ -425,7 +437,7 @@ var Game = {
         }
 
         this.drawChrome();
-        if (this.phase == 'cleaning' && this.player.talking == null) {
+        if (Achievements.canShow()) {
             Achievements.drawToast(); // toasts wait for the cleaning screen
         }
 
@@ -1766,14 +1778,50 @@ var Game = {
         }
         return list;
     },
-    // How warm the floor at x,y is (0..1) given a list of torches.
+    // How warm the floor at x,y is (0..1) given a list of torches. Only floor the
+    // torch can see is lit: on the side of the wall it faces, with a clear line.
     warmth: function(x, y, torches) {
         let w = 0;
         for (let i = 0; i < torches.length; i++) {
-            let d = Math.sqrt((torches[i].x - x) * (torches[i].x - x) + (torches[i].y - y) * (torches[i].y - y));
-            w = Math.max(w, 1 - d / this.TORCH_RADIUS);
+            let t = torches[i];
+            let d = Math.sqrt((t.x - x) * (t.x - x) + (t.y - y) * (t.y - y));
+            if (1 - d / this.TORCH_RADIUS <= w) {
+                continue;
+            }
+            if (t.facing && (x - t.x) * t.facing[0] + (y - t.y) * t.facing[1] <= 0) {
+                continue; // behind the wall it hangs on
+            }
+            // the ray starts in front of the torch, so its own wall does not shade the floor along it
+            let fromX = t.facing ? t.x + t.facing[0] : t.x, fromY = t.facing ? t.y + t.facing[1] : t.y;
+            if (this.torchSees(fromX, fromY, x, y)) {
+                w = 1 - d / this.TORCH_RADIUS;
+            }
         }
         return w;
+    },
+
+    // A Bresenham line from x0,y0 to x1,y1: every tile in between lets light through.
+    // Plain arithmetic, no RNG (it runs while drawing).
+    torchSees: function(x0, y0, x1, y1) {
+        let dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
+        let sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+        let err = dx + dy;
+        let x = x0, y = y0;
+        if (x0 == x1 && y0 == y1) {
+            return true;
+        }
+        while (true) {
+            let e2 = 2 * err;
+            if (e2 >= dy) { err += dy; x += sx; }
+            if (e2 <= dx) { err += dx; y += sy; }
+            if (x == x1 && y == y1) {
+                return true;
+            }
+            let tile = this.map[x + ',' + y];
+            if (!tile || !tile.lightPasses()) {
+                return false;
+            }
+        }
     },
 
     // Mixes colour a towards b by f (0..1).
@@ -1917,6 +1965,8 @@ var Game = {
         this.playerPet = null;
         this.victory = false;
         this.hintsToday = [];
+        this.roomNames = null; // named again for the new dungeon
+        Objectives.list = []; // yesterday's memo is not today's
         this.player.talking = null;
         this.player.examining = null;
         this.player.instructions = false;

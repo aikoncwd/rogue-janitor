@@ -132,20 +132,31 @@ var Achievements = {
             if (Game.display != null && Effects.canRedraw()) {
                 Game.drawMap();
             }
-            if (self.queue.length > 0) {
-                self.scheduleRedraw();
+            if (self.queue.length > 0 && self.canShow()) {
+                self.scheduleRedraw(); // otherwise the next drawToast() starts it again
             }
         }, 500);
     },
 
+    // Toasts only show on the plain cleaning screen (no conversation, shop or pockets).
+    canShow: function () {
+        return Game.phase == 'cleaning' && Game.player != null && Game.player.talking == null &&
+            !(typeof Shop != 'undefined' && Shop.isOpen) && !(typeof Inventory != 'undefined' && Inventory.isOpen);
+    },
+
     // Draws the current toast in the top-right corner of the map viewport.
     drawToast: function () {
-        let t = this.toast();
-        if (t == null || Game.layoutInfo == null) {
+        if (Game.layoutInfo == null || Game.layoutInfo.mapCols < 5) {
             return;
         }
-        let w = Math.max(t.title.length, t.name.length) + 4;
-        let x0 = Math.max(0, Game.layoutInfo.mapCols - w - 1);
+        let t = this.toast();
+        if (t == null) {
+            return;
+        }
+        let cols = Game.layoutInfo.mapCols;
+        let w = Math.min(cols, Math.max(t.title.length, t.name.length) + 4);
+        t = {title: Panel.fit(t.title, w - 4), name: Panel.fit(t.name, w - 4)}; // a very narrow map: shorten
+        let x0 = Math.max(0, cols - w - 1);
         let rows = [
             '┌' + '─'.repeat(w - 2) + '┐',
             '│ ' + t.title + ' '.repeat(w - 3 - t.title.length) + '│',

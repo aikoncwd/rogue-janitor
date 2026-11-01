@@ -81,9 +81,21 @@ function Entity(x,y,char,color,species,hp=1,tags={},level=1,bgColor='#000',attac
             if (oldKey in Game.map && Game.map[oldKey].entity==this) {
                 Game.map[oldKey].entity=null;
             }
+            let hungFrom=[this.x,this.y];
             this.x+=best[0];
             this.y+=best[1];
             Game.map[newKey].entity=this;
+            // which way it faces: the open side next to it closest to where it came from
+            this.facing=null;
+            let bestSide=100;
+            [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d) {
+                let side=Game.map[(this.x+d[0])+','+(this.y+d[1])];
+                let dist=Math.abs(this.x+d[0]-hungFrom[0])+Math.abs(this.y+d[1]-hungFrom[1]);
+                if (side && side.passable && dist<bestSide) {
+                    bestSide=dist;
+                    this.facing=d;
+                }
+            },this);
             if (this.bgColor=='#000') {
                 this.bgColor=Game.map[newKey].bgColor; // hang on the wall, not in a hole
             }
