@@ -635,7 +635,7 @@ Entity.prototype.moveTo=function(x,y,questing) {
                     Game.map[newKey].open=true;
                     return true;
                 }
-                if (Game.map[newKey].entity != null && Game.map[newKey].entity instanceof Entity && oldKey in Game.map && Game.map[oldKey].entity==this) {
+                if (Game.map[newKey].entity != null && (Game.map[newKey].entity instanceof Entity || (Game.map[newKey].entity.tags && Game.map[newKey].entity.tags.dragon)) && oldKey in Game.map && Game.map[oldKey].entity==this) {
                     Game.map[oldKey].entity=null;
                     if (Game.map[newKey].entity.moveTo(this.x,this.y)) {
                         Game.map[newKey].entity=this;

@@ -34,6 +34,8 @@ DayEvents.baseStart = DayEvents.start;
 DayEvents.start = function () {
     this.dragon = null;
     this.intern = null;
+    Game.player.prevX = null; // yesterday's footsteps were on another map
+    Game.player.prevY = null;
     this.baseStart();
 };
 
@@ -69,8 +71,7 @@ DayEvents.corridorSpots = function () {
 DayEvents.flood = function () {
     let f = this.fountain();
     let fx = f.x, fy = f.y;
-    Game.map[fx + ',' + fy].entity = null;
-    f.alive = false;
+    Game.map[fx + ',' + fy].entity = null; // fixing the broken fountain puts it back
     makeMess(fx, fy, 'BrokenFountain').parent = f; // fixing it puts the fountain back
     for (let i = -3; i <= 3; i++) {
         for (let j = -3; j <= 3; j++) {
@@ -94,6 +95,17 @@ DayEvents.napDragon = function () {
         getArt: function () { return [this.char, this.color, '#000']; },
         describe: function () { return 'A big friendly dragon, fast asleep in the corridor. Zzz.'; },
         cleanerAct: function () { DayEvents.bumpDragon(this); },
+        // a comrade squeezing past: the dragon rolls onto the tile they left
+        moveTo: function (x, y) {
+            let t = Game.map[x + ',' + y];
+            if (!t || t.entity != null || t.door != null || t.important) {
+                return false;
+            }
+            t.entity = this;
+            this.x = x;
+            this.y = y;
+            return true;
+        },
     };
     Game.map[s[0] + ',' + s[1]].entity = dragon;
     this.dragon = dragon;
@@ -109,6 +121,13 @@ DayEvents.bumpDragon = function (d) {
     }
     // it rolls over in its sleep and you squeeze past (you swap places)
     let p = Game.player;
+    let here = Game.map[p.x + ',' + p.y];
+    if (here && (here.door != null || here.important)) {
+        d.bumps = 2;
+        Game.sendMessage("The dragon stretches a wing towards the doorway... and thinks better of it. Step out of the door first.");
+        Game.drawMap();
+        return;
+    }
     let px = p.x, py = p.y;
     Game.map[d.x + ',' + d.y].entity = p;
     Game.map[px + ',' + py].entity = d;

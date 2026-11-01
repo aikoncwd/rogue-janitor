@@ -1642,6 +1642,7 @@ var Game = {
             row('Clean  ' + '\u2588'.repeat(filled) + '\u2591'.repeat(12 - filled) + '  ' + pct + '%'),
             row('Points today    +' + (this.yendorPoints - this.shift.startPoints + pct)),
             row('Pay             +' + this.payFor(grade) + ' zm'),
+            row('Mop of Yendor   ' + (this.yendorPoints + pct) + ' / ' + this.targetPoints),
             row('Best combo      x' + (this.combo ? this.combo.bestToday : 0)),
             row('Goals done      ' + goals.filter(function(g) { return g.done; }).length + ' / ' + goals.length),
             row('Messes cleaned  ' + this.shift.cleaned),
