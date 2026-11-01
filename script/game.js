@@ -37,11 +37,13 @@ var Game = {
     convoTags:{},
     day: 1,
     unionist: null,
-    targetPoints:1500,
-    // Dungeon size grows with the days: a small first shift, then 1-2 more rooms
-    // every morning (the staff lounge counts as one of them).
-    DAY1_ROOMS: 5,
-    MAX_ROOMS: 16,
+    // A run is five working days. Mop of Yendor target, estimated per day:
+    // decent ~ 80 (clean %) + 20 (chats) + 10 (secret door) + 50 (a request) = 160
+    // -> ~800 over 5 days; lazy ~ 40 + 10 = 50 -> ~250. 650 leaves room for an off day.
+    targetPoints:650,
+    LAST_DAY: 5,
+    // Rooms per day (the staff lounge counts as one of them).
+    DAY_ROOMS: [5, 7, 10, 13, 16],
     dungeonRooms: 5,
     yendorPoints:0,
     victory:false,
@@ -1584,16 +1586,16 @@ var Game = {
         return best;
     },
 
+    roomsForDay: function(day) {
+        return this.DAY_ROOMS[Math.max(0, Math.min(this.DAY_ROOMS.length, day) - 1)];
+    },
+
     nextDay() {
         Visitors.clear();
         this.hintsToday = [];
         this.day++;
-        this.dungeonRooms = Math.min(this.MAX_ROOMS, this.dungeonRooms + 1 + Math.floor(2*ROT.RNG.getUniform()));
-        this.yendorPoints += this.cleanPercent();
-        if (this.yendorPoints>=this.targetPoints && !this.victory) {
-            this.player.cutscene=ConversationBuilder.victoryPrompt();
-            this.victory=true;
-        }
+        this.dungeonRooms = this.roomsForDay(this.day);
+        this.yendorPoints += this.cleanPercent(); // the Mop is decided at the end of the run
         //this.engine.unlock();
         this.generateDungeon();
     },

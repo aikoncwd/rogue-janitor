@@ -25,20 +25,16 @@ function showFirstScene(ctx, want) {
     return convo[idx];
 }
 
-test('day 1 is a small dungeon and every new day adds one or two rooms', () => {
+test('day 1 is a small dungeon and later days follow the room table', () => {
     for (const seed of [1, 2, 3]) {
         const ctx = bootHeadless({ seed });
         const G = ctx.Game;
         G.generateDungeon();
-        assert.equal(G.rooms.length, G.DAY1_ROOMS, 'day 1 rooms');
-        let prev = G.dungeonRooms;
-        for (let d = 2; d <= 12; d++) {
+        assert.equal(G.rooms.length, G.DAY_ROOMS[0], 'day 1 rooms');
+        for (let d = 2; d <= 5; d++) {
             ctx.Invasion.instant = true;
             G.nextDay();
-            const grew = G.dungeonRooms - prev;
-            assert.ok(grew >= 1 && grew <= 2 || G.dungeonRooms == G.MAX_ROOMS, `day ${d} grew ${grew}`);
-            assert.ok(G.dungeonRooms <= G.MAX_ROOMS);
-            prev = G.dungeonRooms;
+            assert.equal(G.dungeonRooms, G.DAY_ROOMS[d - 1], 'day ' + d);
         }
     }
 });
