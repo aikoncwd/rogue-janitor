@@ -54,3 +54,15 @@ test('literal scenes keep digits and @ as text', () => {
     assert.equal(ctx.Scenes.cell(ctx.Scenes.art.plaque, '@', 0, 0, 0)[0], '@');
     assert.equal(ctx.Scenes.art.plaque.frames.length, 2);
 });
+
+test('only the flowers are pink, not the comma in PEACE,', () => {
+    const ctx = dungeon();
+    const lines = ctx.Game.plaqueLines();
+    ctx.Scenes.setPlaque(lines);
+    const art = ctx.Scenes.art.plaque;
+    const row = lines.findIndex(l => l.includes('PEACE,'));
+    assert.equal(ctx.Scenes.cell(art, ',', 0, row, 0)[1], '#ddd');
+    const flowers = lines.findIndex(l => l.includes('*'));
+    assert.equal(ctx.Scenes.cell(art, '*', 0, flowers, 0)[1], '#f8c');
+    assert.equal(ctx.Scenes.cell(art, ',', 0, flowers, 1)[1], '#f8c');
+});

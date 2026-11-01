@@ -19,6 +19,11 @@ When the day is done, go out for dinner with your colleagues, or have a relaxing
 - The night invasion is last night's security-camera footage: a blinking `● REC` banner with a ticking clock reminds you it's a recording.
 - The replay has rhythm: it hurries through empty corridors and holds on potions, speeches, door kicks and dramatic faints.
 - Three new tunes: a calm title theme, a livelier second raid march and a second cozy cleaning loop, rotating by day.
+- Litter with personality: pages of the Necronomicon, scrolls labeled KLAATU BARADA NIKTO, scattered zorkmids, "I <3 PERMADEATH" mugs... and fortune cookies full of roguelike rumors.
+- Four new heroes (Tourist, Valkyrie, Speedrunner, Necromancer) and new invasion moments: lost heroes asking for directions, unidentified scrolls, save-scumming, Elbereth on the walls, and everyone asking where the Amulet is (Rodney has it. Again.).
+- A memo on the corkboard every morning, and cozy shift events: a health inspector, birthdays with cake, a stain that is secretly a mimic, a rubber duck in the fountain, ghosts of past heroes, and tea with Rodney.
+- NetHack-style extended commands (`#pray`, `#xyzzy`, `#name` your mop, `#elbereth`, `#chat`), a quit joke on `Q`, a certain famous code... and colleagues who drop hints about them.
+- An end-of-shift plaque: rest in peace, your back. Do you want your mess identified?
 - A dynamic, procedurally generated dungeon.
 - A fully simulated dungeon adventure that you miss entirely but get to see the messy aftermath of.
 - A detailed mess system; walk through puddles and track prints everywhere! Gross!

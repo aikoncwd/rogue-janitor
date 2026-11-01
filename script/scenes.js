@@ -178,7 +178,10 @@ var Scenes = {
     // Which scene goes with tonight's plan ('dinner', 'drinks', 'dancing' or "Name's barbeque").
     // The end-of-shift plaque: text as it is (no cast substitution), flowers that sway.
     setPlaque: function (lines) {
-        let palette = { '/': '#999', '\\': '#999', '|': '#999', '*': '#f8c', ',': '#f8c' };
+        let palette = { '/': '#999', '\\': '#999', '|': '#999' };
+        let flowers = lines.findIndex(function (l) { return l.indexOf('*') >= 0; });
+        palette[flowers + ':*'] = '#f8c'; // only the flower row: "PEACE," keeps its comma white
+        palette[flowers + ':,'] = '#f8c';
         palette['0:_'] = '#999';
         palette[(lines.length - 1) + ':_'] = '#6a4';
         palette[(lines.length - 1) + ':\\'] = '#6a4';
