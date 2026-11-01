@@ -64,6 +64,14 @@ var DayEvents = {
         let memo = Game.amuletStolen ? Lore.amuletMemo : Flavor.rng.getItem(Lore.memos);
         Game.amuletStolen = false;
         Game.log.push('%c{#ff0}MEMO:%c{} ' + memo);
+        let gear = {vacuum: "New equipment from HR: a vacuum! Press %c{#ff0}Z%c{} to suck up cobwebs, feathers, spores, soot and other fluff around you.",
+            squeegee: "New equipment from HR: a squeegee! Mopping water now clears the whole puddle.",
+            brush: "New equipment from HR: a scrub brush! Stubborn stains now go in one pass."};
+        for (let tool in gear) {
+            if (Game.day == Game.TOOL_DAYS[tool]) {
+                Game.log.push('%c{#ff0}MEMO:%c{} ' + gear[tool]);
+            }
+        }
         if (Game.day < 2) {
             return;
         }

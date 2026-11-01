@@ -58,6 +58,12 @@ var Effects = {
             frames.push(['*', '#fff', '#000']);
             frames.push(['+', '#888', '#000']);
         }
+        else if (verb == 'vacuum') {
+            frames.push(['@', '#aaa', '#000']);
+            frames.push(['o', '#888', '#000']);
+            frames.push(['°', '#777', '#000']);
+            frames.push(['·', '#555', '#000']);
+        }
         else if (verb == 'fix') {
             frames.push(['T', '#fa0', '#000']);
             frames.push(['⊥', '#fa0', '#000']);

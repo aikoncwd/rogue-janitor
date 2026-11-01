@@ -246,6 +246,7 @@ var Game = {
                 ["(%c{#ff0}M%c{})op messes.",12],
                 ["(%c{#ff0}P%c{})ick up or (%c{#ff0}G%c{})et garbage or other items.",24],
                 ["(%c{#ff0}F%c{})ix or (%c{#ff0}R%c{})epair broken furniture.",24],
+                ["Va(%c{#ff0}Z%c{})uum fluff around you (from day 2).",12],
                 ["All cleaning methods affect tiles you are next to.",0],
                 ["All cleaning methods can reveal hidden doors!",0],
                 ["Careful: slime puddles are slippery!",0],
@@ -1551,6 +1552,15 @@ var Game = {
             "Requests done: " + this.shift.requestsDone + "   Comrades chatted with: " + chatted + "\n" +
             "Points today: +" + today + "   Total: " + (this.yendorPoints + pct) + " / " + this.targetPoints + " toward the Mop of Yendor\n" +
             bestLine;
+    },
+
+    // New equipment arrives during the run.
+    TOOL_DAYS: {vacuum: 2, squeegee: 3, brush: 4},
+    VACUUM_KINDS: ['Cobweb', 'Loose Feathers', 'Spores', 'Bone Dust', 'Soot', 'Gravel', 'Splinters', 'Dripped Wax'],
+    WATER_KINDS: ['Water', 'Holy Water', 'Wet Footprints'],
+    SQUEEGEE_CAP: 12,
+    hasTool: function(name) {
+        return this.day >= this.TOOL_DAYS[name];
     },
 
     gradeFor: function(pct) {

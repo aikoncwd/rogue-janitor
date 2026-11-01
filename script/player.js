@@ -124,6 +124,17 @@ Player.prototype.clean = function(verb) {
             }
             if (key in Game.map && Game.map[key].mess != null && Game.map[key].mess.cleanMethod == verb) {
                 let stain = Game.map[key].mess;
+                let brushed = false;
+                if (verb=='mop' && Game.WATER_KINDS.indexOf(stain.kind) >= 0 && Game.hasTool('squeegee')) {
+                    let n = this.squeegee(key);
+                    Game.sendMessage("Shhhhk! You squeegee away " + (n > 1 ? n + " tiles of " : "the ") + stain.displayName() + ".");
+                    return;
+                }
+                if (verb=='mop' && stain.passes > 1 && Game.hasTool('brush')) {
+                    stain.passes = 0; // the scrub brush does it in one go
+                    brushed = true;
+                    Game.sendMessage("Your scrub brush makes short work of the " + stain.displayName() + ".");
+                }
                 if (verb=='mop' && !stain.scrub()) {
                     let left = stain.passes;
                     Game.sendMessage("You scrub the "+stain.displayName()+". "+(left > 1 ? "It's stubborn! ("+left+" more passes)" : "It's fading... one more pass!"));
@@ -159,7 +170,7 @@ Player.prototype.clean = function(verb) {
                     else if (Game.map[key].mess.unique) {
                         Game.sendMessage("You "+verb+" "+Game.map[key].mess.name+"!");
                     }
-                    else {
+                    else if (!brushed) {
                         Game.sendMessage("You "+verb+" the "+Game.map[key].mess.displayName()+".");
                     }
                     if (Game.map[key].mess.kind == 'Scattered Gold Coins') {
@@ -172,23 +183,10 @@ Player.prototype.clean = function(verb) {
                         Game.sendMessage("You crack the fortune cookie. It reads: \""+Lore.rumor()+"\"");
                     }
                 }
-                let cleaned = Game.map[key].mess;
-                if (cleaned.droppedBy != null) {
-                    ConversationBuilder.cleanConvo(cleaned);
-                }
-                if (cleaned.bonusPoints) {
-                    Game.yendorPoints += cleaned.bonusPoints;
-                }
                 if (tool == 'mop' && EasterEggs.mopName() != null && Flavor.chance(0.2)) {
                     Game.sendMessage("You swish " + EasterEggs.mopName() + ".");
                 }
-                Game.shift.cleaned++;
-                cleaned.pickedUp=true;
-                Game.map[key].mess=null;
-                Game.messNumbers[0]--;
-                Game.checkCleanMilestones();
-                Sfx.play(cleaned.sound || sound);
-                Effects.clean(tool, this.x+i, this.y+j, cleaned.color);
+                this.removeMess(key, tool, sound);
                 return;
             }
             else if (key in Game.map && Game.map[key].mess == null && Game.map[key].entity==null && Game.map[key].secretDoor != null) {
@@ -221,6 +219,80 @@ Player.prototype.clean = function(verb) {
         Game.lastlastMessageTime--;
     }
 }
+
+// Everything that happens when a mess is gone, whatever tool took it.
+Player.prototype.removeMess = function(key, tool, sound=null) {
+    let tile = Game.map[key];
+    let cleaned = tile.mess;
+    if (cleaned.droppedBy != null) {
+        ConversationBuilder.cleanConvo(cleaned);
+    }
+    if (cleaned.bonusPoints) {
+        Game.yendorPoints += cleaned.bonusPoints;
+    }
+    Game.shift.cleaned++;
+    cleaned.pickedUp=true;
+    tile.mess=null;
+    Game.messNumbers[0]--;
+    Game.checkCleanMilestones();
+    Sfx.play(cleaned.sound || sound || 'mop');
+    let parts = key.split(',');
+    Effects.clean(tool, parseInt(parts[0]), parseInt(parts[1]), cleaned.color);
+};
+
+// Z: the vacuum sucks up every dry, fluffy mess around you at once.
+Player.prototype.vacuum = function() {
+    if (!Game.hasTool('vacuum')) {
+        Game.sendMessage("The vacuum arrives tomorrow. HR is \"processing the paperwork\".");
+        return false;
+    }
+    let n = 0;
+    for (let i=-1;i<=1;i++) {
+        for (let j=-1;j<=1;j++) {
+            let key = (this.x+i)+','+(this.y+j);
+            let tile = Game.map[key];
+            if ((i != 0 || j != 0) && tile && tile.mess != null && Game.VACUUM_KINDS.indexOf(tile.mess.kind) >= 0) {
+                this.removeMess(key, 'vacuum', 'pickup');
+                n++;
+            }
+        }
+    }
+    if (n == 0) {
+        Game.sendMessage("Vrrrr... nothing here the vacuum can take.");
+        return false;
+    }
+    Game.sendMessage("VRRRRRM! The vacuum swallows " + n + (n > 1 ? " bits of fluff." : " bit of fluff."));
+    return true;
+};
+
+// The squeegee clears a whole connected puddle (up to SQUEEGEE_CAP tiles).
+// Returns how many tiles it cleaned.
+Player.prototype.squeegee = function(startKey) {
+    let queue = [startKey];
+    let seen = {};
+    seen[startKey] = true;
+    let n = 0;
+    while (queue.length > 0 && n < Game.SQUEEGEE_CAP) {
+        let key = queue.shift();
+        let tile = Game.map[key];
+        if (!tile || tile.mess == null || Game.WATER_KINDS.indexOf(tile.mess.kind) < 0) {
+            continue;
+        }
+        this.removeMess(key, 'mop', 'mop');
+        n++;
+        let parts = key.split(',').map(Number);
+        for (let i=-1;i<=1;i++) {
+            for (let j=-1;j<=1;j++) {
+                let next = (parts[0]+i)+','+(parts[1]+j);
+                if (!seen[next] && next != this.x+','+this.y) {
+                    seen[next] = true;
+                    queue.push(next);
+                }
+            }
+        }
+    }
+    return n;
+};
 
 Player.prototype.doExamine = function(code) {
     if (!(code in this.keyMap)) {
@@ -307,6 +379,15 @@ Player.prototype.handleEvent = function(e) {
             case 70:
             this.clean('fix');
             this.endTurn();
+            return;
+            // z: the vacuum (from day 2)
+            case 90:
+            if (this.vacuum()) {
+                this.endTurn();
+            }
+            else {
+                Game.drawMap();
+            }
             return;
             // x to examine
             case 69:
