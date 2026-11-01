@@ -571,6 +571,11 @@ Entity.prototype.act = function() {
     }
 }
 
+// What examining it says.
+Entity.prototype.describe = function() {
+    return this.name + "." + (this.examineText ? " " + this.examineText : "");
+}
+
 Entity.prototype.getArt = function() {
     this.lastSeen=0;
     if (this.alive) {

@@ -862,11 +862,22 @@ var ConversationBuilder = {
             messages.push("You have a really happy dream about "+Game.convoTags.animal+"s!");
         }
         messages.splice(2, 0, Game.shiftReport());
+        if (Game.todayEvent == 'inspector') {
+            let good = Game.cleanPercent() >= 80;
+            let verdict = {message: Flavor.rng.getItem(good ? Lore.inspectorVerdict.good : Lore.inspectorVerdict.bad)};
+            if (good) {
+                verdict.globalTags = {yendorPoints: 100};
+            }
+            messages.splice(3, 0, verdict);
+        }
         messages.push("In the morning, you wake up, and have a delicious breakfast.");
         messages.push("Time for another day of work!");
         for (let i=0;i<messages.length;i++) {
             // a line is either plain text or {message, scene} with an ASCII scene above it
             var nextMsg = typeof messages[i] == 'string' ? {message:messages[i]} : {message:messages[i].message, scene:messages[i].scene};
+            if (typeof messages[i] != 'string' && messages[i].globalTags) {
+                nextMsg.globalTags = messages[i].globalTags;
+            }
             if (i==0) {
                 nextMsg.y=1;
                 nextMsg.n=-1;

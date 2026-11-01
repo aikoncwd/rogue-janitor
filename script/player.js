@@ -151,6 +151,10 @@ Player.prototype.clean = function(verb) {
                     if (Game.map[key].mess.elbereth) {
                         Game.sendMessage("You erase the engraving. Sorry, Elbereth.");
                     }
+                    else if (Game.map[key].mess.mimic) {
+                        Game.sendMessage("Hehe, that tickles!");
+                        Game.sendMessage("The stain was a mimic! It giggles and scurries off to the lounge.");
+                    }
                     else if (Game.map[key].mess.unique) {
                         Game.sendMessage("You "+verb+" "+Game.map[key].mess.name+"!");
                     }

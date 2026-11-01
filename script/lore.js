@@ -131,6 +131,101 @@ var Lore = {
         "They say the kobolds run the best book club in the dungeon.",
     ],
 
+    // Pinned to the corkboard every morning.
+    memos: [
+        "Please stop dying in the hallway.",
+        "The fountain is NOT a bathtub.",
+        "Whoever keeps writing Elbereth on the walls: we know it's you, Kevin.",
+        "The RNG has been instructed to be nicer.",
+        "Rodney, please return the Amulet to lost & found.",
+        "Fake blood goes in the RED bucket. Real ketchup goes on fries.",
+        "Mimics: please stop pretending to be the mop bucket.",
+        "Reminder: theatrical fainting is not a sick day.",
+        "Whoever ate the lichen in the fridge: it was not yours. It never rots, but still.",
+        "Hero season is here. Please remember to stretch before dying.",
+        "The secret door is a secret. Stop telling the heroes.",
+        "Team-building trust fall on Friday. Skeletons, please hold on to your bones.",
+    ],
+    amuletMemo: "The Amulet of Yendor has been stolen again. Rodney says it's fine, he has spares.",
+
+    // What a shift event says when it starts.
+    eventNews: {
+        inspector: "A health inspector is visiting the staff lounge today. Better make it shine!",
+        birthday: "It's {monster}'s birthday today! There's cake in the lounge.",
+        mimicStain: "One of today's stains looks... suspiciously smug.",
+        bones: "You feel a chill. A ghost is waiting in the staff lounge.",
+        rodney: "Rodney is having tea in the staff lounge today.",
+    },
+
+    birthdayLines: [
+        "It's my birthday today! ^.^",
+        "Somebody baked a cake and everything. Have a slice!",
+        "You sing a slightly off-key happy birthday. They love it.",
+    ],
+
+    inspectorVerdict: {
+        good: [
+            "The inspector nods: \"Spotless. Well, nearly. A+ for the dungeon!\" (+100)",
+            "The inspector beams: \"I could eat lichen off this floor!\" (+100)",
+            "The inspector stamps a gold star on their clipboard. (+100)",
+        ],
+        bad: [
+            "The inspector frowns at a sticky footprint: \"We'll talk next time.\"",
+            "The inspector writes for a very long time on the clipboard.",
+            "The inspector slips on something and leaves without a word.",
+        ],
+    },
+
+    // Funny causes of death for heroes' ghosts and the end-of-shift plaque.
+    killedBy: [
+        "a slippery puddle",
+        "an unexpectedly heavy bucket",
+        "Kevin's crossword",
+        "the RNG",
+        "a mimic disguised as a mess",
+        "a falling torch",
+        "reading the Necronomicon aloud",
+        "too many energy drinks",
+        "a very rude kobold",
+        "a cursed mop",
+        "tripping over loose pages",
+        "a fortune cookie",
+    ],
+
+    visitors: {
+        inspector: {
+            name: 'Inspector Gnoll-Bertson',
+            char: 'g',
+            color: '#9cf',
+            lines: [
+                "Inspector Gnoll-Bertson, Dungeon Health & Safety.",
+                "Don't mind me. Just checking for... *runs a claw along a shelf* ...dust.",
+                "I'll give my verdict when your shift is over. No pressure!",
+            ],
+        },
+        bones: {
+            char: 'G',
+            color: '#bcf',
+            lines: [
+                "Ooooh... hello. I'm the ghost of {hero}.",
+                "I was killed by {killedBy}. Very embarrassing.",
+                "This is my bones level now. Mind if I haunt the lounge for a bit?",
+                "Do you think anyone will find my stuff? It's worth a lot of points.",
+            ],
+        },
+        rodney: {
+            name: 'Rodney the Retired Wizard',
+            char: '@',
+            color: '#f0f',
+            lines: [
+                "Ah, the janitor! Rodney. Retired. Tea?",
+                "Heroes these days. They kick down your door, take your Amulet, and never call.",
+                "Between you and me, I keep the real Amulet of Yendor in my sock drawer.",
+                "The ones they steal are fakes from the gift shop. Business is good!",
+            ],
+        },
+    },
+
     rumor: function () {
         return Flavor.rng.getItem(this.rumors);
     },

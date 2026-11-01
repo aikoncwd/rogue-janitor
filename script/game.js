@@ -45,6 +45,9 @@ var Game = {
     dungeonRooms: 5,
     yendorPoints:0,
     victory:false,
+    pastHeroes:[], // every hero so far: their ghosts may visit
+    todayEvent:null,
+    amuletStolen:false,
     phase:'intro', // 'intro' | 'invasion' | 'cleaning'
     log: new MessageLog(),
     fontSize: 16,
@@ -337,7 +340,7 @@ var Game = {
                         this.showTransient("It's you!");
                     }
                     else {
-                        this.showTransient(this.map[lookKey].entity.name+".");
+                        this.showTransient(this.map[lookKey].entity.describe ? this.map[lookKey].entity.describe() : this.map[lookKey].entity.name+".");
                     }
                 }
                 else if (this.map[lookKey].mess != null) {
@@ -1516,6 +1519,7 @@ var Game = {
     },
 
     nextDay() {
+        Visitors.clear();
         this.day++;
         this.dungeonRooms = Math.min(this.MAX_ROOMS, this.dungeonRooms + 1 + Math.floor(2*ROT.RNG.getUniform()));
         this.yendorPoints += this.cleanPercent();

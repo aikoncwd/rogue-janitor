@@ -25,6 +25,7 @@ const DEFAULT_FILES = [
     'script/pet.js',
     'script/adventurer.js',
     'script/conversations.js',
+    'script/dayevents.js',
 ];
 
 function makeContext() {
