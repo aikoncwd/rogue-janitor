@@ -869,14 +869,16 @@ var ConversationBuilder = {
         if ('animal' in Game.convoTags && Game.convoTags.animal != 'none') {
             messages.push("You have a really happy dream about "+Game.convoTags.animal+"s!");
         }
-        messages.splice(2, 0, Game.shiftReport());
+        // the plaque, then the report (the report *is* the identification)
+        Scenes.setPlaque(Game.plaqueLines());
+        messages.splice(2, 0, {message: 'Do you want your mess identified? [ynq]', scene: 'plaque'}, Game.shiftReport());
         if (Game.todayEvent == 'inspector') {
             let good = Game.cleanPercent() >= 80;
             let verdict = {message: Flavor.rng.getItem(good ? Lore.inspectorVerdict.good : Lore.inspectorVerdict.bad)};
             if (good) {
                 verdict.globalTags = {yendorPoints: 100};
             }
-            messages.splice(3, 0, verdict);
+            messages.splice(4, 0, verdict);
         }
         messages.push("In the morning, you wake up, and have a delicious breakfast.");
         messages.push("Time for another day of work!");

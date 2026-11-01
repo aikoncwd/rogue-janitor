@@ -176,6 +176,21 @@ var Scenes = {
     },
 
     // Which scene goes with tonight's plan ('dinner', 'drinks', 'dancing' or "Name's barbeque").
+    // The end-of-shift plaque: text as it is (no cast substitution), flowers that sway.
+    setPlaque: function (lines) {
+        let palette = { '/': '#999', '\\': '#999', '|': '#999', '*': '#f8c', ',': '#f8c' };
+        palette['0:_'] = '#999';
+        palette[(lines.length - 1) + ':_'] = '#6a4';
+        palette[(lines.length - 1) + ':\\'] = '#6a4';
+        palette[(lines.length - 1) + ':/'] = '#6a4';
+        palette[(lines.length - 1) + ':|'] = '#6a4';
+        this.art.plaque = {
+            literal: true,
+            frames: [lines, lines.map(function (l) { return l.replace(/\*/g, ','); })],
+            palette: palette,
+        };
+    },
+
     forPlan: function (plan) {
         if (plan == 'dinner' || plan == 'drinks' || plan == 'dancing') {
             return plan;
@@ -198,6 +213,10 @@ var Scenes = {
 
     // The cell to draw for character `ch` at column x, row y, on frame f.
     cell: function (scene, ch, x, y, f) {
+        if (scene.literal) {
+            let lc = scene.palette[y + ':' + ch] || scene.palette[ch];
+            return [ch, lc || '#ddd'];
+        }
         if (ch == '@') {
             return ['@', '#ff0'];
         }

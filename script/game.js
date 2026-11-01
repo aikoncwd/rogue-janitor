@@ -1462,6 +1462,50 @@ var Game = {
         return success;
     },
 
+    // A stone plaque for the end of the shift (our own drawing): every line the same width.
+    plaqueLines: function() {
+        let inner = 24;
+        let center = function(text) {
+            let left = Math.floor((inner - text.length) / 2);
+            return '|' + ' '.repeat(left) + text + ' '.repeat(inner - text.length - left) + '|';
+        };
+        let pct = this.messNumbers[1] > 0 ? this.cleanPercent() : 100;
+        let cause = Flavor.rng.getItem(Lore.killedBy);
+        let wrapped = [];
+        let words = cause.split(' ');
+        let line = '';
+        for (let i = 0; i < words.length; i++) {
+            if (line.length > 0 && (line + ' ' + words[i]).length > 16) {
+                wrapped.push(line);
+                line = words[i];
+            }
+            else {
+                line = line.length > 0 ? line + ' ' + words[i] : words[i];
+            }
+        }
+        wrapped.push(line);
+        let lines = [
+            '    ' + '_'.repeat(inner - 6) + '    ',
+            '   /' + ' '.repeat(inner - 6) + '\\   ',
+            '  /' + ' '.repeat(Math.floor((inner - 8) / 2)) + 'REST' + ' '.repeat(inner - 4 - 4 - Math.floor((inner - 8) / 2)) + '\\  ',
+            ' /' + ' '.repeat(Math.floor((inner - 4) / 2)) + 'IN' + ' '.repeat(inner - 2 - 2 - Math.floor((inner - 4) / 2)) + '\\ ',
+            center('PEACE,'),
+            center('YOUR BACK'),
+            center(''),
+            center('EMPLOYEE OF THE'),
+            center('DAY ' + this.day),
+            center('cleaned ' + pct + '%'),
+            center('killed by:'),
+        ];
+        for (let i = 0; i < wrapped.length; i++) {
+            lines.push(center(wrapped[i]));
+        }
+        lines.push(center(''));
+        lines.push(center('*   *    *    *   *'));
+        lines.push('\\|/' + '_'.repeat(inner - 4) + '\\|/');
+        return lines;
+    },
+
     // Shift report shown when you head home: how today went, and your best day so far.
     shiftReport: function() {
         let pct = this.messNumbers[1] > 0 ? this.cleanPercent() : 100;
