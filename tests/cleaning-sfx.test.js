@@ -68,3 +68,40 @@ test('opening a secret door plays the secret sound', () => {
     ctx.Game.player.clean('mop');
     assert.deepEqual(played.filter(s => s !== 'fanfareIn'), ['secret']); // the first secret also unlocks an achievement jingle
 });
+
+test('picking up a lost quest item plays its own twinkle', () => {
+    const { ctx, played } = cleaningDay();
+    const p = ctx.Game.player;
+    const t = messNextToPlayer(ctx, 'Wrapper');
+    t.mess = null;
+    const dropper = { name: 'Bob the Orc', species: 'Orc', hatChar: null };
+    const key = Object.keys(ctx.Game.map).find(k => ctx.Game.map[k] === t);
+    const [x, y] = key.split(',').map(Number);
+    ctx.QuestMess(dropper, x, y);
+    p.clean('get');
+    assert.ok(played.includes('questFound'), played.join(','));
+});
+
+test('a finished goal plays a jingle once', () => {
+    const { ctx, played } = cleaningDay();
+    ctx.Objectives.list = [{ type: 'coins', label: 'Pick up every coin', done: false }];
+    ctx.Objectives.coins = () => 0;
+    ctx.Objectives.check();
+    ctx.Objectives.check();
+    assert.deepEqual(played.filter(n => n == 'goalDone'), ['goalDone']);
+});
+
+test('a colleague thanking you plays the bells once', () => {
+    const { ctx, played } = cleaningDay();
+    const G = ctx.Game;
+    const m = G.monsterList.find(x => x.alive && !x.tags.visitor);
+    const thank = () => {
+        m.convos = [[{ text: 'thanks', any: -1, tags: { requestThanked: true } }]];
+        m.convoIndex = 0; m.convoInnerDex = 0;
+        G.player.talking = m;
+        m.doConvo();
+    };
+    thank();
+    thank(); // a redraw re-runs the line: still one ding-dong
+    assert.deepEqual(played.filter(n => n == 'requestDone'), ['requestDone']);
+});

@@ -1,7 +1,8 @@
 // Tiny synthesized sound effects (Web Audio API, no audio files).
 var Sfx = {
     names: ['hit', 'yelp', 'faint', 'door', 'smash', 'gulp', 'munch', 'fanfareIn', 'fanfareOut',
-        'mop', 'pickup', 'fix', 'secret', 'blip', 'heroHurt', 'slip', 'coins', 'spray', 'scrub'],
+        'mop', 'pickup', 'fix', 'secret', 'blip', 'heroHurt', 'slip', 'coins', 'spray', 'scrub',
+        'goalDone', 'requestDone', 'questFound'],
     minGapMs: 70,
     maxPerSecond: 12,
     volume: 0.15,
@@ -159,6 +160,30 @@ var Sfx = {
         coins: function (t) { this.tone(t, 1319, 0.06, 'square', 0.3); this.tone(t + 0.07, 1760, 0.12, 'square', 0.3); },
         scrub: function (t) { this.noise(t, 0.1, 0.5, 900, 'bandpass'); this.noise(t + 0.12, 0.1, 0.5, 1100, 'bandpass'); },
         spray: function (t) { this.noise(t, 0.35, 0.5, 5000, 'highpass'); },
+        // a goal ticked off: a quick major arpeggio and a held chord on top
+        goalDone: function (t) {
+            let notes = [523, 659, 784];
+            for (let i = 0; i < notes.length; i++) {
+                this.tone(t + i * 0.07, notes[i], 0.1, 'square', 0.4);
+            }
+            this.tone(t + 0.22, 1047, 0.45, 'square', 0.35);
+            this.tone(t + 0.22, 784, 0.45, 'triangle', 0.35);
+        },
+        // a colleague says thanks: two warm "ding-dong" bells
+        requestDone: function (t) {
+            this.tone(t, 880, 0.35, 'triangle', 0.6);
+            this.tone(t, 1760, 0.2, 'sine', 0.2);
+            this.tone(t + 0.18, 659, 0.5, 'triangle', 0.6);
+            this.tone(t + 0.18, 1319, 0.3, 'sine', 0.2);
+        },
+        // someone's lost thing turns up: a curious little rising twinkle
+        questFound: function (t) {
+            let notes = [587, 740, 880, 1175];
+            for (let i = 0; i < notes.length; i++) {
+                this.tone(t + i * 0.09, notes[i], 0.16, 'sine', 0.55);
+            }
+            this.tone(t + 0.36, 1480, 0.3, 'triangle', 0.3);
+        },
     },
 };
 

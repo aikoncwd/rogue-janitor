@@ -437,6 +437,7 @@ function QuestMess(dropper,x,y) {
     let choice = ROT.RNG.getItem(options);
     let newMess = makeMess(x, y, choice);
     newMess.unique=true;
+    newMess.sound='questFound'; // picking it up plays a little twinkle
     dropper.questItemName = newMess.name.toLowerCase();
     newMess.name = dropper.name + "'s " + newMess.name;
     dropper.questItem = newMess;
