@@ -79,7 +79,9 @@ test('picking up and fixing get their own effects', () => {
     assert.equal(ctx.Effects.list[0].frames[0][0], '|');
     ctx.Effects.clear();
     const t = messAt(ctx, 1, 1, 'BrokenTable');
-    t.mess.parent = ctx.GetEntity('Table', ctx.Game.player.x + 5, ctx.Game.player.y + 5);
+    const table = ctx.GetEntity('Table', ctx.Game.player.x + 5, ctx.Game.player.y + 5);
+    ctx.Game.map[table.x + ',' + table.y].entity = null; // the broken table is not standing anywhere yet
+    t.mess.parent = table;
     ctx.Game.player.clean('fix');
     assert.equal(ctx.Effects.list.length, 1);
     assert.equal(ctx.Effects.list[0].frames[0][0], 'T');

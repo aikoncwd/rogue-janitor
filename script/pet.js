@@ -97,21 +97,10 @@ Pet.prototype.recenter = function(x,y) {
     let dx=0;
     let dy=0;
     this.playerTalkedToday=false;
-    let r=0; // search radius grows until a free tile is found
-    while (!this.moveTo(x+dx,y+dy) && r<100) {
-        r++;
-        for (let i=-r;i<=r;i++) {
-            for (let j=-r;j<=r;j++) {
-                let testKey=(i+x)+','+(j+y);
-                if (testKey in Game.map && Game.map[testKey].passThrough()) {
-                    dx=i;
-                    dy=j;
-                }
-            }
-        }
+    let spot = findFreeNear(x,y);
+    if (spot != null) {
+        this.moveTo(spot[0],spot[1]);
     }
-    this.x=x+dx;
-    this.y=y+dy;
     this.home=[this.x,this.y];
 };
 
@@ -198,7 +187,7 @@ Pet.prototype.act = function() {
             astar.compute(this.x,this.y,function(x,y){
                 path.push([x,y]);
             });
-            if (path==null) {
+            if (path.length<=1) { // no way there
                 this.path=[];
             }
             else {
@@ -211,6 +200,7 @@ Pet.prototype.act = function() {
         }
     }
     else {
+        this.steps--; // wandering lasts a few steps, then home or a nap
         if (!this.moveTo(this.x+this.direction[0],this.y+this.direction[1])) {
             while (this.direction[1]==0) {
                 this.direction[1] = Math.floor(3*ROT.RNG.getUniform())-1;
@@ -259,7 +249,7 @@ Pet.prototype.petAction = function(action) {
             });
             this.steps=-1;
             this.sleep=-1;
-            if (path == null) {
+            if (path.length <= 1) { // unreachable: just run around instead
                 this.path = [];
                 do {
                     this.direction[0] = Math.floor(3*ROT.RNG.getUniform())-1;
@@ -341,31 +331,15 @@ Pet.prototype.constructor=Pet;
 function FoodBowl(x,y) {
     this.x=x;
     this.y=y;
-    let dx=0;
-    let dy=0;
     this.full=false;
     this.name="Empty Food Bowl";
     this.color='#fff';
-    //let key = (x+dx)+','+(y+dy);
-    let testKey=x+','+y;
-    let r=0; // search radius grows until a free tile is found
-    while ((!(testKey in Game.map) || !Game.map[testKey].passThrough()) && r<100) {
-        r++;
-        for (let i=-r;i<=r;i++) {
-            for (let j=-r;j<=r;j++) {
-                let candidate=(i+x)+','+(j+y);
-                if (candidate in Game.map && Game.map[candidate].passThrough()) {
-                    dx=i;
-                    dy=j;
-                    testKey=candidate;
-                }
-            }
-        }
+    let spot = findFreeNear(x,y);
+    if (spot != null) {
+        this.x=spot[0];
+        this.y=spot[1];
+        Game.map[this.x+','+this.y].entity=this;
     }
-    this.x+=dx;
-    this.y+=dy;
-    testKey=this.x+','+this.y;
-    Game.map[testKey].entity=this;
     this.getArt = function() {
         if (this.full) {
             return ['\u2200',this.color,'#000'];

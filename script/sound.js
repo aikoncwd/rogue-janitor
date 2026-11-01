@@ -95,15 +95,22 @@ var Sfx = {
     },
 
     // Filtered white noise burst.
+    NOISE_SECONDS: 2, // longer than any burst; one buffer is shared by every sound
+    noiseBuffer: null,
+    noiseCtx: null,
+
     noise: function (start, dur, vol = 1, filterFreq = 1200, filterType = 'lowpass') {
-        let len = Math.max(1, Math.floor(this.ctx.sampleRate * dur));
-        let buffer = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
-        let data = buffer.getChannelData(0);
-        for (let i = 0; i < len; i++) {
-            data[i] = Math.random() * 2 - 1;
+        if (this.noiseBuffer == null || this.noiseCtx !== this.ctx) {
+            let len = Math.floor(this.ctx.sampleRate * this.NOISE_SECONDS);
+            this.noiseBuffer = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+            let data = this.noiseBuffer.getChannelData(0);
+            for (let i = 0; i < len; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            this.noiseCtx = this.ctx;
         }
         let src = this.ctx.createBufferSource();
-        src.buffer = buffer;
+        src.buffer = this.noiseBuffer;
         let filter = this.ctx.createBiquadFilter();
         filter.type = filterType;
         filter.frequency.setValueAtTime(filterFreq, start);

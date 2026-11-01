@@ -250,16 +250,7 @@ Adventurer.prototype.wallsAround = function() {
 
 // Heroes cannot resist writing their name on things.
 Adventurer.prototype.tagWall = function() {
-    let walls=[];
-    for (let i=-1;i<2;i++) {
-        for (let j=-1;j<2;j++) {
-            let key=(this.x+i)+','+(this.y+j);
-            let tile=Game.map[key];
-            if (tile && !tile.passable && tile.door == null && tile.secretDoor == null && tile.mess == null && (tile.char == '#' || tile.char == '\u266F')) {
-                walls.push([this.x+i,this.y+j]);
-            }
-        }
-    }
+    let walls=this.wallsAround();
     if (walls.length == 0) {
         return false;
     }

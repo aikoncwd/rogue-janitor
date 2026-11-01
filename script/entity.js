@@ -25,7 +25,7 @@ function Entity(x,y,char,color,species,hp=1,tags={},level=1,bgColor='#000',attac
     this.lastSeen=10;
     if ('monster' in tags) {
         this.name=firstName+" the "+species;
-        if (firstName == 'Marx') {
+        if (firstName == 'Marx' && !('visitor' in tags)) { // visitors leave the next day
             this.unionStarter=true;
             Game.unionist=this.name;
         }
@@ -56,20 +56,9 @@ function Entity(x,y,char,color,species,hp=1,tags={},level=1,bgColor='#000',attac
         Game.scheduler.add(this,true);
         Game.monsterList.push(this);
     }
-    let dx=0;
-    let dy=0;
-    let r=0; // search radius grows until a free tile is found
-    while (!this.moveTo(x+dx,y+dy) && r<100) {
-        r++;
-        for (let i=-r;i<=r;i++) {
-            for (let j=-r;j<=r;j++) {
-                let testKey=(i+x)+','+(j+y);
-                if (testKey in Game.map && Game.map[testKey].passThrough()) {
-                    dx=i;
-                    dy=j;
-                }
-            }
-        }
+    let spot = findFreeNear(x,y);
+    if (spot != null) {
+        this.moveTo(spot[0],spot[1]);
     }
     if (attachToWall) {
         var best = [0,0,100];
@@ -124,23 +113,31 @@ Entity.prototype.reset = function(x,y) {
     if ('monster' in this.tags) {
         Game.scheduler.add(this,true);
     }
-    let dx=0;
-    let dy=0;
-    let r=0; // search radius grows until a free tile is found
-    while (!this.moveTo(x+dx,y+dy) && r<100) {
-        r++;
+    let spot = findFreeNear(x,y);
+    if (spot != null) {
+        this.moveTo(spot[0],spot[1]);
+    }
+    return this;
+};
+
+// The nearest tile (by Chebyshev rings around x,y, the centre first) that something
+// can stand on, or null when there is none within maxR.
+function findFreeNear(x,y,maxR=100) {
+    for (let r=0;r<=maxR;r++) {
         for (let i=-r;i<=r;i++) {
             for (let j=-r;j<=r;j++) {
-                let testKey=(i+x)+','+(j+y);
-                if (testKey in Game.map && Game.map[testKey].passThrough()) {
-                    dx=i;
-                    dy=j;
+                if (Math.max(Math.abs(i),Math.abs(j)) != r) {
+                    continue; // only the ring at distance r
+                }
+                let tile = Game.map[(x+i)+','+(y+j)];
+                if (tile && tile.passThrough()) {
+                    return [x+i,y+j];
                 }
             }
         }
     }
-    return this;
-};
+    return null;
+}
 
 Entity.prototype.adventurerAct = function() {
     if ('loot' in this.tags) {
@@ -455,11 +452,11 @@ Entity.prototype.cleanerAct = function() {
             Game.map[currentKey].entity=null;
             Game.player.moveTo(currentPos[0],currentPos[1]);
             this.moveTo(currentPos[0]-diff[0],currentPos[1]-diff[1]);
-            Game.sendMessage("You switch places with the "+this.name+".");
+            Game.sendMessage("You switch places with the "+this.name.toLowerCase()+".");
         }
         else {
             Game.player.moveTo(currentPos[0],currentPos[1]);
-            Game.sendMessage("You push the "+this.name+".");
+            Game.sendMessage("You push the "+this.name.toLowerCase()+".");
         }
         Game.drawMap();
         Game.player.endTurn();
@@ -683,28 +680,25 @@ Entity.prototype.questAct = function() {
             return false;
         }
     });
+    if (this.questBlocked > 0) {
+        this.questBlocked--; // the target was unreachable a moment ago: don't search every turn
+        return;
+    }
     astar.compute(this.x,this.y,function(x,y){
         path.push([x,y]);
     });
-    if (path==null || path.length==0) {
-        path=[];
+    if (path.length==0) {
+        // blocked by other comrades? try again walking through them (they swap)
         avoidEntities=false;
         astar.compute(this.x,this.y,function(x,y){
             path.push([x,y]);
         });
-        if (path==null || path.length==0) {
-            return;
-        }
+    }
+    if (path.length<2) {
+        this.questBlocked=5;
+        return;
     }
     let dist = Math.max(Math.abs(path[1][0] - Game.player.x),Math.abs(path[1][1] - Game.player.y));
-    if (path.length<2 && dist <2) {
-        if (dist<2) {
-            dist=0;
-        }
-        else {
-            return;
-        }
-    }
     this.moveTo(path[1][0],path[1][1],true);
 
     

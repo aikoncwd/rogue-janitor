@@ -173,7 +173,7 @@ var Panel = {
             ];
         }
         else {
-            let pct = Game.messNumbers[1] > 0 ? Game.cleanPercent() : 100;
+            let pct = Game.cleanPercent();
             let near = Game.nearestMess();
             head = [
                 '%c{#fff}── SHIFT ──%c{}',

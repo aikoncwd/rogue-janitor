@@ -51,7 +51,8 @@ Player.prototype.getArt = function() {
             return [tile.char,tile.color,tile.bgColor];
         }
     }
-    return [this.char,this.color,this.bgcolor];
+    let under = Game.map[this.x+','+this.y];
+    return [this.char,this.color,under ? under.bgColor : '#000'];
 }
 
 Player.prototype.act = function() {
@@ -179,6 +180,7 @@ Player.prototype.clean = function(verb) {
                 cleaned.pickedUp=true;
                 Game.map[key].mess=null;
                 Game.messNumbers[0]--;
+                Game.checkCleanMilestones();
                 Sfx.play(cleaned.sound || sound);
                 Effects.clean(tool, this.x+i, this.y+j, cleaned.color);
                 return;

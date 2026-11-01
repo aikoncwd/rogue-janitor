@@ -523,9 +523,19 @@ var Game = {
         }
     },
 
+    // How clean the dungeon is, 0-100 (100 when there was nothing to clean). No side effects.
     cleanPercent: function() {
+        if (!(Game.messNumbers[1] > 0)) {
+            return 100;
+        }
         let cleaned = Game.messNumbers[1] - Game.messNumbers[0];
-        let toReturn = 100 * cleaned / Game.messNumbers[1];
+        return Math.floor(100 * cleaned / Game.messNumbers[1]);
+    },
+
+    // Cleanliness milestones: a comrade offers coffee, later an evening out.
+    // Called after each successful cleaning action.
+    checkCleanMilestones: function() {
+        let toReturn = this.cleanPercent();
         let canAsk = function(m) { return m.alive && m.retired && !m.partying && !m.tags.visitor; };
         if ((toReturn > this.coffeeThreshold || toReturn > this.inviteOutThreshold) && this.monsterList.some(canAsk)) {
             this.coffeeThreshold+=200;
@@ -542,7 +552,6 @@ var Game = {
                 this.monsterList[sendIndex].coffeeQuest();
             }
         }
-        return Math.floor(toReturn);
     },
 
     lightPasses: function(x,y) {
@@ -1466,7 +1475,7 @@ var Game = {
             let left = Math.floor((inner - text.length) / 2);
             return '|' + ' '.repeat(left) + text + ' '.repeat(inner - text.length - left) + '|';
         };
-        let pct = this.messNumbers[1] > 0 ? this.cleanPercent() : 100;
+        let pct = this.cleanPercent();
         let cause = Flavor.rng.getItem(Lore.killedBy);
         let wrapped = [];
         let words = cause.split(' ');
@@ -1506,7 +1515,7 @@ var Game = {
 
     // Shift report shown when you head home: how today went, and your best day so far.
     shiftReport: function() {
-        let pct = this.messNumbers[1] > 0 ? this.cleanPercent() : 100;
+        let pct = this.cleanPercent();
         let grade = pct >= 95 ? 'S' : pct >= 85 ? 'A' : pct >= 70 ? 'B' : pct >= 50 ? 'C' : 'D';
         let chatted = this.monsterList.filter(function(m) { return m.alive && m.playerTalkedToday; }).length;
         let today = this.yendorPoints - this.shift.startPoints + pct;
