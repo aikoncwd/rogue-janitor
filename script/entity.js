@@ -210,6 +210,11 @@ Entity.prototype.cancelConvo = function() {
     if (this.convos.length<=0) {
         this.convos.unshift([{action:"is vaping.",any:-1}]);
     }
+    if (Game.runEndPending) {
+        Game.runEndPending = false;
+        Game.endRun(); // the engine stays locked: the run is over
+        return;
+    }
     if (Game.engine._lock > 0) {
         Game.player.endTurn();
     }
@@ -276,7 +281,7 @@ Entity.prototype.doConvo = function() {
                     }
                     if (newTags[i]=='endRun') {
                         delete thisConvo.globalTags.endRun;
-                        Game.endRun();
+                        Game.runEndPending = true; // the ending starts once this last line is read
                         continue;
                     }
                     if (newTags[i]=='nextDay') {

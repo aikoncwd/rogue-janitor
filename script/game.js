@@ -141,6 +141,13 @@ var Game = {
             }
             return;
         }
+        if (this.phase == 'ending') {
+            Ending.handleKey(e);
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            return;
+        }
         if (this.phase == 'howto') {
             this.phase = 'intro';
             this.drawMap();
@@ -212,7 +219,7 @@ var Game = {
 
     // Which tune fits what is on screen right now.
     musicTrack: function() {
-        if (this.phase == 'title' || this.phase == 'howto' || this.phase == 'intro') {
+        if (this.phase == 'title' || this.phase == 'howto' || this.phase == 'intro' || this.phase == 'ending') {
             return 'title';
         }
         let alt = this.day % 2 == 0 ? '2' : ''; // tunes rotate by day
@@ -261,6 +268,11 @@ var Game = {
 
         if (this.phase == 'title') {
             Title.draw();
+            return;
+        }
+
+        if (this.phase == 'ending') {
+            Ending.draw();
             return;
         }
 
@@ -1584,9 +1596,34 @@ var Game = {
         }
     },
 
-    // The last shift is over: the run ends (the ending itself is drawn by Ending).
+    // The last shift is over: the run ends. Points decide which (happy) ending you get.
     endRun: function() {
-        this.phase = 'ending';
+        this.yendorPoints += this.cleanPercent(); // the last day counts like every other
+        this.victory = this.yendorPoints >= this.targetPoints;
+        let best = this.loadBestRun();
+        if (best == null || this.yendorPoints > best.points) {
+            this.saveBestRun({points: this.yendorPoints, ending: this.victory ? 'mop' : 'senior'});
+        }
+        Save.clear();
+        window.removeEventListener('keydown', this.player); // the world stops here
+        Ending.start(this.victory ? 'mop' : 'senior');
+    },
+
+    loadBestRun: function() {
+        try {
+            let b = JSON.parse(localStorage.getItem('rj-best-run'));
+            return (b && typeof b.points == 'number') ? b : null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    saveBestRun: function(b) {
+        try {
+            localStorage.setItem('rj-best-run', JSON.stringify(b));
+        } catch (e) {
+            // storage unavailable
+        }
     },
 
     // Chebyshev distance and arrow towards the closest mess left in the dungeon.
@@ -1640,6 +1677,10 @@ var Game = {
         this.player.instructions = false;
         this.player.reach = 1;
         this.player.cutscene = ConversationBuilder.startGameCutscene();
+        this.runEndPending = false;
+        // a fresh engine: the last run's one stayed locked when it ended
+        this.engine = new ROT.Engine(this.scheduler);
+        Invasion.engineStarted = false;
         this.generateDungeon();
     },
 

@@ -28,6 +28,7 @@ const DEFAULT_FILES = [
     'script/dayevents.js',
     'script/eastereggs.js',
     'script/save.js',
+    'script/ending.js',
 ];
 
 function makeContext() {

@@ -177,6 +177,37 @@ var Lore = {
     },
 
     // Funny causes of death for heroes' ghosts and the end-of-shift plaque.
+    // The two endings of a run (one page per line) and what your comrades say about you.
+    endingMop: [
+        "Five days. Five shifts. One very tired back.",
+        "On your way out, the whole staff lounge is waiting for you. Somebody hid a cake behind the fountain.",
+        "Rodney steps forward, looks both ways, and hands you something wrapped in a hero's cape.",
+        "It is the legendary %c{#ff0}Mop of Yendor%c{}! It hums faintly. It smells of lemons and victory.",
+        "Its mystic energies flow through your hands. No mess will ever stand in your way again. (Mess has been informed.)",
+        "%c{#ff0}You won the hearts of your comrades and, by extension, this game. Thank you for playing!%c{}",
+    ],
+    endingSenior: [
+        "Five days. Five shifts. One very tired back.",
+        "On your way out, the whole staff lounge is waiting for you. There is a banner. It is spelled almost right.",
+        "The Mop of Yendor stays in its glass case for now. Rodney says it is 'mostly decorative anyway'.",
+        "Instead, you are promoted to %c{#ff0}Senior Janitor%c{}! The badge is a bottle cap. You get a slightly comfier chair.",
+        "Also: Employee of the Month (by default, but it still counts). Everybody claps. The mimic claps loudest.",
+        "%c{#ff0}You won the hearts of your comrades, and they want you back tomorrow. Thank you for playing!%c{}",
+    ],
+    comradeReviews: [
+        "★★★★★ would get fainted on again",
+        "Best janitor this dungeon has had. Also the only one.",
+        "Mopped around me while I was being dramatic. Very professional.",
+        "Found my missing umbrella. I owe you one hydra hug per head.",
+        "The floors are so clean I can see my many reflections.",
+        "10/10, did not slip on anything. Okay, once.",
+        "Listened to all my stories. Even the long one about the ogre.",
+        "Never once asked what's in the barrels. A true professional.",
+        "Smells faintly of lemon. We approve.",
+        "Gave the heroes nothing to complain about. They complained anyway.",
+        "Fixed my bookshelf and didn't judge my bookshelf.",
+        "Our union rep says you can stay forever.",
+    ],
     killedBy: [
         "a slippery puddle",
         "an unexpectedly heavy bucket",
