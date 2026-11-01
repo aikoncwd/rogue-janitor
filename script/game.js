@@ -1502,6 +1502,7 @@ var Game = {
         }
         lines.push(center(''));
         lines.push(center('*   *    *    *   *'));
+        lines.push(center('|   |    |    |   |')); // stems
         lines.push('\\|/' + '_'.repeat(inner - 4) + '\\|/');
         return lines;
     },

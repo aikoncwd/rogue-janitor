@@ -182,6 +182,11 @@ var Scenes = {
         let flowers = lines.findIndex(function (l) { return l.indexOf('*') >= 0; });
         palette[flowers + ':*'] = '#f8c'; // only the flower row: "PEACE," keeps its comma white
         palette[flowers + ':,'] = '#f8c';
+        for (let x = 0; x < lines[flowers].length; x++) {
+            if (lines[flowers][x] == '*') {
+                palette[(flowers + 1) + ':' + x] = '#6a4'; // the stem under each flower
+            }
+        }
         palette['0:_'] = '#999';
         palette[(lines.length - 1) + ':_'] = '#6a4';
         palette[(lines.length - 1) + ':\\'] = '#6a4';
@@ -217,7 +222,7 @@ var Scenes = {
     // The cell to draw for character `ch` at column x, row y, on frame f.
     cell: function (scene, ch, x, y, f) {
         if (scene.literal) {
-            let lc = scene.palette[y + ':' + ch] || scene.palette[ch];
+            let lc = scene.palette[y + ':' + x] || scene.palette[y + ':' + ch] || scene.palette[ch];
             return [ch, lc || '#ddd'];
         }
         if (ch == '@') {

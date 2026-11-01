@@ -66,3 +66,20 @@ test('only the flowers are pink, not the comma in PEACE,', () => {
     assert.equal(ctx.Scenes.cell(art, '*', 0, flowers, 0)[1], '#f8c');
     assert.equal(ctx.Scenes.cell(art, ',', 0, flowers, 1)[1], '#f8c');
 });
+
+test('the flowers have green stems, the stone border stays grey', () => {
+    const ctx = dungeon();
+    const lines = ctx.Game.plaqueLines();
+    ctx.Scenes.setPlaque(lines);
+    const art = ctx.Scenes.art.plaque;
+    const f = lines.findIndex(l => l.includes('*'));
+    const stems = lines[f + 1];
+    for (let x = 0; x < lines[f].length; x++) {
+        if (lines[f][x] == '*') {
+            assert.equal(stems[x], '|', 'stem under the flower at ' + x);
+            assert.equal(ctx.Scenes.cell(art, '|', x, f + 1, 0)[1], '#6a4');
+        }
+    }
+    assert.equal(ctx.Scenes.cell(art, '|', 0, f + 1, 0)[1], '#999', 'left border');
+    assert.equal(ctx.Scenes.cell(art, '|', stems.length - 1, f + 1, 0)[1], '#999', 'right border');
+});
