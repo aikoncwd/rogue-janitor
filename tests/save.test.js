@@ -141,3 +141,40 @@ test('no storage still works', () => {
     assert.doesNotThrow(() => A.Game.nextDay());
     assert.strictEqual(A.Save.exists(), false);
 });
+
+test('a save with broken fields never freezes the title', () => {
+    const A = playDayOne();
+    const good = JSON.parse(A.__storage['rj-save']);
+    const breakers = [
+        d => { delete d.convoTags; },
+        d => { d.run = {}; },
+        d => { delete d.pastHeroes; },
+        d => { delete d.yendorPoints; },
+        d => { d.rng = [1]; },
+        d => { d.world.monsterList[0].__t = 'Spaceship'; },
+        d => { d.world.monsterList.push({ __ref: 9999 }); },
+    ];
+    for (const br of breakers) {
+        const d = JSON.parse(JSON.stringify(good));
+        br(d);
+        const B = bootHeadless({ seed: 5, begin: true });
+        B.__storage['rj-save'] = JSON.stringify(d);
+        const day = B.Game.day;
+        assert.doesNotThrow(() => B.__press(67, 99), br.toString());
+        // rejected when the title is drawn (no Continue offered: c clocks in as any key), or when c is pressed
+        assert.ok(B.Game.phase == 'title' || B.Game.phase == 'howto', br.toString());
+        assert.strictEqual(B.Game.day, day, 'Game untouched: ' + br.toString());
+        if (B.Game.phase == 'title') assert.ok(B.Title.timer != null, 'title still animating: ' + br.toString());
+        assert.ok(!('rj-save' in B.__storage), 'bad save cleared');
+        assert.ok(B.Save.problem, 'kind line ready');
+    }
+});
+
+test('the lost-save line is shown once, not after every later run', () => {
+    const B = bootHeadless({ seed: 5, begin: true });
+    B.__storage['rj-save'] = '{oops';
+    B.Save.exists();
+    assert.ok(B.Save.problem);
+    B.Game.newRun();
+    assert.strictEqual(B.Save.problem, null);
+});

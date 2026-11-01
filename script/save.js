@@ -63,11 +63,17 @@ var Save = {
             return data.map(function (v) { return self.decode(v, made); });
         }
         if ('__ref' in data) {
+            if (!(data.__ref in made)) {
+                throw new Error('save: dangling reference ' + data.__ref);
+            }
             return made[data.__ref];
         }
         let obj;
         if ('__t' in data) {
             let ctor = this.TYPES().find(function (t) { return t[0] == data.__t; });
+            if (ctor == null) {
+                throw new Error('save: unknown type ' + data.__t);
+            }
             obj = Object.create(ctor[1].prototype);
             made[data.__id] = obj;
         }
@@ -107,15 +113,29 @@ var Save = {
         };
     },
 
-    restore: function (data) {
+    // Rebuilds the saved objects without touching Game (throws if the save is corrupt).
+    // convoTags and world share one map, as they were encoded with one.
+    prepare: function (data) {
+        let made = {};
+        let convoTags = this.decode(data.convoTags, made);
+        let world = this.decode(data.world, made);
+        if (!Array.isArray(world.monsterList) || !Array.isArray(world.petList) ||
+            !world.monsterList.every(function (m) { return m instanceof Entity; })) {
+            throw new Error('save: bad world');
+        }
+        return { convoTags: convoTags, world: world };
+    },
+
+    restore: function (data, prepared) {
         let G = Game;
-        let world = this.decode(data.world, {});
+        prepared = prepared || this.prepare(data);
+        let world = prepared.world;
         G.day = data.day;
         G.dungeonRooms = data.dungeonRooms;
         G.yendorPoints = data.yendorPoints;
         G.zorkmids = data.zorkmids;
         G.run = data.run;
-        G.convoTags = this.decode(data.convoTags, {});
+        G.convoTags = prepared.convoTags;
         G.unionist = data.unionist;
         G.pastHeroes = data.pastHeroes;
         G.nameRegistry = data.nameRegistry;
@@ -168,8 +188,15 @@ var Save = {
     },
 
     looksComplete: function (data) {
-        return typeof data.day == 'number' && data.world != null && Array.isArray(data.world.monsterList) &&
-            Array.isArray(data.rng) && Array.isArray(data.nameRegistry) && data.run != null;
+        let num = function (v) { return typeof v == 'number' && isFinite(v); };
+        let run = data.run;
+        return num(data.day) && num(data.dungeonRooms) && num(data.yendorPoints) && num(data.zorkmids) && num(data.reach) &&
+            data.convoTags != null && typeof data.convoTags == 'object' && !Array.isArray(data.convoTags) &&
+            data.world != null && Array.isArray(data.world.monsterList) && Array.isArray(data.world.petList) &&
+            Array.isArray(data.rng) && data.rng.length == 4 && data.rng.every(num) &&
+            Array.isArray(data.nameRegistry) && Array.isArray(data.pastHeroes) &&
+            run != null && Array.isArray(run.grades) && Array.isArray(run.cleanPcts) && Array.isArray(run.chattedWith) &&
+            num(run.requestsDone) && num(run.zorkmidsEarned);
     },
 
     exists: function () {
@@ -191,8 +218,17 @@ var Save = {
         if (data == null) {
             return false;
         }
+        let prepared;
+        try {
+            prepared = this.prepare(data); // nothing in Game changes unless this works
+        }
+        catch (e) {
+            this.problem = Flavor.line('saveLost');
+            this.clear();
+            return false;
+        }
         Title.stop();
-        this.restore(data);
+        this.restore(data, prepared);
         Game.generateDungeon(); // a morning: the invasion replay starts
         Game.drawMap();
         return true;

@@ -1660,6 +1660,7 @@ var Game = {
     // A brand new run from day 1 (title screen "New game", or after an ending).
     newRun: function() {
         Save.clear();
+        Save.problem = null; // the lost-save line was for the last visit to the title
         this.day = 1;
         this.dungeonRooms = this.roomsForDay(1);
         this.yendorPoints = 0;

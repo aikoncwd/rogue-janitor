@@ -99,7 +99,9 @@ var Title = {
         }
         if (Save.exists()) {
             if (e.keyCode == 67 || e.keyCode == 13) { // c / Enter: continue
-                Save.continueRun();
+                if (!Save.continueRun()) {
+                    Game.drawMap(); // it could not be used: say so, offer a fresh start
+                }
                 return true;
             }
             if (e.keyCode != 78) { // only n starts over
