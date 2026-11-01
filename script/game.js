@@ -122,7 +122,7 @@ var Game = {
             return;
         }
         if (e.key == '0' || code == 96) { // main keyboard or numpad 0 (NumLock on or off)
-            this.setFontSize(this.autoFontSize(), false);
+            this.setFontSize(this.fitFontSize() || this.autoFontSize(), false);
             return;
         }
         if (e.keyCode == 84 && !this.typingInConvo()) { // T: music on/off
@@ -172,6 +172,45 @@ var Game = {
     autoFontSize: function() {
         let h = (this.screen && this.screen.clientHeight) ? this.screen.clientHeight : 640;
         return Math.max(this.MIN_FONT, Math.min(this.MAX_FONT, Math.floor(h / this.TARGET_ROWS)));
+    },
+
+    hasSavedZoom: function() {
+        try {
+            return localStorage.getItem('rj-font') != null;
+        } catch (e) {
+            return false;
+        }
+    },
+
+    // The font size that fits today's whole dungeon (plus the panel and the log) in
+    // the window, between MIN_FONT and the default size. Null if it can't be measured.
+    fitFontSize: function() {
+        if (this.display == null || !this.display.computeFontSize || this.screen == null) {
+            return null;
+        }
+        let dw = this.corners[1][0] - this.corners[0][0] + 1;
+        let dh = this.corners[1][1] - this.corners[0][1] + 1;
+        if (!(dw > 0 && dh > 0)) {
+            return null;
+        }
+        let keep = {width: this.screenSize ? this.screenSize[0] : 80, height: this.screenSize ? this.screenSize[1] : 40};
+        this.display.setOptions({width: dw + 2 + Panel.WIDTH, height: dh + 2 + Panel.LOG_ROWS + 1});
+        let size = this.display.computeFontSize(this.screen.clientWidth, this.screen.clientHeight);
+        this.display.setOptions(keep);
+        return Math.max(this.MIN_FONT, Math.min(this.autoFontSize(), Math.floor(size)));
+    },
+
+    // Every morning (unless you chose a zoom): fit the new dungeon on screen.
+    applyAutoZoom: function() {
+        if (this.hasSavedZoom()) {
+            return;
+        }
+        let size = this.fitFontSize();
+        if (size != null && size != this.fontSize) {
+            this.fontSize = size;
+            this.display.setOptions({fontSize: size});
+            this.getSize(false);
+        }
     },
 
     // The player's saved zoom level, or the automatic size.
@@ -666,6 +705,7 @@ var Game = {
         this.populateRooms();
         this.addDoors(thetheme);
         Invasion.reset(this.adventurer);
+        this.applyAutoZoom();
         if (this.day > 1) {
             Invasion.start();
         }
