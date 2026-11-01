@@ -129,6 +129,16 @@ var Flavor = {
             "{hero} wrecks the {item}. The insurance forms will be long.",
             "{hero} rummages through the {item} and leaves it in ruins.",
         ],
+        zap: [
+            "{hero} zaps a {wand} at nothing in particular. {effect}",
+            "{hero} waves a {wand} dramatically. {effect}",
+            "{hero} engrave-tests a {wand}. {effect}",
+        ],
+        ring: [
+            "{hero} tries on a ring, decides it clashes with the armor, and drops it.",
+            "{hero} takes off an itchy ring and tosses it over a shoulder.",
+            "A ring slips off {hero}'s finger. Nobody notices but the camera.",
+        ],
         purse: [
             "{hero}'s coin purse has a hole in it. Zorkmids trickle onto the floor.",
             "{hero} drops a handful of zorkmids and decides they are beneath a hero.",

@@ -128,6 +128,63 @@ Adventurer.EVENT_GAP = 25;
 Adventurer.EVENT_CHANCE = 0.06;
 Adventurer.EVENTS = ['lost', 'scroll', 'backIn5', 'elbereth'];
 
+// Wands, staves and rings (the classics): world mess, so ROT.RNG throughout.
+Adventurer.ZAP_CHANCE = 0.03;
+Adventurer.MAX_ZAPS = 2;
+Adventurer.RING_CHANCE = 0.012;
+Adventurer.MAX_RINGS = 2;
+
+// A free floor tile at or next to the hero with no mess on it, or null.
+Adventurer.prototype.litterSpot = function() {
+    let spots = [];
+    for (let i=-1;i<2;i++) {
+        for (let j=-1;j<2;j++) {
+            let t = Game.map[(this.x+i)+','+(this.y+j)];
+            if (t && t.passable && t.door == null && !t.important && t.mess == null) {
+                spots.push([this.x+i,this.y+j]);
+            }
+        }
+    }
+    return spots.length > 0 ? ROT.RNG.getItem(spots) : null;
+};
+
+// The hero zaps a wand (or a staff) at nothing in particular, makes a mess and
+// drops the used-up thing on the floor.
+Adventurer.prototype.tryZap = function() {
+    this.zaps = (this.zaps || 0) + 1;
+    let mat = ROT.RNG.getItem(Lore.wandMaterials);
+    let effect = ROT.RNG.getItem(Lore.zapEffects);
+    let staff = ROT.RNG.getUniform() < 0.35;
+    let spot = this.litterSpot();
+    if (spot != null) {
+        makeMess(spot[0], spot[1], effect.mess);
+    }
+    let name;
+    spot = this.litterSpot();
+    if (spot != null) {
+        let used = makeMess(spot[0], spot[1], staff ? 'CrackedStaff' : 'UsedWand');
+        name = staff ? 'Staff of ' + effect.staff + ' (cracked)' : ROT.RNG.getItem(['Snapped', 'Empty', 'Bent', 'Fizzled']) + ' ' + mat.name + ' Wand';
+        used.name = name;
+        used.color = mat.color;
+    }
+    Invasion.event('zap', {wand: (staff ? 'staff of ' + effect.staff.toLowerCase() : mat.name.toLowerCase() + ' wand'), effect: effect.line});
+    return true;
+};
+
+// Rings: tried on, didn't fit, left behind. At most MAX_RINGS a raid.
+Adventurer.prototype.tryDropRing = function() {
+    let spot = this.litterSpot();
+    if (spot == null) {
+        return false;
+    }
+    this.ringsDropped = (this.ringsDropped || 0) + 1;
+    let ring = makeMess(spot[0], spot[1], 'LostRing');
+    ring.name = ROT.RNG.getItem(Lore.ringNames); // world RNG: the same ring watched or skipped
+    ring.ringLore = ROT.RNG.getItem(Lore.ringLore);
+    Invasion.event('ring', {});
+    return true;
+};
+
 Adventurer.prototype.setClass = function(cls) {
     let def = Adventurer.classes[cls] || Adventurer.classes.Paladin;
     this.heroClass = (cls in Adventurer.classes) ? cls : 'Paladin';
@@ -400,6 +457,12 @@ Adventurer.prototype.takeTurn = function () {
         this.purseLeaked = true;
         makeMess(this.x, this.y, 'GoldCoins');
         Invasion.event('purse', {});
+    }
+    if ((this.zaps || 0) < Adventurer.MAX_ZAPS && this.turns > 10 && ROT.RNG.getUniform() < Adventurer.ZAP_CHANCE) {
+        this.tryZap();
+    }
+    if ((this.ringsDropped || 0) < Adventurer.MAX_RINGS && this.turns > 10 && ROT.RNG.getUniform() < Adventurer.RING_CHANCE) {
+        this.tryDropRing();
     }
     this.smashWallDecor();
     this.trySpecial();

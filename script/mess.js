@@ -207,6 +207,18 @@ function makeMess(x,y,name) {
         newMess.bonusPoints=2;
         newMess.sound='coins';
         break;
+        case 'UsedWand': // what the hero leaves after zapping (renamed by material)
+        newMess = new Mess(x,y,'/','#c96','#000',"Used Wand",10,null,0,"","get");
+        break;
+        case 'CrackedStaff':
+        newMess = new Mess(x,y,'_','#a74','#000',"Cracked Staff",10,null,0,"","get");
+        break;
+        case 'LostRing': // goes to your pocket (inventory) when picked up
+        newMess = new Mess(x,y,'=','#fd0','#000',"Lost Ring",30,null,0,"","get");
+        newMess.name = Flavor.rng.getItem(Lore.ringNames);
+        newMess.unique = true; // "You pick up a jade ring!", not "the a jade ring"
+        newMess.ringLore = Flavor.rng.getItem(Lore.ringLore);
+        break;
         case 'Crossword':
         newMess = new Mess(x,y,'=','#fff','#000',"Crumpled Crossword",10,null,0,"","get");
         break;

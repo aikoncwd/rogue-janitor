@@ -101,6 +101,7 @@ var Save = {
             dungeonRooms: G.dungeonRooms,
             yendorPoints: G.yendorPoints,
             zorkmids: G.zorkmids,
+            inventory: JSON.parse(JSON.stringify(G.inventory || [])),
             run: JSON.parse(JSON.stringify(G.run)),
             convoTags: this.encode(G.convoTags, seen),
             unionist: G.unionist,
@@ -134,6 +135,7 @@ var Save = {
         G.dungeonRooms = data.dungeonRooms;
         G.yendorPoints = data.yendorPoints;
         G.zorkmids = data.zorkmids;
+        G.inventory = Array.isArray(data.inventory) ? data.inventory : []; // older saves had none
         G.run = data.run;
         G.convoTags = prepared.convoTags;
         G.unionist = data.unionist;

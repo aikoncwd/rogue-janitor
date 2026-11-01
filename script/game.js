@@ -42,6 +42,7 @@ var Game = {
     // -> ~800 over 5 days; lazy ~ 40 + 10 = 50 -> ~250. 650 leaves room for an off day.
     targetPoints:650,
     zorkmids: 0,
+    inventory: [], // things in your pockets: rings for now, shop items later
     turnCount: 0,
     combo: {count: 0, lastTurn: -99, bestToday: 0},
     COMBO_GAP: 3,
@@ -1709,6 +1710,7 @@ var Game = {
         this.dungeonRooms = this.roomsForDay(1);
         this.yendorPoints = 0;
         this.zorkmids = 0;
+        this.inventory = [];
         this.run = this.freshRun();
         this.convoTags = {};
         this.unionist = null;

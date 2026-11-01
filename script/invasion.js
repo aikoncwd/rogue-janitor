@@ -303,6 +303,13 @@ var Invasion = {
                 this.beat('door', this.say('doorKick'));
                 this.sound('door');
                 break;
+            case 'zap':
+                this.beat('snack', this.say('zap', {wand: data.wand, effect: data.effect}, true));
+                this.sound('spray');
+                break;
+            case 'ring':
+                this.beat('snack', this.say('ring', {}, true));
+                break;
             case 'purse':
                 this.beat('snack', this.say('purse', {}, true));
                 this.sound('coins');

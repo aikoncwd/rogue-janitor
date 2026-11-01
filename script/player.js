@@ -181,6 +181,11 @@ Player.prototype.clean = function(verb) {
                         Game.run.zorkmidsEarned += value;
                         Game.sendMessage("Ka-ching! %c{#ff0}(+" + value + " zm)%c{}");
                     }
+                    if (Game.map[key].mess.kind == 'Lost Ring') {
+                        let ring = Game.map[key].mess;
+                        Game.inventory.push({kind: 'ring', name: ring.name, lore: ring.ringLore});
+                        Game.sendMessage("You pocket " + ring.name + ". Engraved inside: \"" + ring.ringLore + "\"");
+                    }
                     if (Game.map[key].mess.pickup == 'fortune') {
                         Game.sendMessage("You crack the fortune cookie. It reads: \""+Lore.rumor()+"\"");
                     }
