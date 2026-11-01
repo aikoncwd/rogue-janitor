@@ -1827,6 +1827,7 @@ var Game = {
     newRun: function() {
         Save.clear();
         Save.problem = null; // the lost-save line was for the last visit to the title
+        Achievements.resetQueue();
         this.day = 1;
         this.dungeonRooms = this.roomsForDay(1);
         this.yendorPoints = 0;

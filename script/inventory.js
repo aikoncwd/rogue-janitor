@@ -25,6 +25,20 @@ var Inventory = {
         });
     },
 
+    // Letters for the items in order, skipping i and x (they close the screen).
+    letters: function () {
+        let out = [];
+        for (let c = 97; c <= 122; c++) {
+            if (c != 105 && c != 120) {
+                out.push(String.fromCharCode(c));
+            }
+        }
+        for (let c = 65; c <= 90; c++) { // then capitals, for a very full pocket
+            out.push(String.fromCharCode(c));
+        }
+        return out;
+    },
+
     // The cosmetic name of an equipped tool, or null.
     toolName: function (tool) {
         let id = Game.equipped && Game.equipped[tool];
@@ -58,7 +72,8 @@ var Inventory = {
             return true;
         }
         let list = this.items();
-        let i = code - 65;
+        let letter = e.key && e.key.length == 1 ? e.key : String.fromCharCode(code).toLowerCase();
+        let i = this.letters().indexOf(letter);
         if (i >= 0 && i < list.length) {
             this.lastMessage = this.use(list[i]);
             Game.drawMap();
@@ -90,7 +105,7 @@ var Inventory = {
             if (item.placed) {
                 tag = ' %c{#0f0}[in the lounge]%c{}';
             }
-            out.push(String.fromCharCode(97 + i) + ') ' + item.name + tag);
+            out.push(this.letters()[i] + ') ' + item.name + tag);
             let info = item.kind == 'ring' ? item.lore : item.desc;
             if (info) {
                 out.push('%c{#777}   ' + info + '%c{}');

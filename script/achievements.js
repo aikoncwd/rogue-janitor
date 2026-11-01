@@ -35,13 +35,27 @@ var Achievements = {
         return Date.now();
     },
 
+    got: null, // what has been unlocked: read from storage once, then kept here
+
     load: function () {
-        try {
-            let got = JSON.parse(localStorage.getItem(this.KEY));
-            return got && typeof got == 'object' ? got : {};
+        if (this.got == null) {
+            try {
+                let got = JSON.parse(localStorage.getItem(this.KEY));
+                this.got = got && typeof got == 'object' ? got : {};
+            }
+            catch (e) {
+                this.got = {};
+            }
         }
-        catch (e) {
-            return {};
+        return this.got;
+    },
+
+    // A new run: the toasts of the last one are not news any more.
+    resetQueue: function () {
+        this.queue = [];
+        if (this.timer != null) {
+            clearTimeout(this.timer);
+            this.timer = null;
         }
     },
 

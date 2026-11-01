@@ -100,6 +100,9 @@ var Shop = {
         if (item.sold) {
             return '"Sold out! I only had the one. Of course I did."';
         }
+        if (item.kind == 'tool' && Game.inventory.some(function (i) { return i.id == item.id; })) {
+            return '"You already have the ' + item.name + '! One is plenty. Zero would also be plenty."';
+        }
         if (Game.zorkmids < item.price) {
             return '"You\'re ' + (item.price - Game.zorkmids) + ' zorkmids short, friend. Mop a little more!"';
         }
