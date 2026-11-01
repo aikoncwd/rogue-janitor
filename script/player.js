@@ -148,7 +148,10 @@ Player.prototype.clean = function(verb) {
                     if (verb=='get') {
                         verb="pick up";
                     }
-                    if (Game.map[key].mess.unique) {
+                    if (Game.map[key].mess.elbereth) {
+                        Game.sendMessage("You erase the engraving. Sorry, Elbereth.");
+                    }
+                    else if (Game.map[key].mess.unique) {
                         Game.sendMessage("You "+verb+" "+Game.map[key].mess.name+"!");
                     }
                     else {

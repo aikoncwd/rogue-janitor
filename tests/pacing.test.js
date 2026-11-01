@@ -88,6 +88,7 @@ test('skipping schedules no hero timers', () => {
 
 test('a paced invasion walks at 90, acts at 200 and holds a little more now and then', () => {
     const ctx = invading(7);
+    ctx.Game.adventurer.heroClass = 'Paladin'; // speedrunners run at x0.7
     const seen = new Set();
     for (let i = 0; i < 400 && ctx.Game.phase == 'invasion' && ctx.Invasion.stage == null; i++) {
         const t = ctx.__timers.find(x => x.ms !== ctx.Game.QUEST_BLINK_MS);

@@ -115,7 +115,16 @@ Adventurer.classes = {
     Bard:         { color:'#f8f', hp:5, dmg:1, every:25, special:'song', stat:'Songs performed' },
     Archeologist: { color:'#da6', hp:5, dmg:1, every:30, special:'dig', stat:'Holes dug' },
     Alchemist:    { color:'#6fc', hp:5, dmg:1, every:20, special:'potionSplash', stat:'Potions spilled' },
+    Tourist:      { color:'#fd8', hp:5, dmg:1, every:20, special:'snapshot', stat:'Photos taken' },
+    Valkyrie:     { color:'#adf', hp:7, dmg:2, every:30, special:'frost', stat:'Battle cries' },
+    Speedrunner:  { color:'#f6a', hp:4, dmg:1, every:25, special:'energyDrink', stat:'Frames saved' },
+    Necromancer:  { color:'#9a9', hp:5, dmg:1, every:30, special:'readAloud', stat:'Pages read aloud' },
 };
+
+// Special events (lost hero, unknown scroll...): rare, and never two close together.
+Adventurer.EVENT_GAP = 25;
+Adventurer.EVENT_CHANCE = 0.06;
+Adventurer.EVENTS = ['lost', 'scroll', 'backIn5', 'elbereth'];
 
 Adventurer.prototype.setClass = function(cls) {
     let def = Adventurer.classes[cls] || Adventurer.classes.Paladin;
@@ -182,6 +191,26 @@ Adventurer.prototype.dig = function() {
     this.splat('SpilledSoil', 1, 2);
     return made > 0;
 }
+// Splats `count` messes of `type` around the hero, all called `name`.
+Adventurer.prototype.splatVariant = function(type, name, radius, count) {
+    let spots=this.floorAround(radius);
+    let made=0;
+    for (let k=0;k<count && spots.length>0;k++) {
+        let spot=spots.splice(Math.floor(ROT.RNG.getUniform()*spots.length),1)[0];
+        makeVariant(spot[0],spot[1],type,name);
+        made++;
+    }
+    return made;
+}
+Adventurer.prototype.snapshot = function() {
+    let made = this.splatVariant('Wrapper', 'Expensive Gift Shop Receipt', 1, 1);
+    this.splatVariant('GoldCoins', 'Overpriced Souvenir Coins', 1, 1);
+    return made > 0;
+}
+Adventurer.prototype.frost = function() { return this.splatVariant('Water', 'Melted Frost', 1, 2) > 0; }
+Adventurer.prototype.energyDrink = function() { return this.splatVariant('EmptyBottle', 'Energy Drink Can', 1, 1) > 0; }
+Adventurer.prototype.readAloud = function() { return this.splatVariant('LoosePages', 'Page of the Necronomicon (do not read aloud)', 1, 1) > 0; }
+
 Adventurer.prototype.potionSplash = function() {
     let made = this.splat('PotionSplash', 1, 2);
     this.splat('BrokenFlask', 1, 1);
@@ -200,6 +229,21 @@ Adventurer.prototype.smashWallDecor = function() {
         }
     }
     return false;
+}
+
+// Plain wall tiles next to the hero (for graffiti and engravings).
+Adventurer.prototype.wallsAround = function() {
+    let walls=[];
+    for (let i=-1;i<2;i++) {
+        for (let j=-1;j<2;j++) {
+            let key=(this.x+i)+','+(this.y+j);
+            let tile=Game.map[key];
+            if (tile && !tile.passable && tile.door == null && tile.secretDoor == null && tile.mess == null && (tile.char == '#' || tile.char == '♯')) {
+                walls.push([this.x+i,this.y+j]);
+            }
+        }
+    }
+    return walls;
 }
 
 // Heroes cannot resist writing their name on things.
@@ -222,6 +266,82 @@ Adventurer.prototype.tagWall = function() {
     this.graffiti++;
     Invasion.event('graffiti', {x:spot[0], y:spot[1]});
     return true;
+}
+
+// Now and then something silly happens. Uses ROT.RNG: it changes the world, so it
+// must happen the same way whether the invasion is watched or skipped.
+Adventurer.prototype.tryEvent = function() {
+    if (this.turns - (this.lastEvent || 0) < Adventurer.EVENT_GAP || ROT.RNG.getUniform() >= Adventurer.EVENT_CHANCE) {
+        return false;
+    }
+    let order = ROT.RNG.shuffle(Adventurer.EVENTS.slice());
+    for (let i=0;i<order.length;i++) {
+        if (this.doEvent(order[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Runs one special event if it can happen here; returns whether it did.
+Adventurer.prototype.doEvent = function(name, outcome=null) {
+    let awake = Game.monsterList.filter(function(m) { return m.alive && !m.retired && m.hp > 0; });
+    let fainted = Game.monsterList.filter(function(m) { return !m.retired && m.hp <= 0; });
+    let self = this;
+    let near = awake.filter(function(m) { return Math.abs(m.x-self.x) + Math.abs(m.y-self.y) <= 6; });
+    let done = false;
+    switch (name) {
+        case 'lost':
+        if (near.length > 0) {
+            makeVariant(this.x, this.y, 'Crossword', 'Hand-drawn Map (wrong)');
+            Invasion.event('lost', {monster: ROT.RNG.getItem(near)});
+            done = true;
+        }
+        break;
+        case 'scroll':
+        outcome = outcome || ROT.RNG.getItem(['teleport', 'loss', 'menu', 'confetti']);
+        makeMess(this.x, this.y, 'SpentScroll');
+        if (outcome == 'teleport') {
+            let spots = [];
+            for (let key in Game.map) {
+                let t = Game.map[key];
+                if (t.passable && t.entity == null && t.door == null && !t.important) {
+                    spots.push(key);
+                }
+            }
+            let parts = ROT.RNG.getItem(spots).split(',');
+            this.moveTo(parseInt(parts[0]), parseInt(parts[1]));
+            this.recalculate = true;
+        }
+        else if (outcome == 'confetti') {
+            this.splat('LoosePages', 1, 3);
+        }
+        Invasion.event('scroll', {outcome: outcome});
+        done = true;
+        break;
+        case 'backIn5':
+        if (fainted.length > 0 && awake.length > 0) {
+            Invasion.event('backIn5', {monster: ROT.RNG.getItem(awake)});
+            done = true;
+        }
+        break;
+        case 'elbereth':
+        let walls = this.wallsAround();
+        if (walls.length > 0) {
+            let spot = ROT.RNG.getItem(walls);
+            let mess = makeMess(spot[0], spot[1], 'Graffiti');
+            mess.name = 'Engraving: Elbereth';
+            mess.char = 'E';
+            mess.elbereth = true;
+            Invasion.event('elbereth', {monster: near.length > 0 ? ROT.RNG.getItem(near) : null});
+            done = true;
+        }
+        break;
+    }
+    if (done) {
+        this.lastEvent = this.turns;
+    }
+    return done;
 }
 
 Adventurer.prototype.damage = function() {
@@ -262,10 +382,17 @@ Adventurer.prototype.takeTurn = function () {
         }
     }
     if (this.hp<=0 && this.turns % 5 ==0) {
-        //console.log("Dropping potion");
-        let newMess1 = makeMess(this.x, this.y, "EmptyPotion");
-        Invasion.event('potion', {});
-        this.hp+=6;
+        if (!this.savedOnce) {
+            // the first time: "You die... Restoring from save."
+            this.savedOnce=true;
+            this.hp=this.maxHp || 5;
+            Invasion.event('saveScum', {});
+        }
+        else {
+            let newMess1 = makeMess(this.x, this.y, "EmptyPotion");
+            Invasion.event('potion', {});
+            this.hp+=6;
+        }
     }
     //console.log(this.x+','+this.y);
     //console.log(this.destinations);
@@ -277,6 +404,7 @@ Adventurer.prototype.takeTurn = function () {
     }
     this.smashWallDecor();
     this.trySpecial();
+    this.tryEvent();
     if (this.graffiti < this.maxGraffiti && ROT.RNG.getUniform() < 0.025) {
         this.tagWall();
     }

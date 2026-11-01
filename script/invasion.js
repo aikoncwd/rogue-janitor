@@ -48,6 +48,9 @@ var Invasion = {
         let targets = Game.adventurer ? Game.adventurer.targets.length : 0;
         let base = (this.busy || targets > 0) ? this.ACTION_MS : this.WALK_MS;
         let ms = Math.min(this.MAX_TURN_MS, base + this.extra);
+        if (Game.adventurer && Game.adventurer.heroClass == 'Speedrunner') {
+            ms = ms * 0.7; // ANY%!
+        }
         return this.fast ? ms / this.FAST_FACTOR : ms;
     },
 
@@ -258,9 +261,19 @@ var Invasion = {
                         this.beat('cry', cry);
                     }
                 }
+                else if (Flavor.chance(0.03)) {
+                    let quip = this.say('heroQuip', {}, true);
+                    if (quip) {
+                        this.beat('quip', quip);
+                    }
+                }
                 break;
             case 'enter':
                 this.beat('enter', this.say('heroEnter'));
+                if (Flavor.chance(0.3) && this.roster.length > 0) {
+                    this.say('heroAmulet');
+                    this.say('rodneyReply', { monster: this.monsterName(Flavor.rng.getItem(this.roster)) });
+                }
                 this.sound('fanfareIn');
                 break;
             case 'hit':
@@ -309,6 +322,40 @@ var Invasion = {
                 this.stats.graffiti++;
                 this.beat('graffiti', this.say('graffiti', { item: ROT.RNG.getItem(Flavor.pools.graffitiTags) }));
                 this.sound('spray');
+                break;
+            case 'lost':
+                this.say('heroLost');
+                this.say('monsterDirections', { monster: this.monsterName(data.monster) });
+                this.beat('lost');
+                break;
+            case 'scroll':
+                this.say('scrollRead');
+                this.say('scrollOutcome_' + data.outcome);
+                this.sound('spray');
+                this.beat('scroll');
+                break;
+            case 'backIn5':
+                this.say('backIn5', { monster: this.monsterName(data.monster) });
+                this.beat('backIn5');
+                break;
+            case 'saveScum': {
+                this.say('saveScum');
+                let awake = this.roster.filter(function (m) { return m.hp > 0; });
+                if (awake.length > 0) {
+                    this.say('saveScumReply', { monster: this.monsterName(Flavor.rng.getItem(awake)) });
+                }
+                this.sound('gulp');
+                this.beat('saveScum');
+                break;
+            }
+            case 'elbereth':
+                this.stats.graffiti++;
+                this.say('elbereth');
+                if (data.monster) {
+                    this.say('elberethReply', { monster: this.monsterName(data.monster) });
+                }
+                this.sound('spray');
+                this.beat('elbereth');
                 break;
             case 'heroHurt':
                 this.stats.heroHurt++;
@@ -473,6 +520,7 @@ var Invasion = {
                 this.stats.bloodPuddles++;
             }
         }
+        Game.amuletStolen = Flavor.chance(0.25); // tomorrow's memo may mention it
         Game.player.cutscene = ConversationBuilder.chainCutscenes(this.reportCutscene(), Game.player.cutscene);
         Game.phase = 'cleaning';
     },

@@ -236,6 +236,108 @@ var Flavor = {
             "{hero} drops a flask. Something bubbly oozes out.",
             "{hero} tries a new recipe. It explodes, but only a little.",
         ],
+        special_Tourist: [
+            "{hero} takes a flash photo. Everyone sees spots for a while.",
+            "{hero} poses for a selfie with a 'defeated' monster. The monster does bunny ears.",
+            "{hero} buys a souvenir from nobody and drops the receipt.",
+        ],
+        special_Valkyrie: [
+            "{hero} bellows \"VALHALLA!\" and the room gets noticeably colder.",
+            "{hero} stamps their boots. Frost melts into puddles everywhere.",
+            "{hero} raises a frosty blade. The floor gets very, very wet.",
+        ],
+        special_Speedrunner: [
+            "{hero} shouts \"ANY%!\" and crushes an energy drink can.",
+            "{hero} yells \"FRAME PERFECT!\" at a perfectly normal doorway.",
+            "{hero} mutters \"reset? no, keep going\" and chugs another energy drink.",
+        ],
+        special_Necromancer: [
+            "{hero} reads aloud: \"KLAATU BARADA... NECKTIE?\" Nothing rises. A page falls.",
+            "{hero} tries to raise the dead. The 'dead' politely stay down, they're on a break.",
+            "{hero} flips through the Necronomicon. A page comes loose.",
+        ],
+        heroQuip: [
+            "{hero} mutters: \"Never melee a floating eye...\"",
+            "{hero} says: \"I'll just check this one more room.\"",
+            "{hero} grumbles: \"It was the RNG's fault.\"",
+            "{hero} sighs: \"This seed is cursed.\"",
+            "{hero} yelps: \"Wait, I didn't press that!\"",
+            "{hero} squints at a chest: \"Was that a mimic? It's always a mimic.\"",
+            "{hero} muses: \"I should've played a Minotaur Berserker.\"",
+            "{hero} asks nobody: \"Is this a YASD? This feels like a YASD.\"",
+        ],
+        heroAmulet: [
+            "{hero} bellows: \"WHERE IS THE AMULET OF YENDOR?!\"",
+            "{hero} announces: \"I'm here for the Amulet!\"",
+            "{hero} demands: \"Hand over the Amulet of Yendor!\"",
+        ],
+        rodneyReply: [
+            "{monster} sighs: \"Rodney has it. Again.\"",
+            "{monster} points: \"Bottom floor, take the stairs, mind the wet floor sign.\"",
+            "{monster} shrugs: \"Ask Rodney. He borrowed it for 'a quick thing' ages ago.\"",
+            "{monster} whispers: \"Rodney sells fake ones at the gift shop, you know.\"",
+        ],
+        heroLost: [
+            "{hero} stops, turns the map upside down, and looks lost.",
+            "{hero} has been walking in circles. Again.",
+            "{hero} looks around: \"Have I been here before? Everything looks procedurally generated.\"",
+        ],
+        monsterDirections: [
+            "{monster} breaks character: \"Down the hall, second left. You're welcome.\"",
+            "{monster} politely points the hero toward the next room.",
+            "{monster} draws them a little map. It is wrong, but it's the thought that counts.",
+        ],
+        scrollRead: [
+            "{hero} reads an unidentified scroll!",
+            "{hero} unrolls a mysterious scroll and reads it out loud.",
+            "{hero} reads a scroll labeled ZELGO MER. Brave.",
+        ],
+        scrollOutcome_teleport: [
+            "{hero} vanishes in a puff of smoke! And reappears somewhere else, confused.",
+            "{hero} is teleported! \"I MEANT TO DO THAT.\"",
+            "Poof! {hero} is suddenly elsewhere.",
+        ],
+        scrollOutcome_loss: [
+            "{hero} feels a strange sense of loss.",
+            "{hero} has a feeling they forgot something important. Like where they parked.",
+            "Nothing happens. {hero} feels oddly disappointed.",
+        ],
+        scrollOutcome_menu: [
+            "It is a takeaway menu. {hero} orders a pizza.",
+            "The scroll reads: \"2-for-1 kebabs, Tuesdays.\" {hero} takes note.",
+            "It's a coupon for 10% off at the Minetown shop. Expired.",
+        ],
+        scrollOutcome_confetti: [
+            "Confetti bursts from the scroll! Paper everywhere.",
+            "The scroll explodes into a shower of tiny pages. Festive.",
+            "A party popper scroll! It's someone's birthday, apparently.",
+        ],
+        backIn5: [
+            "{monster} holds up a little sign: BACK IN 5.",
+            "{monster} flips a sign: ON BREAK. PLEASE SLAY LATER.",
+            "{monster} puts up a sign: CLOSED FOR LUNCH. The hero waits, confused.",
+        ],
+        saveScum: [
+            "{hero} dies... \"Do you want your possessions identified?\" ...Restoring from save.",
+            "{hero} collapses! The world flickers. Restoring from save...",
+            "{hero} is defeated! Somewhere, a save file is reloaded. Restoring from save.",
+        ],
+        saveScumReply: [
+            "{monster} blinks: \"Wait, didn't we just...?\"",
+            "{monster} frowns: \"Hey! No save-scumming!\"",
+            "{monster} mutters: \"Every single time.\"",
+        ],
+        elbereth: [
+            "{hero} engraves \"Elbereth\" on the wall. Very carefully.",
+            "{hero} writes Elbereth in the dust. And on the wall. Just in case.",
+            "{hero} scratches \"ELBERETH\" into the stone and feels very safe.",
+        ],
+        elberethReply: [
+            "{monster} reads it: \"Oh, Elbereth. Sure.\" *walks around it politely*",
+            "{monster} nods respectfully at the engraving and carries on.",
+            "{monster} sighs: \"Someone's going to have to scrub that.\"",
+        ],
+
         cardTitle: [
             "Night shift, day {day}",
             "Day {day}: the night shift",
@@ -253,13 +355,15 @@ var Flavor = {
         heroFirst: [
             "Sir Gleamington", "Brakka", "Lady Valoria", "Thrognar", "Percival", "Ser Shinyboots",
             "Elandriel", "Grimbold", "Dame Fortitude", "Chad", "Xandar", "Bartholomew",
+            "Rodney", "Yasd the Unlucky", "Ascension Andy", "Scummy McSavefile", "Gelatinous Kevin's Cousin",
         ],
         heroLast: [
             "Skullsplitter", "the Bold", "Dragonbane", "of the Prophecy", "Loothoarder", "Doorkicker",
-            "the Unwashed", "Goblinbane", "the Mildly Famous", "Ironpants",
+            "the Unwashed", "Goblinbane", "the Mildly Famous", "Ironpants", "Bones", "of Seed 42",
         ],
         heroClass: [
             "Paladin", "Barbarian", "Wizard", "Ranger", "Rogue", "Bard", "Archeologist", "Alchemist",
+            "Tourist", "Valkyrie", "Speedrunner", "Necromancer",
         ],
     },
 
