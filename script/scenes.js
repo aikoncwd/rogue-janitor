@@ -292,9 +292,11 @@ var Scenes = {
         }
         let scene = this.art[this.current.name];
         let lines = scene.frames[this.current.frame % scene.frames.length];
-        let w = 0;
-        for (let i = 0; i < lines.length; i++) {
-            w = Math.max(w, lines[i].length);
+        let w = 0; // the widest line of any frame: every frame is centred the same, nothing jumps
+        for (let k = 0; k < scene.frames.length; k++) {
+            for (let i = 0; i < scene.frames[k].length; i++) {
+                w = Math.max(w, scene.frames[k][i].length);
+            }
         }
         let cols = Game.layoutInfo.mapCols;
         let left = Math.max(0, Math.floor((cols - w) / 2));

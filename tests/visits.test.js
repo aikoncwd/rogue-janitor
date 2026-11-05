@@ -173,3 +173,34 @@ test('the dice scene draws the numbers on the die, not the comrades', () => {
     assert.equal(S.cell(S.art.dice, '1', 0, 2, 0)[0], 'g', 'the digit is still the host');
     assert.deepEqual(S.cell(S.art.roguelike, 'H', 0, 2, 0), ['@', '#fff']);
 });
+
+test('no figure in a night scene has an arm twice (raised and also down)', () => {
+    const ctx = bootHeadless();
+    for (const [name, a] of Object.entries(ctx.Scenes.art)) {
+        if (a.literal) continue;
+        a.frames.forEach((f, fi) => f.forEach((line, y) => {
+            for (let x = 0; x < line.length; x++) {
+                const ch = line[x];
+                if (!(ch === '@' || (ch >= '1' && ch <= '3'))) continue;
+                const below = f[y + 1] || '';
+                if (line[x - 1] === '\\') assert.notEqual(below[x - 1], '/', name + ' f' + fi + ' ' + ch + ' left arm twice');
+                if (line[x + 1] === '/') assert.notEqual(below[x + 1], '\\', name + ' f' + fi + ' ' + ch + ' right arm twice');
+            }
+        }));
+    }
+});
+
+test('every frame of a scene is drawn from the same left column', () => {
+    const ctx = cleaning();
+    for (const name of ['sleep', 'karaoke', 'bowling', 'roguelike']) {
+        const lefts = new Set();
+        ctx.Scenes.current = { name, node: null, frame: 0, cast: ctx.Scenes.pickCast() };
+        for (let f = 0; f < ctx.Scenes.art[name].frames.length; f++) {
+            ctx.__drawn.length = 0;
+            ctx.Scenes.current.frame = f;
+            ctx.Scenes.draw();
+            lefts.add(Math.min(...ctx.__drawn.filter(d => d.ch !== undefined).map(d => d.x)));
+        }
+        assert.equal(lefts.size, 1, name);
+    }
+});
