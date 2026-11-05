@@ -20,11 +20,17 @@ var Invasion = {
     skipping: false,
     timer: null,
     engineStarted: false,
+    // Video controls: the footage starts paused on its first frame every day.
+    startPaused: true, // tests of the old self-running replay switch this off
+    paused: false,
+    held: false, // the engine is locked by a pause, with no timer to resume it
+    gate: null, // releases the hero's very first turn (see firstFrameGate)
 
     // Hands control to the hero: called when the intro screen is dismissed (day 1)
     // or when a new day's dungeon is generated (the player's pending unlock resumes it).
     start: function () {
         Game.phase = 'invasion';
+        this.takeFootageStart();
         Game.stopQuestBlink();
         Game.drawMap();
         if (!this.engineStarted) {
@@ -70,7 +76,150 @@ var Invasion = {
         this.busy = false;
         this.extra = 0;
         this.speaking = false;
+        if (this.paused) {
+            this.held = true; // play or step releases it
+            return;
+        }
         this.resumeIn(ms);
+    },
+
+    // The hero's first turn waits for the player while the footage is paused.
+    holdFirst: function (hero) {
+        return this.paused && !this.instant && !this.skipping && Game.phase == 'invasion';
+    },
+
+    // A synchronous thenable: rot.js locks the engine and hands us its unlock,
+    // which runs right after the hero's first turn once the footage moves.
+    firstFrameGate: function (hero) {
+        return {
+            then: function (unlock) {
+                Invasion.gate = function () {
+                    hero.act(true);
+                    unlock();
+                };
+            },
+        };
+    },
+
+    // Lets the next hero turn happen, whatever is holding it.
+    release: function () {
+        if (this.gate != null) {
+            let gate = this.gate;
+            this.gate = null;
+            gate();
+        }
+        else if (this.timer != null) {
+            clearTimeout(this.timer);
+            this.timer = null;
+            Game.engine.unlock();
+        }
+        else if (this.held) {
+            this.held = false;
+            Game.engine.unlock();
+        }
+    },
+
+    play: function (fast) {
+        this.paused = false;
+        this.fast = fast;
+        this.release();
+    },
+
+    pause: function () {
+        this.paused = true;
+        if (this.timer != null) {
+            clearTimeout(this.timer);
+            this.timer = null;
+            this.held = true;
+        }
+    },
+
+    // One hero turn forward; while playing it only pauses.
+    step: function () {
+        if (!this.paused) {
+            this.pause();
+            return;
+        }
+        this.release();
+    },
+
+    // --- Rewind: the night is a simulation, so going back means rebuilding the
+    // morning (as Continue does) and running it again with the same dice. ---
+    morning: null,
+    rewoundFootage: null,
+
+    // Taken as the dungeon is built (the world and its dice)...
+    takeMorning: function () {
+        this.morning = {
+            save: Save.snapshot(),
+            flavor: Flavor.rng.getState(), // the banner clock and camera are rolled while building
+            cutscene: Game.player.cutscene,
+            footage: null,
+        };
+    },
+
+    // ...and as the footage starts: the title screen and the night conversation
+    // roll presentation dice and write to the log in between.
+    takeFootageStart: function () {
+        if (this.rewoundFootage != null) { // a rewind: put the presentation back as it was
+            let f = this.rewoundFootage;
+            this.rewoundFootage = null;
+            Flavor.rng.setState(f.flavor);
+            Flavor.lastLines = Object.assign({}, f.lastLines);
+            Game.log.lines = JSON.parse(JSON.stringify(f.log));
+            if (this.morning != null) {
+                this.morning.footage = f;
+            }
+            return;
+        }
+        if (this.morning != null && this.morning.footage == null) {
+            this.morning.footage = {
+                flavor: Flavor.rng.getState(),
+                lastLines: Object.assign({}, Flavor.lastLines),
+                log: JSON.parse(JSON.stringify(Game.log.lines)),
+            };
+        }
+    },
+
+    rewind: function () {
+        let m = this.morning;
+        if (Game.phase != 'invasion' || this.stage != null || m == null) {
+            return false;
+        }
+        if (this.timer != null) {
+            clearTimeout(this.timer);
+            this.timer = null;
+        }
+        this.gate = null;
+        this.held = false;
+        this.skipping = false;
+        this.fast = false;
+        let footage = m.footage;
+        Save.restore(m.save); // decodes fresh objects every time
+        Game.player.cutscene = m.cutscene;
+        Flavor.rng.setState(m.flavor);
+        // a fresh engine: the old one stays locked, waiting for a turn that never comes
+        Game.engine = new ROT.Engine(Game.scheduler);
+        this.engineStarted = false;
+        let paused = this.startPaused;
+        this.startPaused = true; // the rebuilt night waits on its first frame
+        this.rewoundFootage = footage;
+        Game.generateDungeon(); // on day 2+ this calls start()
+        this.startPaused = paused;
+        if (Game.phase != 'invasion' || !this.engineStarted) {
+            this.start();
+        }
+        return true;
+    },
+
+    toggleFast: function () {
+        this.fast = !this.fast;
+        if (this.timer != null) { // rescale the wait that is already running
+            let left = Math.max(0, this.timerDue - this.now());
+            clearTimeout(this.timer);
+            this.timer = null;
+            this.resumeIn(this.fast ? left / this.FAST_FACTOR : left * this.FAST_FACTOR);
+        }
     },
 
     // The hero's next turn starts in `ms`; remembers when, so fast mode can
@@ -87,11 +236,8 @@ var Invasion = {
     // Run the rest of the invasion instantly.
     skip: function () {
         this.skipping = true;
-        if (this.timer != null) {
-            clearTimeout(this.timer);
-            this.timer = null;
-            Game.engine.unlock();
-        }
+        this.paused = false;
+        this.release();
     },
 
     handleKey: function (code) {
@@ -100,20 +246,44 @@ var Invasion = {
             return true;
         }
         if (this.stage != null) {
-            this.clockIn(); // any key hurries the hand-over along
+            if ((this.stage == 'linger' || this.stage == 'curtain') && this.REPLAY_KEYS.indexOf(code) >= 0) {
+                return true; // still stepping or pausing: let the curtain and the card play
+            }
+            this.clockIn(); // any other key hurries the hand-over along
             return true;
         }
         if (Game.player.talking != null) {
             return false; // a conversation owns the keys (e.g. the night screen before day 2)
         }
         if (Game.phase == 'invasion') {
-            if (code == 32) {
-                this.fast = !this.fast;
-                if (this.timer != null) { // rescale the wait that is already running
-                    let left = Math.max(0, this.timerDue - this.now());
-                    clearTimeout(this.timer);
-                    this.timer = null;
-                    this.resumeIn(this.fast ? left / this.FAST_FACTOR : left * this.FAST_FACTOR);
+            if (code == 32) { // Space: play / pause
+                if (this.paused) {
+                    this.play(false);
+                }
+                else {
+                    this.pause();
+                }
+                Game.drawMap();
+                return true;
+            }
+            if (code == 39 || code == 102) { // right arrow (or numpad 6): one turn
+                this.step();
+                Game.drawMap();
+                return true;
+            }
+            if (code == 70) { // F: fast
+                if (this.paused) {
+                    this.play(true);
+                }
+                else {
+                    this.toggleFast();
+                }
+                Game.drawMap();
+                return true;
+            }
+            if (code == 82) { // R: rewind to the first frame
+                if (this.rewind) {
+                    this.rewind();
                 }
                 Game.drawMap();
                 return true;
@@ -155,6 +325,10 @@ var Invasion = {
         this.busy = false;
         this.extra = 0;
         this.speaking = false;
+        this.paused = this.startPaused;
+        this.held = false;
+        this.gate = null;
+        this.transcript = [];
     },
 
     // --- Playback banner: the invasion is last night's security footage ---
@@ -164,7 +338,8 @@ var Invasion = {
     NAG_MS: 5000,
     // Besides every movement key in Player.keyMap: action letters m p g f r o c x e,
     // and the wait keys . / 5 / numpad 5 (NumLock off).
-    NAG_KEYS: [77, 80, 71, 70, 82, 79, 67, 88, 69, 190, 53, 12, 101],
+    REPLAY_KEYS: [32, 39, 102, 70, 82], // Space, right arrow, numpad 6, F, R
+    NAG_KEYS: [77, 80, 71, 79, 67, 88, 69, 190, 53, 12, 101],
 
     clockText: function () {
         let h24 = Math.floor(this.clockMinutes / 60) % 24;
@@ -177,10 +352,9 @@ var Invasion = {
     // One line for the top of the map, shortened to fit `width` columns.
     bannerText: function (width) {
         let dot = '%c{' + (this.turn % 4 < 2 ? '#f00' : '#500') + '}●%c{}';
-        let play = this.fast ? '▶▶ x' + this.FAST_FACTOR : '▶';
+        let play = this.paused ? '❚❚ PAUSED' : this.fast ? '▶▶ x' + this.FAST_FACTOR : '▶ PLAY';
         let clock = this.clockText();
         let forms = [
-            '%c{#fff}[ ' + dot + '%c{#fff} REC  ' + play + ' PLAYBACK · CAM ' + this.camera + ' (floating eye) · ' + clock + ' ]%c{}  %c{#ddd}just watch - no input needed%c{}',
             '%c{#fff}[ ' + dot + '%c{#fff} REC  ' + play + ' PLAYBACK · CAM ' + this.camera + ' (floating eye) · ' + clock + ' ]%c{}',
             '%c{#fff}[ ' + dot + '%c{#fff} REC  ' + play + ' PLAYBACK · ' + clock + ' ]%c{}',
         ];
@@ -190,6 +364,22 @@ var Invasion = {
             }
         }
         return dot + '%c{#fff} REC ' + play + ' ' + clock + '%c{}';
+    },
+
+    // The replay keys, for the row under the REC line (shortened to fit `width`).
+    controlsText: function (width) {
+        let k = function (key) { return '%c{#ff0}' + key + '%c{#ddd}'; };
+        let forms = [
+            k('[Space]') + ' play/pause  ' + k('[→]') + ' step  ' + k('[F]') + ' fast  ' + k('[R]') + ' rewind  ' + k('[Esc]') + ' skip%c{}',
+            k('Space') + ' play  ' + k('→') + ' step  ' + k('F') + ' fast  ' + k('R') + ' rewind  ' + k('Esc') + ' skip%c{}',
+            k('Spc') + ' ' + k('→') + ' ' + k('F') + ' ' + k('R') + ' ' + k('Esc') + '%c{}',
+        ];
+        for (let i = 0; i < forms.length; i++) {
+            if (forms[i].replace(/%c\{[^}]*\}/g, '').length <= width - 2) {
+                return forms[i];
+            }
+        }
+        return forms[forms.length - 1];
     },
 
     // Pressing game keys during the replay: a gentle reminder, at most every NAG_MS.
@@ -208,10 +398,17 @@ var Invasion = {
         return this.skipping === true;
     },
 
-    say: function (pool, vars, optional = false) {
-        if (this.quiet()) {
-            return '';
+    // Everything the night says goes to the security log (the transcript), with the
+    // camera clock; the message bar only gets it while the footage plays.
+    transcript: [],
+
+    record: function (line) {
+        if (line) {
+            this.transcript.push({ clock: this.clockText(), text: line });
         }
+    },
+
+    say: function (pool, vars, optional = false) {
         if (optional) {
             if (this.optionalLogged) {
                 return '';
@@ -221,7 +418,8 @@ var Invasion = {
         vars = vars || {};
         vars.hero = '%c{' + this.heroColor() + '}' + this.hero.short + '%c{}';
         let line = Flavor.line(pool, vars);
-        if (line != "") {
+        this.record(line);
+        if (line != "" && !this.quiet()) {
             Game.log.push(line);
         }
         return line;
@@ -516,6 +714,9 @@ var Invasion = {
     finish: function () {
         this.skipping = false;
         this.fast = false;
+        this.paused = false;
+        this.held = false;
+        this.gate = null;
         if (this.timer != null) {
             clearTimeout(this.timer);
             this.timer = null;
@@ -536,6 +737,29 @@ var Invasion = {
         DayEvents.start(); // the memo, and maybe a visitor or a birthday (or a ghost of an earlier hero)
         Game.pastHeroes.push({ full: this.hero.full, cls: this.hero.cls });
         Game.amuletStolen = Flavor.chance(0.25); // tomorrow's memo may mention it
+        this.tapeTip();
+    },
+
+    TAPE_COMMENT_CHANCE: 0.35,
+
+    // A comrade in the staff room mentions the security log: always on day 1
+    // (that's how you learn about Tab), now and then on later mornings.
+    tapeTip: function () {
+        let pool = Game.day <= 1 ? 'tapeTip' : 'tapeComment';
+        if (pool == 'tapeComment' && !Flavor.chance(this.TAPE_COMMENT_CHANCE)) {
+            return;
+        }
+        let crew = this.roster.filter(function (m) { return m.alive && m.retired; });
+        if (crew.length == 0) {
+            crew = Game.monsterList.filter(function (m) { return m.alive; });
+        }
+        if (crew.length == 0) {
+            return;
+        }
+        let line = Flavor.line(pool, { monster: this.monsterName(Flavor.rng.getItem(crew)) });
+        if (line) {
+            Game.log.push(line);
+        }
     },
 };
 

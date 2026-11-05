@@ -34,9 +34,12 @@ var Flavor = {
             "",
             "%c{#0ff}1. TONIGHT%c{}   A hero raids the dungeon. You are %c{#f80}NOT%c{} playing:",
             "             you are watching last night's security footage.",
-            "             %c{#ff0}[Space]%c{} fast-forward   %c{#ff0}[Esc]%c{} skip to the morning",
+            "             The tape starts paused:",
+            "             %c{#ff0}[Space]%c{} play/pause  %c{#ff0}[→]%c{} step  %c{#ff0}[F]%c{} fast",
+            "             %c{#ff0}[R]%c{} rewind  %c{#ff0}[Esc]%c{} skip to the morning",
             "",
             "%c{#0ff}2. MORNING%c{}   The mess is yours. Mop, pick up, fix.",
+            "             Missed something? %c{#ff0}[Tab]%c{} reads the security log.",
             "",
             "%c{#0ff}3. BREAKS%c{}    Your colleagues relax in the staff lounge.",
             "             Chat with them. They are lovely.",
@@ -49,8 +52,23 @@ var Flavor = {
         playbackNag: [
             "You can't do anything. It's a recording.",
             "You shout at the screen. The hero does not hear you.",
-            "This already happened. Space to fast-forward, Esc to skip.",
+            "This already happened. Space plays, → steps, Esc skips.",
             "You reach for the mop. Patience, it's still last night.",
+        ],
+
+        // A comrade in the staff room tells you about the security log (day 1)...
+        tapeTip: [
+            '{monster} waves a tape at you: "Missed the good bits? The whole security log is up. Press [Tab]."',
+            '{monster}: "The floating eye saw everything. Everything. [Tab] if you want the gory details. Well, the ketchup details."',
+            '{monster} points at the camera: "It writes it all down, you know. Press [Tab] to read last night\'s log."',
+            '{monster}: "New here? Last night is all in the security log. [Tab]. Bring popcorn."',
+        ],
+        // ...and on later mornings, now and then, mentions it again.
+        tapeComment: [
+            '{monster} is rewatching last night on loop: "[Tab] if you want to see me faint again. I was magnificent."',
+            '{monster}: "Did you read the log? [Tab]. Page three. My best line yet."',
+            '{monster} sighs: "The floating eye got my bad side again. It\'s all in the log. [Tab]."',
+            '{monster}: "Someone check the security log. [Tab]. I want to know who kicked MY door."',
         ],
 
         heroEnter: [
@@ -403,7 +421,7 @@ var Flavor = {
             choice = this.rng.getItem(pool);
         } while (pool.length > 1 && choice == this.lastLines[poolName]);
         this.lastLines[poolName] = choice;
-        return choice.replace(/\{(hero|monster|item)\}/g, function (m, key) {
+        return choice.replace(/\{(\w+)\}/g, function (m, key) {
             return (key in vars) ? vars[key] : m;
         });
     },

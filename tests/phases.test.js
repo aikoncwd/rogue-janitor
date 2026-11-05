@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { bootHeadless, toIntro } = require('./harness');
 
-const KEY = { ENTER: 13, SPACE: 32, ESC: 27, LEFT: 37, V: 86 };
+const KEY = { ENTER: 13, SPACE: 32, F: 70, ESC: 27, LEFT: 37, V: 86 };
 
 function bootDay1(seed = 1234) {
     const ctx = toIntro(bootHeadless({ seed, begin: true }));
@@ -34,7 +34,7 @@ test('timer advances one hero turn', () => {
     assert.equal(ctx.__timers.length, 1);
 });
 
-test('turn delay: walking 90, action 200, small extras, space makes it 4x faster', () => {
+test('turn delay: walking 90, action 200, small extras, F makes it 4x faster', () => {
     const ctx = bootDay1();
     ctx.__press(KEY.ENTER);
     const inv = ctx.Invasion;
@@ -43,10 +43,10 @@ test('turn delay: walking 90, action 200, small extras, space makes it 4x faster
     assert.equal(inv.turnDelay(), 90);
     inv.event('potion', {});
     assert.equal(inv.turnDelay(), 320);
-    ctx.__press(KEY.SPACE);
+    ctx.__press(KEY.F);
     assert.equal(inv.fast, true);
     assert.equal(inv.turnDelay(), 320 / inv.FAST_FACTOR);
-    ctx.__press(KEY.SPACE);
+    ctx.__press(KEY.F);
     assert.equal(inv.fast, false);
 });
 

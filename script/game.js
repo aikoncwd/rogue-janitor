@@ -101,6 +101,9 @@ var Game = {
     // their own listeners.
     onKey: function(e) {
         let code = e.keyCode;
+        if (code == 9 && !e.ctrlKey && !e.altKey && !e.metaKey && e.preventDefault) {
+            e.preventDefault(); // Tab is a game key (the security log, the pockets' tabs): keep the focus here
+        }
         // leave browser shortcuts alone (reload, devtools, fullscreen, alt-tab...)
         if (e.ctrlKey || e.metaKey || e.altKey || (code >= 112 && code <= 123) || [9,16,17,18,20,91,92,93].indexOf(code) >= 0) {
             return;
@@ -174,9 +177,10 @@ var Game = {
         }
     },
 
-    // Mimsy's shop or your pockets are on screen.
+    // Mimsy's shop, your pockets or the security log are on screen.
     screenOpen: function() {
-        return this.phase == 'cleaning' && ((typeof Shop != 'undefined' && Shop.isOpen) || (typeof Inventory != 'undefined' && Inventory.isOpen));
+        return this.phase == 'cleaning' && ((typeof Shop != 'undefined' && Shop.isOpen) || (typeof Inventory != 'undefined' && Inventory.isOpen) ||
+            (typeof NightLog != 'undefined' && NightLog.isOpen));
     },
 
     // Font size that gives roughly TARGET_ROWS rows in the current window.
@@ -390,6 +394,13 @@ var Game = {
                 this.display.draw(x, 0, ' ', '#fff', wall);
             }
             this.display.drawText(Math.max(0, Math.floor((this.layoutInfo.mapCols - len) / 2)), 0, '%b{' + wall + '}' + banner);
+            // and the replay keys right under it, always in view
+            let controls = Invasion.controlsText(this.layoutInfo.mapCols);
+            let clen = controls.replace(/%c\{[^}]*\}/g, '').length;
+            for (let x = 0; x < this.layoutInfo.mapCols; x++) {
+                this.display.draw(x, 1, ' ', '#fff', wall);
+            }
+            this.display.drawText(Math.max(0, Math.floor((this.layoutInfo.mapCols - clen) / 2)), 1, '%b{' + wall + '}' + controls);
         }
 
         this.drawChrome();
@@ -472,6 +483,9 @@ var Game = {
         else if (Inventory.isOpen) {
             Inventory.draw();
         }
+        else if (NightLog.isOpen) {
+            NightLog.draw();
+        }
     },
 
     helpLines: function() {
@@ -502,6 +516,7 @@ var Game = {
             row('E or X', 'examine what is around you'),
             row('O / C', 'open / close doors'),
             row('I', 'your pockets and achievements'),
+            row('Tab', "last night's security log"),
             row('#', 'extended commands, for the curious'),
             '',
             head('SETTINGS'),
@@ -704,6 +719,7 @@ var Game = {
     },
 
     generateDungeon: function() {
+        Invasion.takeMorning(); // what rewinding the footage goes back to
         var thetheme=this.dungeonTheme;
         this.shift = {cleaned:0, passes:0, requestsDone:0, startPoints:this.yendorPoints};
         this.shiftEnded = false;

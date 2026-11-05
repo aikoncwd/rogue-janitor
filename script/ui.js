@@ -41,6 +41,66 @@ var Ui = {
         return out;
     },
 
+    // Like wrap, for text with %c{...} colour codes: widths count visible
+    // characters only, and a colour that spans a line break is closed at the end
+    // of the line and opened again at the start of the next.
+    wrapColored: function (text, width) {
+        let self = this;
+        let out = [];
+        let line = '';
+        let lineLen = 0;
+        let color = null; // the colour open at the current point of the text
+        let lineColor = null; // the colour open where the current line started
+        let flush = function () {
+            let opened = lineColor ? '%c{' + lineColor + '}' : '';
+            out.push(opened + line + (color ? '%c{}' : ''));
+            line = '';
+            lineLen = 0;
+            lineColor = color;
+        };
+        // tracks the colour codes inside a piece of text
+        let follow = function (piece) {
+            let re = /%c\{([^}]*)\}/g;
+            let m;
+            while ((m = re.exec(piece)) != null) {
+                color = m[1] ? m[1] : null;
+            }
+        };
+        String(text || '').split(' ').forEach(function (word) {
+            let len = self.plainLength(word);
+            if (len > width) { // a word longer than the line: cut it (it has no colour codes in practice)
+                let bare = word.replace(/%[cb]\{[^}]*\}/g, '');
+                if (lineLen > 0) {
+                    flush();
+                }
+                while (bare.length > width) {
+                    line = bare.slice(0, width);
+                    bare = bare.slice(width);
+                    flush();
+                }
+                line = bare;
+                lineLen = bare.length;
+                follow(word);
+                return;
+            }
+            if (lineLen > 0 && lineLen + 1 + len > width) {
+                flush();
+            }
+            if (lineLen > 0 || line != '') {
+                line += ' ';
+                lineLen += 1;
+            }
+            line += word;
+            lineLen += len;
+            follow(word);
+        });
+        if (line != '' || out.length == 0) {
+            let opened = lineColor ? '%c{' + lineColor + '}' : '';
+            out.push(opened + line);
+        }
+        return out;
+    },
+
     // Exactly `n` lines: wrapped text, padded with blanks or cut with "…", so
     // whatever the message says nothing below it moves.
     fixedLines: function (text, width, n, color) {

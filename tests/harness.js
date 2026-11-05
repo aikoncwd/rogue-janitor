@@ -34,6 +34,7 @@ const DEFAULT_FILES = [
     'script/achievements.js',
     'script/shop.js',
     'script/inventory.js',
+    'script/nightlog.js',
     'script/events.js',
 ];
 
@@ -127,7 +128,9 @@ function stubDisplay(ctx) {
 // Boots the game without a DOM: Game.init minus the canvas. With begin=false no
 // dungeon is generated (tests call Game.generateDungeon themselves); with
 // begin=true it runs Game.begin() like the browser does (day 1 intro screen).
-function bootHeadless({ seed = 1234, files = DEFAULT_FILES, game = true, begin = false } = {}) {
+// paused=true keeps the game's real start (the footage paused on its first
+// frame); by default the replay runs by itself, as the older tests expect.
+function bootHeadless({ seed = 1234, files = DEFAULT_FILES, game = true, begin = false, paused = false } = {}) {
     const ctx = makeContext();
     load(ctx, 'tests/vendor/rot.js');
     ctx.ROT.RNG.setSeed(seed);
@@ -137,6 +140,7 @@ function bootHeadless({ seed = 1234, files = DEFAULT_FILES, game = true, begin =
         ctx.Game.display = stubDisplay(ctx);
         ctx.Game.getSize(false);
         ctx.Game.setup();
+        if (ctx.Invasion && !paused) ctx.Invasion.startPaused = false;
         if (begin) ctx.Game.begin();
     }
     return ctx;

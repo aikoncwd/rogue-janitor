@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { bootHeadless, toIntro } = require('./harness');
 
-const KEY = { ENTER: 13, SPACE: 32, ESC: 27, LEFT: 37, M: 77, V: 86, T: 84 };
+const KEY = { ENTER: 13, SPACE: 32, F: 70, ESC: 27, LEFT: 37, M: 77, V: 86, T: 84 };
 const plain = s => s.replace(/%c\{[^}]*\}/g, '');
 
 function invading(seed = 1234) {
@@ -56,14 +56,14 @@ test('clock advances one minute per hero turn', () => {
 test('fast mode shows x4', () => {
     const ctx = invading();
     assert.ok(!plain(ctx.Invasion.bannerText(100)).includes('x4'));
-    ctx.__press(KEY.SPACE);
+    ctx.__press(KEY.F);
     assert.ok(plain(ctx.Invasion.bannerText(100)).includes('\u25b6\u25b6 x4'));
 });
 
 test('banner shortens on narrow maps', () => {
     const ctx = invading();
     const full = plain(ctx.Invasion.bannerText(120));
-    assert.ok(full.includes('floating eye') && full.includes('just watch'));
+    assert.ok(full.includes('floating eye') && !full.includes('just watch'));
     const mid = plain(ctx.Invasion.bannerText(64));
     assert.ok(mid.length <= 62 && mid.includes('PLAYBACK'), mid);
     const narrow = plain(ctx.Invasion.bannerText(30));
@@ -104,9 +104,9 @@ test('nag is throttled and ignores control keys', () => {
     ctx.__press(KEY.T);
     ctx.__press(107, 0, '+');
     assert.equal(nags(ctx), 2, 'global keys never nag');
-    ctx.__press(KEY.SPACE);
+    ctx.__press(KEY.F);
     assert.equal(ctx.Invasion.fast, true);
-    assert.equal(nags(ctx), 2, 'space never nags');
+    assert.equal(nags(ctx), 2, 'F never nags');
 });
 
 test('WASD, PgUp/Home and wait/examine keys also get the reminder', () => {

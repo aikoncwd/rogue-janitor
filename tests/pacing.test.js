@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { bootHeadless, toIntro } = require('./harness');
 
-const KEY = { ENTER: 13, SPACE: 32, ESC: 27 };
+const KEY = { ENTER: 13, SPACE: 32, F: 70, ESC: 27 };
 
 // Into the invasion, with a fresh, quiet turn (nothing happened, nobody in view).
 function invading(seed = 1234) {
@@ -65,7 +65,7 @@ test('no turn is longer than MAX_TURN_MS', () => {
 test('fast mode divides the whole turn', () => {
     const ctx = invading();
     ctx.Invasion.event('potion', {});
-    ctx.__press(KEY.SPACE);
+    ctx.__press(KEY.F);
     assert.equal(ctx.Invasion.turnDelay(), 320 / ctx.Invasion.FAST_FACTOR);
 });
 
@@ -110,7 +110,7 @@ test('turning fast mode on during a hold shortens the wait right away', () => {
     const held = ctx.__timers.find(x => x.ms >= 300);
     assert.ok(held, 'a hold is pending');
     t += 100;
-    ctx.__press(KEY.SPACE);
+    ctx.__press(KEY.F);
     const pending = ctx.__timers.filter(x => x.ms !== ctx.Game.QUEST_BLINK_MS);
     assert.equal(pending.length, 1, 'only one hero timer');
     assert.ok(pending[0].ms <= (held.ms - 100) / ctx.Invasion.FAST_FACTOR + 1, 'rescheduled at x4: ' + pending[0].ms);
