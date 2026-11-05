@@ -13,6 +13,7 @@ function cleaning(seed = 1234) {
 // Walks the exit cutscene up to the first node with a scene and puts it on screen.
 function showFirstScene(ctx, want) {
     const G = ctx.Game;
+    ctx.Visits.HOME = ctx.Visits.HOME.filter(h => h.scene === 'home'); // a night in varies: pin the telly one
     const m = G.monsterList.find(x => x.alive && x.retired);
     const convo = ctx.ConversationBuilder.exitPrompt();
     const idx = convo.findIndex(n => n.scene === want);

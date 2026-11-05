@@ -296,6 +296,6 @@ test('a leaky ceiling drips water into one room, a few times', () => {
 
 test('new nights out have their own scenes', () => {
     const ctx = bootHeadless({});
-    assert.equal(ctx.Scenes.forPlan('dice night'), 'dinner');
-    assert.equal(ctx.Scenes.forPlan('karaoke'), 'dancing');
+    assert.equal(ctx.Scenes.forPlan('dice night'), 'dice');
+    assert.equal(ctx.Scenes.forPlan('karaoke'), 'karaoke');
 });

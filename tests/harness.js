@@ -16,6 +16,7 @@ const DEFAULT_FILES = [
     'script/panel.js',
     'script/effects.js',
     'script/scenes.js',
+    'script/nightscenes.js',
     'script/title.js',
     'script/ui.js',
     'script/game.js',
@@ -38,6 +39,7 @@ const DEFAULT_FILES = [
     'script/nightlog.js',
     'script/events.js',
     'script/guests.js',
+    'script/visits.js',
 ];
 
 function makeContext() {

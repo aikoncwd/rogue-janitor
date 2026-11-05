@@ -29,6 +29,8 @@ var Achievements = {
         {id: 'konami', name: 'Thirty Lives', desc: 'Enter a certain famous code.', hidden: true},
         {id: 'dragon', name: 'Let Sleeping Dragons Lie', desc: 'Get past a sleeping dragon.'},
         {id: 'intern', name: 'HR Was Informed', desc: 'Send the intern to "training".'},
+        {id: 'listener', name: 'A Shoulder to Lean On', desc: 'Listen to 3 comrades who just needed to talk, in one run.'},
+        {id: 'snacks4', name: 'Never Skip Second Breakfast', desc: 'Get 4 snacks brought to you in one run.'},
         {id: 'traps5', name: "It's a Trap! (Re-armed)", desc: 'Re-arm 5 traps in one run.'},
     ],
 
@@ -91,7 +93,7 @@ var Achievements = {
     },
 
     // Run counters with an achievement at a threshold.
-    THRESHOLDS: {slips: ['slips10', 10], fortunes: ['fortunes5', 5], traps: ['traps5', 5]},
+    THRESHOLDS: {slips: ['slips10', 10], fortunes: ['fortunes5', 5], traps: ['traps5', 5], listened: ['listener', 3], snacks: ['snacks4', 4]},
     bump: function (name) {
         let counts = Game.run.counts = Game.run.counts || {};
         counts[name] = (counts[name] || 0) + 1;

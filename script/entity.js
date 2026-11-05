@@ -336,6 +336,11 @@ Entity.prototype.doConvo = function() {
                         delete thisConvo.globalTags.yendorPoints;
                         continue;
                     }
+                    if (newTags[i]=='listened') {
+                        delete thisConvo.globalTags.listened;
+                        Achievements.bump('listened');
+                        continue;
+                    }
                     if (newTags[i]=='victory') {
                         Game.victory=true;
                         Game.player.reach=2;
@@ -774,6 +779,11 @@ Entity.prototype.questAct = function() {
 Entity.prototype.invitationQuest=function() {
     //var invitationConvo = ConversationBuilder.invitationConvo();
     this.addQuest('invitationConvo');
+};
+
+// A comrade with nothing to ask: they just want to talk.
+Entity.prototype.chatQuest=function() {
+    this.addQuest('chatConvo');
 };
 
 Entity.prototype.coffeeQuest=function() {
