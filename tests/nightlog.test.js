@@ -217,3 +217,33 @@ test('Tab never sends the focus away from the game', () => {
     ctx.__press(191); // help
     assert.ok(tab(ctx), 'with the help open');
 });
+
+test('wand and staff lines fill in every placeholder', () => {
+    const ctx = bootHeadless();
+    for (let i = 0; i < 20; i++) {
+        const line = ctx.Flavor.line('zap', { hero: 'Bob', wand: 'staff of frost', effect: 'Everything goes chilly.' });
+        assert.ok(!/\{\w+\}/.test(line), line);
+        assert.ok(line.includes('staff of frost') && line.includes('Everything goes chilly.'), line);
+    }
+    // placeholders nobody passed stay as they are (no "undefined")
+    ctx.Flavor.pools.__t = ['{hero} and {nobody}'];
+    assert.equal(ctx.Flavor.line('__t', { hero: 'Bob' }), 'Bob and {nobody}');
+});
+
+test('no line in the night log is left with a {placeholder}', () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+        const ctx = invading(seed);
+        ctx.__press(KEY.ESC);
+        for (const e of ctx.Invasion.transcript) assert.ok(!/\{\w+\}/.test(e.text), seed + ': ' + plain(e.text));
+    }
+});
+
+test('the how-to screen teaches the camera controls and the log', () => {
+    const ctx = bootHeadless();
+    const text = ctx.Flavor.pools.howtoText.map(plain).join('\n');
+    for (const k of ['[Space] play/pause', '[→] step', '[F] fast', '[R] rewind', '[Esc] skip', '[Tab]']) {
+        assert.ok(text.includes(k), k);
+    }
+    assert.ok(!text.includes('fast-forward   '), 'the old Space line is gone');
+    for (const l of ctx.Flavor.pools.howtoText) assert.ok(plain(l).length <= 64, plain(l));
+});

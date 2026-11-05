@@ -34,9 +34,12 @@ var Flavor = {
             "",
             "%c{#0ff}1. TONIGHT%c{}   A hero raids the dungeon. You are %c{#f80}NOT%c{} playing:",
             "             you are watching last night's security footage.",
-            "             %c{#ff0}[Space]%c{} fast-forward   %c{#ff0}[Esc]%c{} skip to the morning",
+            "             The tape starts paused:",
+            "             %c{#ff0}[Space]%c{} play/pause  %c{#ff0}[→]%c{} step  %c{#ff0}[F]%c{} fast",
+            "             %c{#ff0}[R]%c{} rewind  %c{#ff0}[Esc]%c{} skip to the morning",
             "",
             "%c{#0ff}2. MORNING%c{}   The mess is yours. Mop, pick up, fix.",
+            "             Missed something? %c{#ff0}[Tab]%c{} reads the security log.",
             "",
             "%c{#0ff}3. BREAKS%c{}    Your colleagues relax in the staff lounge.",
             "             Chat with them. They are lovely.",
@@ -418,7 +421,7 @@ var Flavor = {
             choice = this.rng.getItem(pool);
         } while (pool.length > 1 && choice == this.lastLines[poolName]);
         this.lastLines[poolName] = choice;
-        return choice.replace(/\{(hero|monster|item)\}/g, function (m, key) {
+        return choice.replace(/\{(\w+)\}/g, function (m, key) {
             return (key in vars) ? vars[key] : m;
         });
     },
