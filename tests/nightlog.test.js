@@ -205,3 +205,15 @@ test('tips use the comrade pools, each with {monster} and [Tab]', () => {
         for (const l of lines) assert.ok(l.includes('{monster}') && l.includes('[Tab]'), l);
     }
 });
+
+test('Tab never sends the focus away from the game', () => {
+    const tab = ctx => { let p = false; ctx.__pressEvent({ keyCode: KEY.TAB, preventDefault() { p = true; } }); return p; };
+    const r = invading();
+    assert.ok(tab(r), 'during the replay');
+    const ctx = cleaningDay();
+    ctx.Game.player.talking = ctx.Game.monsterList.find(m => m.alive && m.retired);
+    assert.ok(tab(ctx), 'during a conversation');
+    ctx.Game.player.talking = null;
+    ctx.__press(191); // help
+    assert.ok(tab(ctx), 'with the help open');
+});

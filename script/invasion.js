@@ -246,7 +246,10 @@ var Invasion = {
             return true;
         }
         if (this.stage != null) {
-            this.clockIn(); // any key hurries the hand-over along
+            if ((this.stage == 'linger' || this.stage == 'curtain') && this.REPLAY_KEYS.indexOf(code) >= 0) {
+                return true; // still stepping or pausing: let the curtain and the card play
+            }
+            this.clockIn(); // any other key hurries the hand-over along
             return true;
         }
         if (Game.player.talking != null) {
@@ -335,6 +338,7 @@ var Invasion = {
     NAG_MS: 5000,
     // Besides every movement key in Player.keyMap: action letters m p g f r o c x e,
     // and the wait keys . / 5 / numpad 5 (NumLock off).
+    REPLAY_KEYS: [32, 39, 102, 70, 82], // Space, right arrow, numpad 6, F, R
     NAG_KEYS: [77, 80, 71, 79, 67, 88, 69, 190, 53, 12, 101],
 
     clockText: function () {

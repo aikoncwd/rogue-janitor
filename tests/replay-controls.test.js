@@ -271,3 +271,14 @@ test('rewind works on a continued day', () => {
     assert.deepEqual(frame(B), later);
     assert.notDeepEqual(start, later);
 });
+
+test('stepping into the hero\'s exit does not skip the curtain and the card', () => {
+    const ctx = invading();
+    for (let i = 0; i < 3000 && ctx.Invasion.stage == null; i++) ctx.__press(KEY.RIGHT);
+    assert.equal(ctx.Invasion.stage, 'linger');
+    for (const k of [KEY.RIGHT, KEY.SPACE, KEY.F, KEY.R, 102]) ctx.__press(k);
+    assert.equal(ctx.Invasion.stage, 'linger', 'replay keys do not hurry the hand-over');
+    ctx.__press(KEY.ENTER);
+    assert.equal(ctx.Invasion.stage, null, 'other keys still do');
+    assert.equal(ctx.Game.phase, 'cleaning');
+});

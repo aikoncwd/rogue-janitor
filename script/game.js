@@ -101,6 +101,9 @@ var Game = {
     // their own listeners.
     onKey: function(e) {
         let code = e.keyCode;
+        if (code == 9 && !e.ctrlKey && !e.altKey && !e.metaKey && e.preventDefault) {
+            e.preventDefault(); // Tab is a game key (the security log, the pockets' tabs): keep the focus here
+        }
         // leave browser shortcuts alone (reload, devtools, fullscreen, alt-tab...)
         if (e.ctrlKey || e.metaKey || e.altKey || (code >= 112 && code <= 123) || [9,16,17,18,20,91,92,93].indexOf(code) >= 0) {
             return;
