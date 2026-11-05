@@ -891,6 +891,10 @@ var Game = {
                 //if (position[0]+direction[0])
 
             }
+            if (direction[0]==0 && direction[1]==0) {
+                // already lined up on the axis it turned to: head straight for the room instead
+                direction = position[0] != lastCenter[0] ? [Math.sign(lastCenter[0]-position[0]),0] : [0,Math.sign(lastCenter[1]-position[1])];
+            }
             position[0]+=direction[0];
             position[1]+=direction[1];
         }

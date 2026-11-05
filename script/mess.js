@@ -377,7 +377,6 @@ function makeMess(x,y,name) {
         case 'WorthlessGlass':
         newMess = new Mess(x,y,'*','#c9f','#000',"Worthless Piece of Glass",9,null,0,"","get");
         newMess.pluralName='Worthless Pieces of Glass';
-        newMess.color = ROT.RNG.getItem(['#c9f','#8f8','#f88','#88f','#ff8','#fff']);
         break;
         case 'Glitter':
         newMess = new Mess(x,y,'\u2219','#f8f','#000',"Glitter",5,"GlitterPrints",4,"Glittery");
