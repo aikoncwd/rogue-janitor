@@ -183,6 +183,9 @@ Entity.prototype.adventurerAct = function() {
             } while (dx==0 && dy==0);
             makeMess(this.x+dx,this.y+dy,this.tags.splashes);
         }
+        if ('bonusDrop' in this.tags && ROT.RNG.getUniform() < this.tags.bonusDrop[1]) {
+            this.dropBonus(this.tags.bonusDrop[0]);
+        }
     }
     else if ('monster' in this.tags) {
         this.hp -= Game.adventurer.dmg;
@@ -211,6 +214,29 @@ Entity.prototype.adventurerAct = function() {
             Game.adventurer.damage();
         }*/
     }
+};
+
+// Something extra falls out of smashed furniture, on a free tile next to it.
+Entity.prototype.dropBonus = function(type) {
+    let spots = [];
+    for (let i=-1;i<2;i++) {
+        for (let j=-1;j<2;j++) {
+            let t = Game.map[(this.x+i)+','+(this.y+j)];
+            if ((i != 0 || j != 0) && t && t.passable && t.door == null && !t.important && t.mess == null) {
+                spots.push([this.x+i,this.y+j]);
+            }
+        }
+    }
+    if (spots.length == 0) {
+        return null;
+    }
+    let s = ROT.RNG.getItem(spots);
+    let made = makeMess(s[0], s[1], type);
+    if (type == 'LostRing') {
+        made.name = ROT.RNG.getItem(Lore.ringNames);
+        made.ringLore = ROT.RNG.getItem(Lore.ringLore);
+    }
+    return made;
 };
 
 Entity.prototype.cancelConvo = function() {
@@ -768,26 +794,28 @@ Entity.prototype.addHat=function() {
 
 function AddCollectible(x,y) {
     var options=['Chest','Cauldron','Candleabra','Statue','Barrel','Bookshelf',
-        'Pot','Pot','WeaponRack','Fountain','Rock','Column','Table'];
+        'Pot','Pot','WeaponRack','Fountain','Rock','Column','Table',
+        'Throne','Sink','Dummy','SnackMachine','FishTank','Altar','ArmorStand','CrystalBall'];
     return GetEntity(ROT.RNG.getItem(options),x,y);
 }
 
 function AddMonster(x,y,level) {
-    var options=['Goblin','Kobold','Goblin','Kobold','Myconid'];
+    var options=['Goblin','Kobold','Goblin','Kobold','Myconid','Newt','FruitBat'];
     if (level==2) {
-        options=['Ogre','Imp','Slime','Harpy','Mimic'];
+        options=['Ogre','Imp','Slime','Harpy','Mimic','FloatingEye','Leprechaun','Cockatrice'];
     }
     else if (level==3) {
-        options=['Troll','Naga','Ghost','Skeleton'];
+        options=['Troll','Naga','Ghost','Skeleton','GelatinousCube','Unicorn'];
     }
     else if (level>=4) {
-        options=['Balor','Hydra','Dragon'];
+        options=['Balor','Hydra','Dragon','Lich'];
     }
     let chosen=ROT.RNG.getItem(options);
+    let species=SPECIES_NAMES[chosen] || chosen;
     if (Game.monsterList.length>0) {
         for (let i=0;i<Game.monsterList.length;i++) {
             if (!Game.monsterList[i].alive || Game.monsterList[i].retired) {
-                if (Game.monsterList[i].species == chosen) {
+                if (Game.monsterList[i].species == species) {
                     return Game.monsterList[i].reset(x,y);
                 }
             }
@@ -796,7 +824,18 @@ function AddMonster(x,y,level) {
     return GetEntity(chosen,x,y);
 }
 
+// Monster keys whose species is written with a space.
+var SPECIES_NAMES = {FruitBat:'Fruit Bat', FloatingEye:'Floating Eye', GelatinousCube:'Gelatinous Cube'};
+
 function GetEntity(name,x,y) {
+    var newEntity = MakeEntity(name,x,y);
+    if (newEntity != null && newEntity.tags && 'loot' in newEntity.tags) {
+        newEntity.lootKey = name; // picks the furniture's own smash lines
+    }
+    return newEntity;
+}
+
+function MakeEntity(name,x,y) {
     var newEntity;
     switch (name) {
         default:
@@ -852,8 +891,61 @@ function GetEntity(name,x,y) {
         case 'Dragon':
         newEntity = new Entity(x,y,'D','#0f0',name,7,{monster:true,ranged:2,rangeMess:'Scorch',big:true},4)
         break;
+        case 'Newt':
+        newEntity = new Entity(x,y,':','#ff0',name,1,{monster:true,small:true},1);
+        break;
+        case 'FruitBat':
+        newEntity = new Entity(x,y,'B','#c84','Fruit Bat',2,{monster:true,small:true,trail:'FruitPits'},1);
+        break;
+        case 'FloatingEye':
+        newEntity = new Entity(x,y,'e','#48f','Floating Eye',3,{monster:true,small:true,bleeds:'EyeDrops'},2);
+        break;
+        case 'Leprechaun':
+        newEntity = new Entity(x,y,'l','#2c4','Leprechaun',3,{monster:true,small:true},2);
+        newEntity.bonusMess='GoldCoins';
+        newEntity.hatChar='\u013A';
+        break;
+        case 'Cockatrice':
+        newEntity = new Entity(x,y,'c','#fd4','Cockatrice',3,{monster:true,small:true},2);
+        newEntity.bonusMess='CockatriceEgg';
+        break;
+        case 'GelatinousCube':
+        newEntity = new Entity(x,y,'b','#0dd','Gelatinous Cube',6,{monster:true,big:true,bleeds:'Gelatin'},3);
+        newEntity.bonusMess='CubeLeftovers';
+        break;
+        case 'Unicorn':
+        newEntity = new Entity(x,y,'u','#fff','Unicorn',5,{monster:true,ranged:1,rangeMess:'WorthlessGlass',trail:'Glitter'},3);
+        break;
+        case 'Lich':
+        newEntity = new Entity(x,y,'L','#aaf','Lich',7,{monster:true,ranged:1,rangeMess:'Frost',bleeds:'BoneDust'},4);
+        newEntity.bonusMess='LoosePages';
+        break;
         case 'Gold':
         newEntity = new Entity(x,y,'$','#ff0',name,1,{loot:true});
+        break;
+        case 'Throne':
+        newEntity = new Entity(x,y,'\\','#fd0','Throne',1,{loot:true,heavy:true,mess:'BrokenThrone',scatter:['GoldCoins',1]});
+        break;
+        case 'Sink':
+        newEntity = new Entity(x,y,'\u222A','#ccc','Sink',1,{loot:true,heavy:true,mess:'KickedSink',splashes:'Water',bonusDrop:['LostRing',0.3]});
+        break;
+        case 'Dummy':
+        newEntity = new Entity(x,y,'\u2020','#da6','Training Dummy',1,{loot:true,mess:'TornDummy',scatter:['Straw',3]});
+        break;
+        case 'SnackMachine':
+        newEntity = new Entity(x,y,'\u25A0','#e44','Snack Machine',1,{loot:true,heavy:true,mess:'SmashedSnackMachine',scatter:['Wrapper',3],bonusDrop:['GoldCoins',0.6]});
+        break;
+        case 'FishTank':
+        newEntity = new Entity(x,y,'\u2248','#4cf','Fish Tank',1,{loot:true,mess:'BrokenFishTank',scatter:['Water',2],splashes:'FloppingFish'});
+        break;
+        case 'Altar':
+        newEntity = new Entity(x,y,'_','#fff','Altar',1,{loot:true,heavy:true,mess:'WaxyAltar',scatter:['DrippedWax',3]});
+        break;
+        case 'ArmorStand':
+        newEntity = new Entity(x,y,'[','#ccc','Armor Stand',1,{loot:true,mess:'ToppledArmorStand',scatter:['ArmorPiece',2]});
+        break;
+        case 'CrystalBall':
+        newEntity = new Entity(x,y,'\u25CF','#c9f','Crystal Ball',1,{loot:true,mess:'CrackedCrystalBall',splashes:'Glitter'});
         break;
         case 'Chest':
         newEntity = new Entity(x,y,'\u03C0','#fa0','Treasure Chest',1,{loot:true,mess:'BrokenChest',scatter:['GoldCoins',3]});

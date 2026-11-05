@@ -148,7 +148,11 @@ Player.prototype.clean = function(verb) {
                     Effects.clean(tool, this.x+i, this.y+j, stain.color);
                     return;
                 }
-                if (verb=='fix' && Game.map[key].mess.parent == null) {
+                if (verb=='fix' && Game.map[key].mess.trap) {
+                    Game.sendMessage(Flavor.line('trapRearm', {trap: Traps.KINDS[Game.map[key].mess.trap].name.toLowerCase()}));
+                    Achievements.bump('traps');
+                }
+                else if (verb=='fix' && Game.map[key].mess.parent == null) {
                     Game.sendMessage("You patch up the "+Game.map[key].mess.displayName()+".");
                 }
                 else if (verb=='fix') {

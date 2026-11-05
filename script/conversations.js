@@ -1,8 +1,15 @@
 var ConversationBuilder = {
     usedGenericOptions:[],
-    idleOptions: ["is vaping.","is enjoying a relaxing drink.","is reading a book.","is having a coffee.","is eating an apple."],
-    partyOptions: ["is vaping.","is enjoying a relaxing drink.","is dancing.","is headbanging."],
-    words: ['Wicked','Sweet','Awesome','Tubular','Mondo','Heinous','Excellent','Epic','Metal','Hardcore'],
+    idleOptions: ["is vaping.","is enjoying a relaxing drink.","is reading a book.","is having a coffee.","is eating an apple.",
+        "is doing a crossword. Seven down: 'hero's least favourite chore'. Eight letters.","is painting a tiny miniature of themselves.",
+        "is rolling a d20 over and over, waiting for a 20.","is knitting a scarf for a hydra. All of the necks.",
+        "is reading 'Dungeons on a Budget'.","is napping with one eye open.","is doing gentle stretches after a hard night of fainting.",
+        "is reorganising their pocket lint by colour.","is reading the security log and laughing.","is writing fan fiction about the janitor.",
+        "is sipping tea with the pinky out.","is teaching a newt to fetch."],
+    partyOptions: ["is vaping.","is enjoying a relaxing drink.","is dancing.","is headbanging.","is doing the robot. Badly.",
+        "is starting a conga line.","is air-guitaring on a mop.","is singing karaoke into a turkey leg."],
+    words: ['Wicked','Sweet','Awesome','Tubular','Mondo','Heinous','Excellent','Epic','Metal','Hardcore',
+        'Radical','Natural 20','Splendid','Righteous','Gnarly','Critical'],
     buildConvos: function(speaker,party=false) {
         speaker.playerTalkedToday=false;
         var newConversation;
@@ -73,12 +80,27 @@ var ConversationBuilder = {
         speaker.lastDay = Game.day;
     },
     
+    lostLines: [
+        "Oh dang I lost my {item}! Can you help me find it?",
+        "Have you seen my {item}? The hero knocked it out of my hands and it went... somewhere!",
+        "I rolled a 1 on my Dexterity save and dropped my {item}. Keep an eye out for it?",
+        "My {item} is gone! I think it's in the dungeon. Unless a mimic ate it. Please let it not be a mimic.",
+        "Psst. I lost my {item} last night. It has sentimental value. And a name. Don't ask its name.",
+    ],
+    foundLines: [
+        "You found my {item}! Thank you so much ^.^",
+        "MY {item}! You're the best janitor in the multiverse!",
+        "You found my {item}! I'd hug you but I'm still a bit ketchupy.",
+        "Ahh, my {item}! I owe you one. No, two. No, a whole d20's worth.",
+    ],
+
     searchQuestConvo: function(newConversation, speaker) {
+        let item = speaker.questItemName;
         var findConvo=[
-            {text:"Oh dang I lost my "+speaker.questItemName+"! Can you help me find it?",any:-1,conditions:{questItemGot:false},tags:{questHeard:true}}
+            {text:ROT.RNG.getItem(this.lostLines).replace('{item}', item),any:-1,conditions:{questItemGot:false},tags:{questHeard:true}}
         ];
         var gotConvo = [
-            {text:"You found my "+speaker.questItemName+"! Thank you so much ^.^",any:-1,conditions:{questItemGot:true},tags:{questItemSuccess:true},globalTags:{yendorPoints:50}}
+            {text:ROT.RNG.getItem(this.foundLines).replace('{item}', item),any:-1,conditions:{questItemGot:true},tags:{questItemSuccess:true},globalTags:{yendorPoints:50}}
         ];
         if (speaker.questItemName.toLowerCase() == 'favourite hat') {
             gotConvo[0].any=1;
@@ -378,6 +400,202 @@ var ConversationBuilder = {
             ]);
         }
 
+        // the new staff
+        if (speaker.species=='Newt') {
+            possibilities.push([
+                "Every hero who meets me thinks the same thing: 'You kill the newt!'",
+                "But I don't die! I faint! With dignity!",
+                "One hit point, a hundred percent heart."
+            ]);
+            possibilities.push([
+                "Being the smallest monster in the dungeon has perks.",
+                "Nobody ever expects me to carry anything heavy.",
+                "And I fit in the snack cupboard. Shh."
+            ]);
+        }
+        if (speaker.species=='Fruit Bat') {
+            possibilities.push([
+                "Sorry about the fruit pits. I eat when I'm nervous.",
+                "And I'm nervous when there's a hero. And when there isn't. So, always.",
+                "Want a fig? I have like forty."
+            ]);
+            possibilities.push([
+                "I hang upside down to relax. Gets the blood to the brain.",
+                "Best ideas I ever had, I had upside down."
+            ]);
+        }
+        if (speaker.species=='Floating Eye') {
+            possibilities.push([
+                "Fun fact: I'm the security camera. Well, my cousin is. I'm the backup.",
+                "I see everything. EVERYTHING. You missed a spot in the east corridor, by the way.",
+                "Not judging! Just observing."
+            ]);
+            possibilities.push([
+                "Heroes have a rule: never melee a floating eye.",
+                "Every single one of them breaks it.",
+                "I've started keeping a tally. I need a bigger wall."
+            ]);
+        }
+        if (speaker.species=='Leprechaun') {
+            possibilities.push([
+                "I'm the co-op treasurer! Every zorkmid accounted for.",
+                "The pot at the end of the rainbow? Savings account. Very good interest.",
+                "Heroes keep trying to steal it. Joke's on them, it's direct deposit now."
+            ]);
+            possibilities.push([
+                "When a hero hits me I drop a few coins. It's in my contract.",
+                "Keep what you find, love. Consider it a tip. You've earned it."
+            ]);
+        }
+        if (speaker.species=='Cockatrice') {
+            possibilities.push([
+                "People are SO scared of me. One little petrification incident...",
+                "Okay, forty-two incidents. But they're all statues now and they look great!",
+                "Kidding. Kidding! I'm on stone-free duty. HR made me sign a thing."
+            ]);
+            possibilities.push([
+                "If you find any of my eggs lying around, wear gloves.",
+                "You wear gloves for mopping anyway, right? Good janitor."
+            ]);
+        }
+        if (speaker.species=='Gelatinous Cube') {
+            possibilities.push([
+                "I'm a gelatinous cube! Basically a walking lost and found.",
+                "If you've lost anything in the last six months, it's probably inside me.",
+                "Sorry. I'll cough it up eventually."
+            ]);
+            possibilities.push([
+                "People think cubes are boring. Four corners, six sides, no personality.",
+                "But I contain multitudes! Mostly boots. But multitudes!"
+            ]);
+        }
+        if (speaker.species=='Unicorn') {
+            possibilities.push([
+                "In other dungeons, heroes throw gems at unicorns to make friends.",
+                "Here I throw worthless glass back at them. It's called boundaries.",
+                "Also glitter. Sorry about the glitter. It just... happens around me."
+            ]);
+            possibilities.push([
+                "I'm co-aligned with everyone in this dungeon. That's the co-op spirit!",
+                "Except Kevin. Kevin and I have a complicated alignment."
+            ]);
+        }
+        if (speaker.species=='Lich') {
+            possibilities.push([
+                "I was a librarian for three hundred years before I became undead.",
+                "Then I was an undead librarian for three hundred more.",
+                "Now I'm in the dungeon book club. It's the most exciting thing I've ever done."
+            ]);
+            possibilities.push([
+                "Everyone asks where my phylactery is.",
+                "It's my coffee mug. 'World's Okayest Lich'. If it breaks, I'm done for. So I never wash it.",
+                "...Please don't wash it."
+            ]);
+        }
+        if (speaker.species=='Goblin') {
+            possibilities.push([
+                "Goblins get a bad rap. Stabby, sneaky, smelly.",
+                "I'm only stabby on weekdays. Weekends I bake.",
+                "My scones are famous in three dungeons."
+            ]);
+            possibilities.push([
+                "Did you know goblins invented the dungeon break room?",
+                "Before us, everyone just took naps in treasure chests. Mimics HATED that."
+            ]);
+        }
+        if (speaker.species=='Kobold') {
+            possibilities.push([
+                "Kobolds love traps! Every trap in this dungeon? We built them. With love.",
+                "The whoopee cushion one was my idea. Proudest day of my life.",
+                "If you find one sprung, re-arm it, would you? For art."
+            ]);
+            possibilities.push([
+                "In another dungeon, kobolds worship dragons.",
+                "Here we just play dice with one on Thursdays. Much healthier."
+            ]);
+        }
+        if (speaker.species=='Ogre') {
+            possibilities.push([
+                "Ogres are like onions. We have layers.",
+                "...Wait, that might be a different thing. Copyright. Never mind.",
+                "Ogres are like lasagna. Also layers. Also delicious."
+            ]);
+        }
+        if (speaker.species=='Troll') {
+            possibilities.push([
+                "Trolls regenerate. Cuts, bruises, bad moods. All gone by lunch.",
+                "Only thing that doesn't regenerate is my patience for heroes who don't wipe their boots."
+            ]);
+        }
+        if (speaker.species=='Balor') {
+            possibilities.push([
+                "Big, red, on fire, wings. I know. Very scary.",
+                "I volunteer at the cave-kitten shelter on weekends.",
+                "The kittens like me because I'm warm."
+            ]);
+        }
+
+        // a little multiverse gossip, from anyone
+        possibilities.push([
+            "Have you ever been to Caves of Qud? Lovely place. Very crabby. Lots of crabs, I mean.",
+            "There, you greet people with 'Live and drink'. And you pay in water!",
+            "Here we pay in zorkmids. Water just makes a mess. Ask the janitor. Ask yourself, I mean."
+        ]);
+        possibilities.push([
+            "My cousin works in Brogue. He's a monkey. Steals one thing per hero, then runs.",
+            "He says it's not about the item. It's about the thrill.",
+            "He's in therapy now."
+        ]);
+        possibilities.push([
+            "I did an exchange semester in the Complex. Cogmind territory. All robots.",
+            "Nice folks! Lost a few of my parts. They found most of them.",
+            "That's why my left arm beeps sometimes."
+        ]);
+        possibilities.push([
+            "Do you play Crawl? Dungeon Crawl Stone Soup?",
+            "Every time I get used to a feature, the devs remove it. For balance!",
+            "I respect it. Honestly I wish I could remove Mondays for balance."
+        ]);
+        possibilities.push([
+            "You know what I love about procedural generation?",
+            "Every morning the dungeon is different, but the coffee machine is always in the same place.",
+            "That's the real hand-crafted content."
+        ]);
+        possibilities.push([
+            "Rogue, the very first one, had no janitor at all.",
+            "The levels just... reset. Clean. Every time.",
+            "Lazy, if you ask me. We do it properly here."
+        ]);
+        possibilities.push([
+            "I tried playing a tabletop campaign once. I was a level 3 Accountant.",
+            "My special ability was 'Audit'. The DM hated it.",
+            "Best session ever."
+        ]);
+        possibilities.push([
+            "Sometimes I think about how all of this is decided by the RNG.",
+            "Who gets hit, who faints, which room floods...",
+            "And then I think: well, the RNG hired you, and that worked out great!"
+        ]);
+        possibilities.push([
+            "Is it weird that I like the sound of a mop?",
+            "Swish, swish. It's very calming. Like rain, but cleaner."
+        ]);
+        possibilities.push([
+            "The best part of a raid is the morning after.",
+            "Coffee, a little stretch, and someone nice tidying up while we tell stories.",
+            "That someone is you! Thanks for being the someone."
+        ]);
+        possibilities.push([
+            "I keep a list of every hero who ever kicked my door.",
+            "It's a long list. It's mostly kickers.",
+            "One of them knocked once. I think about them a lot."
+        ]);
+        possibilities.push([
+            "If you ever feel overwhelmed, just mop one tile.",
+            "Then another. Before you know it, it's a whole room!",
+            "That's how I do everything. Even fainting."
+        ]);
+
         if (speaker.playerInteractions>1 && Game.yendorPoints>1000) {
             possibilities.push([
                 "You do a lot of really good work around here. I'm impressed!",
@@ -541,26 +759,23 @@ var ConversationBuilder = {
     },
 
     meetingPlayer: function(speaker) {
-        let option = Math.floor(ROT.RNG.getUniform() * 6);
         let parts=speaker.name.split(' ');
         let firstName=parts[0];
         let name=speaker.name;
-
-        switch(option) {
-            default:
-            case 0:
-            return [{text:"Hey! Don't think we've met. My name is "+firstName+". "+name+"!",any:-1}];
-            case 1:
-            return [{text:"Ahoy, I'm "+name+"! How do you do?",any:-1}];
-            case 2:
-            return [{text:"Hi! I'm "+firstName+"! It's always nice to see a new face :)",any:-1}];
-            case 3:
-            return [{text:"It's me! "+name+"!",any:-1}];
-            case 4:
-            return [{text:"Good morning and welcome to the dungeon! I'm "+name+", but you can just call me "+firstName+".",any:-1}];
-            case 5:
-            return [{text:"Hey there! My name is "+name+". It's nice to meet you!",any:-1}];
-        }
+        let greetings=[
+            "Hey! Don't think we've met. My name is "+firstName+". "+name+"!",
+            "Ahoy, I'm "+name+"! How do you do?",
+            "Hi! I'm "+firstName+"! It's always nice to see a new face :)",
+            "It's me! "+name+"!",
+            "Good morning and welcome to the dungeon! I'm "+name+", but you can just call me "+firstName+".",
+            "Hey there! My name is "+name+". It's nice to meet you!",
+            "Oh! The new janitor! I'm "+firstName+". I faint on the left side of the hall, mostly.",
+            "Hello, hello! "+name+", level "+(speaker.level || 1)+", lawful cozy. Nice to meet you!",
+            "Welcome aboard! I'm "+firstName+". If anyone asks, I was VERY scary last night.",
+            "Hi! "+name+" here. Don't mind the ketchup, it's from work.",
+            "*rolls a d20* Seventeen! That's a good first impression. Hi, I'm "+firstName+"!",
+        ];
+        return [{text:ROT.RNG.getItem(greetings),any:-1}];
     },
 
     loveMyFriend: function(friend) {
@@ -569,13 +784,20 @@ var ConversationBuilder = {
             "Nothing beats just sitting back and defending some treasure with my pal, "+friend+"!",
             "My friend, "+friend+", has such a good sense of humor.",
             "We defend a lot of treasure here, but the best treasure of all is my friend "+friend+"!",
+            friend+" taught me how to faint properly. Knees first, then a little sigh.",
+            "Me and "+friend+" are starting a band. We're called The Random Number Generators.",
+            friend+" always saves me the good chair in the lounge. That's friendship.",
+            "If "+friend+" were a dice, they'd be a natural 20. Every time.",
+            "Last night "+friend+" took a hit meant for me. Well, the ketchup did. Still counts!",
         ];
         return [{text:ROT.RNG.getItem(phrases),any:-1}];
     },
 
     noDamage: function(speaker) {
-        let openPhrases=["Dang, didn't even get one hit in today!","That adventurer was pretty good!","Haha I was just hanging out vaping and this adventurer came from nowhere.","Wowzers I got walloped today."];
-        let closePhrases=["Sometimes you have a rough day, but it's alright! Tomorrow will friggin rule!","You get knocked down, but you just have to get back up again!","Rough days happen but I still love working here!","Next time the adventurer won't be so lucky!"];
+        let openPhrases=["Dang, didn't even get one hit in today!","That adventurer was pretty good!","Haha I was just hanging out vaping and this adventurer came from nowhere.","Wowzers I got walloped today.",
+            "I rolled a 1. Then another 1. The dice hate me today.","I swung, I missed, I fainted. In that order. Very fast.","The hero didn't even notice me. I was RIGHT THERE."];
+        let closePhrases=["Sometimes you have a rough day, but it's alright! Tomorrow will friggin rule!","You get knocked down, but you just have to get back up again!","Rough days happen but I still love working here!","Next time the adventurer won't be so lucky!",
+            "The RNG giveth, the RNG taketh away. Tomorrow it giveth again!","At least my fainting was on point. Ten out of ten fainting."];
         //let option = Math.floor(8*ROT.RNG.getUniform());
         var conversation=[{text:ROT.RNG.getItem(openPhrases),any:1},
             {text:ROT.RNG.getItem(closePhrases),any:-1}
@@ -595,7 +817,8 @@ var ConversationBuilder = {
     },
 
     lottaDamage: function(speaker) {
-        let openPhrases=["Haha! I walloped that adventurer!","That adventurer didn't see me coming :)","We really beat that adventurer up!","Most of that 'blood' out there wasn't from monsters, I'll tell you that much :D","That adventurer got WRECKED.","You should've seen the look on the adventurer's face when they met me!"];
+        let openPhrases=["Haha! I walloped that adventurer!","That adventurer didn't see me coming :)","We really beat that adventurer up!","Most of that 'blood' out there wasn't from monsters, I'll tell you that much :D","That adventurer got WRECKED.","You should've seen the look on the adventurer's face when they met me!",
+            "Natural 20 after natural 20! I was ON FIRE last night!","The hero had to quaff THREE potions because of me. Three!","I made the hero save-scum. That's the highest compliment in this business."];
         let closePhrases=["They made it through, but they had to work extra hard to get by me!","Days like today remind me why I love this job!","These teeth and claws aren't just for show, you know!","You look pretty tough yourself; I bet you'd wipe the floor with them if you joined us someday!","I reckon you'd kick some butt too if you were there :)"];
         if (speaker.friends.length>0) {
             let friend = ROT.RNG.getItem(speaker.friends);
@@ -622,6 +845,14 @@ var ConversationBuilder = {
             else if (speaker.tags.rangeMess == 'AcidPool') {
                 openPhrases.push("That adventurer was pretty drenched in acid when I was through with them.");
                 openPhrases.push("I love melting adventurers with acid!");
+            }
+            else if (speaker.tags.rangeMess == 'WorthlessGlass') {
+                openPhrases.push("I threw SO much worthless glass at that hero. They kept picking it up!");
+                openPhrases.push("The hero thought my glass was gems. Every time. Every single time.");
+            }
+            else if (speaker.tags.rangeMess == 'Frost') {
+                openPhrases.push("I gave that hero a chill they'll remember. And a cold, probably.");
+                openPhrases.push("Cone of cold! Well, cone of chilly. It's the thought that counts.");
             }
         }
         let option = Math.floor(10*ROT.RNG.getUniform());
@@ -678,6 +909,8 @@ var ConversationBuilder = {
                 "Oops! I knew I forgot something. That "+messname+" was mine...",
                 "Oh dang sorry about the "+messname+".",
                 "Oof, forgot to clean up after myself. Thanks for picking up my "+messname+"!",
+                "Is that my "+messname+"? It IS! I was looking everywhere. Well, nowhere. But still!",
+                "My "+messname+"! You found it before the gelatinous cube did. Hero of the morning!",
             ];
             endMessages=[
                 "I know, I know... leaving "+messnamePlural+" lying around on the job. I'll do better tomorrow!",
@@ -690,6 +923,8 @@ var ConversationBuilder = {
                 "Yeah my aim was a bit off on that one. Thanks for mopping up the "+messnamePlural+".",
                 "Aaahh I got a little carried away! Thanks for cleaning the "+messnamePlural+"!",
                 "Those "+messnamePlural+" were my fault! Sorry about that.",
+                "In my defence, the "+messnamePlural+" were very dramatic. Thanks for cleaning them!",
+                "I rolled for 'tidy combat' and failed. Sorry about the "+messnamePlural+"!",
             ];
             endMessages=[
                 "The adventurer sure felt it, though :) Worth it?",
@@ -711,7 +946,7 @@ var ConversationBuilder = {
 
     coffeeConvo: function(tags,speaker) {
         var newConvo;
-        let option=Math.floor(4*ROT.RNG.getUniform());
+        let option=Math.floor(6*ROT.RNG.getUniform());
         switch (option) {
             default:
             case 0:
@@ -750,6 +985,24 @@ var ConversationBuilder = {
                 {text:"Okie doke!",any:-1},
             ];
             break;
+            case 4:
+            newConvo = [
+                {text:"I'm heading to the Minetown Bakery. Want anything?","A cinnamon roll!":1,"Lembas, please!":2,"Something with sprinkles!":3,"No thanks":4},
+                {text:ROT.RNG.getItem(this.words)+"! One cinnamon roll, coming up!",any:-1,tags:{food:'cinnamon roll'}},
+                {text:ROT.RNG.getItem(this.words)+"! Lembas it is. One bite and you're full for a week!",any:-1,tags:{food:'lembas'}},
+                {text:ROT.RNG.getItem(this.words)+"! The sprinkliest thing they have!",any:-1,tags:{food:'sprinkle donut'}},
+                {text:"Okie doke!",any:-1},
+            ];
+            break;
+            case 5:
+            newConvo = [
+                {text:"I'm popping over to the Joppa Juice Bar. Want anything?","A watervine smoothie!":1,"Fresh water, a whole dram!":2,"Something with a mango!":3,"No thanks":4},
+                {text:ROT.RNG.getItem(this.words)+"! Watervine smoothie. Live and drink!",any:-1,tags:{food:'watervine smoothie'}},
+                {text:ROT.RNG.getItem(this.words)+"! A whole dram! You're rich now!",any:-1,tags:{food:'dram of fresh water'}},
+                {text:ROT.RNG.getItem(this.words)+"! Mango juice, Brogue-style!",any:-1,tags:{food:'mango juice'}},
+                {text:"Okie doke!",any:-1},
+            ];
+            break;
         }
         
         return newConvo;
@@ -764,9 +1017,11 @@ var ConversationBuilder = {
             return null;
         }
         var newConvo;
+        let enjoy = ["I really hope you enjoy it :)", "Careful, it's still warm!", "I got you an extra napkin. You're welcome.",
+            "The cashier rolled a d20 for your order and got a 20. It's extra good.", "Enjoy! You earned it!"];
         newConvo = [
             {text:"Here's the "+food+" you asked for!",any:1},
-            {text:"I really hope you enjoy it :)",any:-1},
+            {text:ROT.RNG.getItem(enjoy),any:-1},
         ];
         tags.food=false;
         return newConvo;
@@ -784,7 +1039,7 @@ var ConversationBuilder = {
             ];
         }
         else {
-            let planOpts = ['dinner', 'drinks', 'dancing'];
+            let planOpts = ['dinner', 'drinks', 'dancing', 'dice night', 'karaoke'];
             let plan = ROT.RNG.getItem(planOpts);
             newConvo = [
                 { text: "Hey! You've done so much cleaning, holy cow!", any: 1 },
@@ -843,6 +1098,16 @@ var ConversationBuilder = {
                 description.push("You dance the whole night. It's so fun and energetic!");
                 description.push("Some really good classic metal is played and you headbang the whole night!");
                 description.push("Some wicked good music from the 90's plays. Such nostalgia! Wow! ");
+                break;
+                case 'dice night':
+                description.push("The dragon runs the game. You play a level 1 Janitor. You save the kingdom by mopping the final boss's lair!");
+                description.push("You roll three natural 20s in a row. The whole table screams. The dragon has to lie down.");
+                description.push("The campaign is 'Dungeons and Dishwashers'. You win. Everybody wins. There are snacks.");
+                break;
+                case 'karaoke':
+                description.push("The harpy sings a power ballad. Every glass in the place shatters. Nobody minds.");
+                description.push("You and a skeleton duet 'Dancing in the Dark'. Bones rattle. A standing ovation.");
+                description.push("The ogre sings a lullaby. Half the bar falls asleep. It's the best night ever.");
                 break;
                 case 'drinks':
                 description.push("You have a beverage called a 'Gin and "+RandomName(false)+"'. It's surprisingly "+ROT.RNG.getItem(this.words)+"?");
@@ -1029,6 +1294,7 @@ var Requests = {
     MAX_PER_DAY: 3,
     CHANCE: 0.35,
     REWARD: 40,
+    OWN_FIRST: 0.5, // how often a comrade asks about their own species' mess first
     types: [
         {key:'slime', label:'Slime', species:'Slime', test:function(m){ return /^(Slime |Slimy )/.test(m.kind); },
             ask:"Sorry about all my slime... Could you mop up every last bit of it? It's embarrassing."},
@@ -1054,6 +1320,96 @@ var Requests = {
             ask:"Someone's going to trip on all those dropped weapons! Could you pick them all up?"},
         {key:'litter', label:'Mugs & bottles', test:function(m){ return /^Empty (Coffee Mug|Bottle)$/.test(m.kind); },
             ask:"Okay, I admit it, we leave mugs and bottles everywhere. Could you round them all up?"},
+        // the new staff
+        {key:'fruit', label:'Fruit pits', species:'Fruit Bat', test:function(m){ return m.kind == 'Fruit Pits'; },
+            ask:"I may have eaten a whole orchard last night. Could you pick up the fruit pits? Someone will slip."},
+        {key:'eyedrops', label:'Eye drops', species:'Floating Eye', test:function(m){ return m.kind == 'Puddle of Eye Drops'; },
+            ask:"I cried a little when the hero hit me. A lot, actually. Could you mop up the eye drops?"},
+        {key:'eggs', label:'Cockatrice eggs', species:'Cockatrice', test:function(m){ return m.kind == 'Cockatrice Egg (Do Not Touch)'; },
+            ask:"I laid a few eggs out of stress. Could you collect them? With gloves. ALWAYS with gloves."},
+        {key:'gelatin', label:'Gelatin', species:'Gelatinous Cube', test:function(m){ return m.kind == 'Gelatin Puddle' || m.kind == 'Cube Leftovers'; },
+            ask:"I leaked some of myself, and some of what was inside myself. Could you clean up the gelatin and the leftovers?"},
+        {key:'glitter', label:'Glitter', species:'Unicorn', test:function(m){ return m.kind == 'Glitter' || m.kind == 'Glittery Footprints'; },
+            ask:"The glitter. It's everywhere. It's always everywhere. Could you get rid of every last speck? I believe in you."},
+        {key:'frost', label:'Frost', species:'Lich', test:function(m){ return m.kind == 'Patch of Frost'; },
+            ask:"My spells left frost all over the floor. Could you mop it before somebody slips and joins me in undeath?"},
+        {key:'glass', label:'Worthless glass', species:'Unicorn', test:function(m){ return m.kind == 'Worthless Piece of Glass'; },
+            ask:"I threw a LOT of worthless glass at the hero. Would you pick it all up? It's worthless. But it's MY worthless."},
+        // anybody's
+        {key:'traps', label:'Sprung traps', test:function(m){ return m.kind == 'Sprung Trap'; },
+            ask:"The hero sprung our traps! Could you re-arm them all? The kobolds worked so hard on those."},
+        {key:'fixall', label:'Broken furniture', test:function(m){ return m.cleanMethod == 'fix' && m.kind != 'Sprung Trap'; },
+            ask:"So much of our furniture got smashed. Could you fix every last piece? I miss my favourite chair."},
+        {key:'footprints', label:'Footprints', test:function(m){ return / Footprints$/.test(m.kind); },
+            ask:"Footprints! Everywhere! Muddy, sticky, glowing... Could you mop every single one?"},
+        {key:'scorch', label:'Scorch marks', test:function(m){ return m.kind == 'Scorch Mark'; },
+            ask:"Somebody got a bit fiery last night. Could you scrub off all the scorch marks?"},
+        {key:'water', label:'Puddles', test:function(m){ return m.kind == 'Water' || m.kind == 'Holy Water' || m.kind == 'Puddle of Eye Drops'; },
+            ask:"There are puddles all over the dungeon. Could you mop them all up? My socks are SOAKED."},
+        {key:'food', label:'Leftover food', test:function(m){ return m.kind == 'Apple Core' || m.kind == 'Gnawed Drumstick' || m.kind == 'Discarded Candy Wrapper' || m.kind == 'Fruit Pits'; },
+            ask:"The hero left food everywhere! Could you clear away every wrapper, core and bone before the rats throw a party?"},
+        {key:'shards', label:'Shards', test:function(m){ return m.kind == 'Pottery Shards' || m.kind == 'Broken Flask'; },
+            ask:"All those broken pots and flasks... Could you pick up every shard? Nobody likes a pointy surprise."},
+        {key:'music', label:'Sheet music', test:function(m){ return m.kind == 'Sheet Music'; },
+            ask:"That bard left sheet music everywhere. Could you collect it? The choir wants to see if it's any good."},
+        {key:'scrap', label:'Loose metal', test:function(m){ return m.kind == 'Dropped Sword' || m.kind == 'Loose Armor Piece' || m.kind == 'Used Wand' || m.kind == 'Cracked Staff'; },
+            ask:"Swords, wands, armour bits... the floor is a scrapyard! Could you gather up all the loose metal?"},
+        {key:'soot', label:'Soot', test:function(m){ return m.kind == 'Soot' || m.kind == 'Sooty Footprints'; },
+            ask:"Smoke bombs, incense, dragon snores... Could you clean up all the soot? I keep sneezing."},
+        {key:'pies', label:'Cream pie', test:function(m){ return m.kind == 'Cream Pie Splat'; },
+            ask:"Somebody's pie trap went off. It smells amazing but it's SO sticky. Could you mop up every splat?"},
+        {key:'confetti', label:'Confetti', test:function(m){ return m.kind == 'Confetti'; },
+            ask:"Confetti everywhere! Was it someone's birthday? Could you sweep it all up?"},
+        {key:'dice', label:'Dice', test:function(m){ return m.kind == 'Stray Die'; },
+            ask:"The dice! They rolled everywhere! Could you collect every single one? A d4 in the foot is no joke."},
+        {key:'bananas', label:'Banana peels', test:function(m){ return m.kind == 'Banana Peel'; },
+            ask:"That monkey left banana peels all over! Could you pick them up before someone does a cartoon slip?"},
+    ],
+    // other ways of asking (key -> lines), so the same favour isn't always worded the same
+    asks: {
+        slime: ["I'm leaking again. Could you mop up all my slime trails? I'd do it, but I'd just make more.",
+            "Every puddle of slime out there has my name on it. Literally, I signed one. Could you clean them all?"],
+        feathers: ["Stress moult. Big one. Could you collect every feather? I'll knit you a pillow.",
+            "There's more of my plumage on the floor than on me. Could you pick up the feathers?"],
+        bones: ["I'm not all here today. Could you gather my bones and the bone dust? Spare parts are precious.",
+            "Could you round up all the loose bones? I'm missing a rib. Or I have an extra one. Hard to say."],
+        ecto: ["I left ectoplasm all over the dungeon. It glows in the dark. Could you scrub it all off?",
+            "Could you clean up my ectoplasm? Ghost goo is very hard to get out of grout."],
+        spores: ["The hero made me so nervous I puffed spores everywhere. Could you vacuum them all up?",
+            "Atchoo! Sorry, my own spores. Could you clean them all before the whole lounge catches them?"],
+        drool: ["My drool is everywhere. Could you mop it? If the next hero sees it, my cover's blown.",
+            "I drooled. A lot. In my defence, the hero smelled like snacks. Could you mop it up?"],
+        graffiti: ["Someone wrote 'MONSTERS STINK' on the wall. I do not stink. Could you scrub ALL the graffiti?",
+            "The walls are covered in hero scribbles. Could you scrub them clean? Spelling mistakes hurt my eyes."],
+        coins: ["The co-op's coins are all over the floor! Could you pick up every one? Ask the leprechaun, they counted.",
+            "Coins, coins, coins! Could you round them all up? Keep a few. Finder's fee."],
+        pages: ["Book club is tonight and our books are in pieces! Could you gather the loose pages?",
+            "Pages everywhere! I think the hero was looking for a spellbook. Could you gather them up?"],
+        cobwebs: ["The spiders moved out but left their webs. Could you clear every cobweb?",
+            "I walked into a cobweb face-first this morning. Could you clear them all? For my dignity."],
+        swords: ["Dropped weapons are a workplace hazard! Could you collect every sword and arrow?",
+            "The hero left their armoury on our floor. Could you pick up all the swords and arrows?"],
+        litter: ["The lounge has 'mug creep'. They're migrating. Could you collect every empty mug and bottle?",
+            "Bottles, mugs, bottles... Could you round up all the empties? We'll do better. Probably."],
+        traps: ["Our beautiful traps, all sprung! Could you re-arm every single one? For the craft.",
+            "The traps need resetting. The kobolds made me promise to ask nicely. Please?"],
+        fixall: ["The furniture took a beating. Could you fix all of it? A dungeon isn't a home without its tables.",
+            "Everything's broken! Could you fix every last smashed thing? I'll owe you a favour. A big one."],
+        footprints: ["Muddy footprints from wall to wall. Could you mop up every one? I'll get the hero some doormats.",
+            "Could you mop all the footprints? The floor looks like a map of everywhere the hero went."],
+        water: ["Puddles! I stepped in three already. Could you mop up all the water?",
+            "There's water everywhere, and not the good drinking kind. Could you mop it all?"],
+        food: ["The hero ate like a dragon and left the leftovers everywhere. Could you clear it all?",
+            "Wrappers and cores all over! Could you pick up every scrap of food? The ants are getting ideas."],
+        glitter: ["Glitter. In my mane. On the floor. In my dreams. Could you clean it all up? Please. PLEASE."],
+        dice: ["Dice everywhere! Could you pick them all up? The dragon counts them, you know. Every night."],
+    },
+    thanks: [
+        "You did it! Not a trace of {label} left anywhere. Thank you!",
+        "Not one bit of {label} left! You're a natural 20 of a janitor!",
+        "The {label}? GONE. You're incredible. Like, statistically incredible.",
+        "No more {label}! I could cry. I won't, I'd just make more mess.",
+        "Every last bit of {label}, gone! I'm telling the whole co-op about this.",
     ],
     rewards: [
         "hands you a cookie they were saving.",
@@ -1061,6 +1417,12 @@ var Requests = {
         "promises to put in a good word at the next co-op meeting.",
         "gives you a hand-drawn 'Employee of the Day' certificate.",
         "high-fives you. It stings a little, in a good way.",
+        "rolls a d20 to decide your reward. It's a 20. They give you a hug AND a cookie.",
+        "draws you a little medal on a napkin. It says 'MOP HERO'.",
+        "promises to name their next pet rock after you.",
+        "does a little victory dance. It's mostly wiggling.",
+        "gives you a sticker. It's a sticker of a mop. It's perfect.",
+        "salutes you with a ketchup packet.",
     ],
 
     type: function(key) {
@@ -1103,10 +1465,12 @@ var Requests = {
                 generic.push(t);
             }
         }
-        if (mine.length > 0) {
+        // their own mess first, now and then; otherwise anything (their own included)
+        if (mine.length > 0 && (generic.length == 0 || ROT.RNG.getUniform() < this.OWN_FIRST)) {
             return ROT.RNG.getItem(mine);
         }
-        return generic.length > 0 ? ROT.RNG.getItem(generic) : null;
+        let all = mine.concat(generic);
+        return all.length > 0 ? ROT.RNG.getItem(all) : null;
     },
 
     offer: function(speaker, convos) {
@@ -1118,17 +1482,25 @@ var Requests = {
             return false;
         }
         Game.requestsOffered++;
+        this.push(convos, t);
+        return true;
+    },
+
+    // The favour itself: the question, and the thanks waiting for when it's done.
+    push: function(convos, t) {
+        let yes = ["You're the best! Come find me when it's done.", "Yay! I'll be right here. Vaping. Gratefully.",
+            "You're a hero! The good kind. Come back when it's done!", "Thank you thank you! Roll for cleaning!"];
+        let no = ["No worries! Forget I asked :)", "Totally fine! It's not going anywhere. Literally.", "That's okay! Maybe tomorrow's janitor. Which is you. No pressure!"];
         convos.push([
-            {text:t.ask, y:1, n:2, tags:{offerSeen:true}},
-            {text:"You're the best! Come find me when it's done.", any:-1, tags:{request:t.key}},
-            {text:"No worries! Forget I asked :)", any:-1},
+            {text:ROT.RNG.getItem([t.ask].concat(this.asks[t.key] || [])), y:1, n:2, tags:{offerSeen:true}},
+            {text:ROT.RNG.getItem(yes), any:-1, tags:{request:t.key}},
+            {text:ROT.RNG.getItem(no), any:-1},
         ]);
         convos.push([
-            {text:"You did it! Not a trace of "+t.label.toLowerCase()+" left anywhere. Thank you!", any:1,
+            {text:ROT.RNG.getItem(this.thanks).replace('{label}', t.label.toLowerCase()), any:1,
                 conditions:{requestDone:true}, tags:{requestThanked:true}, globalTags:{yendorPoints:this.REWARD}},
             {action:ROT.RNG.getItem(this.rewards), any:-1},
         ]);
-        return true;
     },
 
     isDone: function(speaker) {

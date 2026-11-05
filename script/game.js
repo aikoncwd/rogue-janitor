@@ -754,6 +754,7 @@ var Game = {
         this.adventurer = new Adventurer(this.stairs[0][0],this.stairs[0][1]);
         this.populateRooms();
         this.addDoors(thetheme);
+        Traps.place(); // a few silly traps for the hero to find
         Invasion.reset(this.adventurer);
         this.applyAutoZoom();
         if (this.day > 1) {
@@ -889,6 +890,10 @@ var Game = {
                 }
                 //if (position[0]+direction[0])
 
+            }
+            if (direction[0]==0 && direction[1]==0) {
+                // already lined up on the axis it turned to: head straight for the room instead
+                direction = position[0] != lastCenter[0] ? [Math.sign(lastCenter[0]-position[0]),0] : [0,Math.sign(lastCenter[1]-position[1])];
             }
             position[0]+=direction[0];
             position[1]+=direction[1];
@@ -1735,8 +1740,9 @@ var Game = {
 
     // New equipment arrives during the run.
     TOOL_DAYS: {vacuum: 2, squeegee: 3, brush: 4},
-    VACUUM_KINDS: ['Cobweb', 'Loose Feathers', 'Spores', 'Bone Dust', 'Soot', 'Gravel', 'Splinters', 'Dripped Wax'],
-    WATER_KINDS: ['Water', 'Holy Water', 'Wet Footprints'],
+    VACUUM_KINDS: ['Cobweb', 'Loose Feathers', 'Spores', 'Bone Dust', 'Soot', 'Gravel', 'Splinters', 'Dripped Wax',
+        'Glitter', 'Glittery Footprints', 'Confetti', 'Loose Straw', 'Rust Flakes'],
+    WATER_KINDS: ['Water', 'Holy Water', 'Wet Footprints', 'Puddle of Eye Drops'],
     SQUEEGEE_CAP: 12,
     hasTool: function(name) {
         return this.day >= this.TOOL_DAYS[name];

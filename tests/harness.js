@@ -25,6 +25,7 @@ const DEFAULT_FILES = [
     'script/entity.js',
     'script/pet.js',
     'script/adventurer.js',
+    'script/traps.js',
     'script/conversations.js',
     'script/dayevents.js',
     'script/eastereggs.js',
@@ -36,6 +37,7 @@ const DEFAULT_FILES = [
     'script/inventory.js',
     'script/nightlog.js',
     'script/events.js',
+    'script/guests.js',
 ];
 
 function makeContext() {

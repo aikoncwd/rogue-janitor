@@ -119,6 +119,10 @@ Adventurer.classes = {
     Valkyrie:     { color:'#adf', hp:7, dmg:2, every:30, special:'frost', stat:'Battle cries' },
     Speedrunner:  { color:'#f6a', hp:4, dmg:1, every:25, special:'energyDrink', stat:'Frames saved' },
     Necromancer:  { color:'#9a9', hp:5, dmg:1, every:30, special:'readAloud', stat:'Pages read aloud' },
+    Monk:         { color:'#fc6', hp:5, dmg:1, every:30, special:'incense', stat:'Moments of inner peace' },
+    Healer:       { color:'#fff', hp:5, dmg:1, every:25, special:'bandage', stat:'Unrequested bandages' },
+    Berserker:    { color:'#f44', hp:6, dmg:2, every:30, special:'berserk', stat:'Chairs defeated' },
+    Wanderer:     { color:'#9cf', hp:5, dmg:1, every:25, special:'wander', stat:'Baffling items dropped' },
 };
 
 var ELBERETH_NAME = 'Elbereth engraving';
@@ -269,6 +273,20 @@ Adventurer.prototype.snapshot = function() {
 Adventurer.prototype.frost = function() { return this.splatVariant('Water', 'Melted Frost', 1, 2) > 0; }
 Adventurer.prototype.energyDrink = function() { return this.splatVariant('EmptyBottle', 'Energy Drink Can', 1, 1) > 0; }
 Adventurer.prototype.readAloud = function() { return this.splatVariant('LoosePages', 'Page of the Necronomicon (do not read aloud)', 1, 1) > 0; }
+
+Adventurer.prototype.incense = function() { return this.splatVariant('Soot', 'Incense Ash', 1, 2) > 0; }
+Adventurer.prototype.bandage = function() { return this.splatVariant('Wrapper', 'Used Bandage Wrapper', 1, 1) > 0; }
+Adventurer.prototype.berserk = function() {
+    let made = this.splat('Splinters', 1, 3);
+    this.splatVariant('LoosePages', 'Pamphlet: TROG SAYS BOOKS ARE FOR BURNING', 1, 1);
+    return made > 0;
+}
+// The Wanderer's random starting kit: nobody knows what it was for.
+Adventurer.WANDERER_KIT = ['Half a Ration of Something', 'Unlabelled Throwing Net', 'Single Boomerang (One-Way)',
+    'Wand of Unknown Wand', 'Book of Mysterious Recipes', 'Very Old Sandwich'];
+Adventurer.prototype.wander = function() {
+    return this.splatVariant('Crossword', ROT.RNG.getItem(Adventurer.WANDERER_KIT), 1, 1) > 0;
+}
 
 Adventurer.prototype.potionSplash = function() {
     let made = this.splat('PotionSplash', 1, 2);
@@ -542,6 +560,9 @@ Adventurer.prototype.moveTo=function(x,y) {
         this.y=y;
         if (Game.map[newKey].mess != null) {
             Game.map[newKey].mess.spread(this);
+        }
+        if (Game.map[newKey].trap != null && typeof Traps != 'undefined') {
+            Traps.spring(this, Game.map[newKey]);
         }
     }
     else {

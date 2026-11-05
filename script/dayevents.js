@@ -101,7 +101,7 @@ var DayEvents = {
         let list = [];
         for (let key in Game.map) {
             let m = Game.map[key].mess;
-            if (m != null && m.cleanMethod == 'mop' && !m.unique) {
+            if (m != null && m.cleanMethod == 'mop' && !m.unique && !m.elbereth) { // an engraving is no mimic
                 list.push(m);
             }
         }

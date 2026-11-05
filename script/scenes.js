@@ -225,6 +225,12 @@ var Scenes = {
         if (plan == 'dinner' || plan == 'drinks' || plan == 'dancing') {
             return plan;
         }
+        if (plan == 'dice night') {
+            return 'dinner'; // around a table
+        }
+        if (plan == 'karaoke') {
+            return 'dancing';
+        }
         return 'bbq';
     },
 
