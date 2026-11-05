@@ -754,6 +754,7 @@ var Game = {
         this.adventurer = new Adventurer(this.stairs[0][0],this.stairs[0][1]);
         this.populateRooms();
         this.addDoors(thetheme);
+        Traps.place(); // a few silly traps for the hero to find
         Invasion.reset(this.adventurer);
         this.applyAutoZoom();
         if (this.day > 1) {
@@ -1735,8 +1736,9 @@ var Game = {
 
     // New equipment arrives during the run.
     TOOL_DAYS: {vacuum: 2, squeegee: 3, brush: 4},
-    VACUUM_KINDS: ['Cobweb', 'Loose Feathers', 'Spores', 'Bone Dust', 'Soot', 'Gravel', 'Splinters', 'Dripped Wax'],
-    WATER_KINDS: ['Water', 'Holy Water', 'Wet Footprints'],
+    VACUUM_KINDS: ['Cobweb', 'Loose Feathers', 'Spores', 'Bone Dust', 'Soot', 'Gravel', 'Splinters', 'Dripped Wax',
+        'Glitter', 'Glittery Footprints', 'Confetti', 'Loose Straw', 'Rust Flakes'],
+    WATER_KINDS: ['Water', 'Holy Water', 'Wet Footprints', 'Puddle of Eye Drops'],
     SQUEEGEE_CAP: 12,
     hasTool: function(name) {
         return this.day >= this.TOOL_DAYS[name];

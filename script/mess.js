@@ -353,6 +353,109 @@ function makeMess(x,y,name) {
         newMess.color = ROT.RNG.getItem(['#f5f','#5ff','#ff5']);
         break;
 
+        // new monsters' messes
+        case 'FruitPits':
+        newMess = new Mess(x,y,',','#c63','#000',"Fruit Pits",9,null,0,"","get");
+        newMess.pluralName='Fruit Pits';
+        break;
+        case 'EyeDrops':
+        newMess = new Mess(x,y,'~','#8cf','#000',"Puddle of Eye Drops",6,"WetPrints",3,"Soggy");
+        newMess.pluralName='Puddles of Eye Drops';
+        break;
+        case 'CockatriceEgg':
+        newMess = new Mess(x,y,'0','#ffd','#000',"Cockatrice Egg (Do Not Touch)",11,null,0,"","get");
+        newMess.desc='Wear gloves. You are wearing gloves. Phew.';
+        break;
+        case 'Gelatin':
+        newMess = new Mess(x,y,'~','#0dd','#000',"Gelatin Puddle",6,"StickyPrints",4,"Sticky");
+        newMess.slippery=true;
+        break;
+        case 'CubeLeftovers': // whatever the cube had swallowed (variants in Lore)
+        newMess = new Mess(x,y,'&','#0cc','#000',"Cube Leftovers",10,null,0,"","get");
+        newMess.pluralName='Cube Leftovers';
+        break;
+        case 'WorthlessGlass':
+        newMess = new Mess(x,y,'*','#c9f','#000',"Worthless Piece of Glass",9,null,0,"","get");
+        newMess.pluralName='Worthless Pieces of Glass';
+        newMess.color = ROT.RNG.getItem(['#c9f','#8f8','#f88','#88f','#ff8','#fff']);
+        break;
+        case 'Glitter':
+        newMess = new Mess(x,y,'\u2219','#f8f','#000',"Glitter",5,"GlitterPrints",4,"Glittery");
+        newMess.pluralName='Clouds of Glitter';
+        break;
+        case 'GlitterPrints':
+        newMess = new Mess(x,y,',','#f8f','#000',"Glittery Footprints",3,"",0,"Glittery");
+        break;
+        case 'Frost':
+        newMess = new Mess(x,y,'*','#aef','#000',"Patch of Frost",6,"WetPrints",3,"Soggy");
+        newMess.pluralName='Patches of Frost';
+        break;
+        // new furniture, broken
+        case 'BrokenThrone':
+        newMess = new Mess(x,y,'\\','#a80','#000',"Wobbly Broken Throne",12,"Splinters",2,"","fix");
+        break;
+        case 'KickedSink':
+        newMess = new Mess(x,y,'\u222A','#777','#000',"Kicked Sink",12,"Water",3,"","fix");
+        break;
+        case 'TornDummy':
+        newMess = new Mess(x,y,'\u2020','#864','#000',"Beheaded Training Dummy",12,null,0,"","fix");
+        break;
+        case 'Straw':
+        newMess = new Mess(x,y,'"','#db6','#000',"Loose Straw",4,null,0,"");
+        newMess.pluralName='Piles of Straw';
+        break;
+        case 'SmashedSnackMachine':
+        newMess = new Mess(x,y,'\u25A1','#a33','#000',"Smashed Snack Machine",12,null,0,"","fix");
+        break;
+        case 'BrokenFishTank':
+        newMess = new Mess(x,y,'\u2248','#468','#000',"Broken Fish Tank",12,"Water",3,"","fix");
+        break;
+        case 'FloppingFish':
+        newMess = new Mess(x,y,'\u03B1','#4cf','#000',"Flopping Fish",11,null,0,"","get");
+        break;
+        case 'WaxyAltar':
+        newMess = new Mess(x,y,'_','#999','#000',"Altar Covered in Candle Wax",12,null,0,"","fix");
+        break;
+        case 'ToppledArmorStand':
+        newMess = new Mess(x,y,'[','#777','#000',"Toppled Armor Stand",12,null,0,"","fix");
+        break;
+        case 'ArmorPiece':
+        newMess = new Mess(x,y,'[','#bbb','#000',"Loose Armor Piece",10,null,0,"","get");
+        break;
+        case 'CrackedCrystalBall':
+        newMess = new Mess(x,y,'\u25CB','#a8c','#000',"Cracked Crystal Ball",12,null,0,"","fix");
+        break;
+        // traps and their mess
+        case 'SprungTrap': // renamed and recoloured by Traps.spring
+        newMess = new Mess(x,y,'^','#f8f','#000',"Sprung Trap",20,null,0,"","fix");
+        break;
+        case 'CreamPie':
+        newMess = new Mess(x,y,'~','#ffd','#000',"Cream Pie Splat",6,"StickyPrints",4,"Sticky");
+        newMess.pluralName='Cream Pie Splats';
+        newMess.slippery=true;
+        break;
+        case 'Confetti':
+        newMess = new Mess(x,y,'\u2219','#ff5','#000',"Confetti",4,null,0,"");
+        newMess.pluralName='Heaps of Confetti';
+        newMess.color = ROT.RNG.getItem(['#ff5','#5ff','#f5f','#5f5','#f85']);
+        break;
+        case 'RustFlakes':
+        newMess = new Mess(x,y,'.','#c63','#000',"Rust Flakes",4,null,0,"");
+        newMess.pluralName='Piles of Rust Flakes';
+        break;
+        case 'HeroDrool':
+        newMess = new Mess(x,y,'~','#cdf','#000',"Hero Drool",6,"DroolPrints",3,"Drool Covered");
+        newMess.slippery=true;
+        break;
+        // day events
+        case 'BananaPeel':
+        newMess = new Mess(x,y,')','#ff0','#000',"Banana Peel",10,null,0,"","get");
+        break;
+        case 'Dice':
+        newMess = new Mess(x,y,'\u2680','#fff','#000',"Stray Die",10,null,0,"","get");
+        newMess.pluralName='Stray Dice';
+        break;
+
         // quest items
         case 'FavouriteHat':
         newMess = new Mess(x,y,'^','#fff','#000','Favourite Hat',50,null,0,"","get");
@@ -374,6 +477,24 @@ function makeMess(x,y,name) {
         break;
         case 'Cello':
         newMess = new Mess(x,y,'\u03A6','#fa0','#000','Cello',50,null,0,"",'get');
+        break;
+        case 'Teapot':
+        newMess = new Mess(x,y,'\u00F5','#fcf','#000','Teapot',50,null,0,"",'get');
+        break;
+        case 'Plushie':
+        newMess = new Mess(x,y,'\u00A7','#fa8','#000','Plush Owlbear',50,null,0,"",'get');
+        break;
+        case 'Lute':
+        newMess = new Mess(x,y,'\u0192','#da6','#000','Lute',50,null,0,"",'get');
+        break;
+        case 'Spellbook':
+        newMess = new Mess(x,y,'+','#8cf','#000','Spellbook of Tidy Up',50,null,0,"",'get');
+        break;
+        case 'Monocle':
+        newMess = new Mess(x,y,'\u00B0','#ff8','#000','Monocle',50,null,0,"",'get');
+        break;
+        case 'Kazoo':
+        newMess = new Mess(x,y,'\u2013','#f6c','#000','Kazoo',50,null,0,"",'get');
         break;
         case 'YoYo':
         let color=ROT.Color.toHex(ROT.Color.hsl2rgb([ROT.RNG.getUniform(),1,0.5]));
@@ -419,10 +540,14 @@ var TOUGH_STAINS = {
     'Spilled Ale': 2,
     'Soot': 2,
     '"Blood"': 2,
+    'Glitter': 3, // glitter is forever
+    'Gelatin Puddle': 2,
+    'Patch of Frost': 2,
+    'Cream Pie Splat': 2,
 };
 
 function QuestMess(dropper,x,y) {
-    var options=['Purse','Vuvuzela','Umbrella','DiceBag','Cello','YoYo'];
+    var options=['Purse','Vuvuzela','Umbrella','DiceBag','Cello','YoYo','Teapot','Plushie','Lute','Spellbook','Monocle','Kazoo'];
     if (dropper.species=='Dragon') {
         options.push('DiceBag');
         options.push('DiceBag');

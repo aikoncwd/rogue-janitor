@@ -25,6 +25,7 @@ const DEFAULT_FILES = [
     'script/entity.js',
     'script/pet.js',
     'script/adventurer.js',
+    'script/traps.js',
     'script/conversations.js',
     'script/dayevents.js',
     'script/eastereggs.js',

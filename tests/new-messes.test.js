@@ -62,7 +62,8 @@ test('smashing a chest scatters gold coins, a bookshelf scatters pages, a barrel
         const e = ctx.GetEntity(loot, x + 1, y);
         e.adventurerAct();
         const names = messesOnMap(ctx);
-        assert.ok(names.includes(mess), loot + ' -> ' + mess + ' in ' + names.join(','));
+        const kinds = Object.values(ctx.Game.map).filter(t => t.mess).map(t => t.mess.kind); // litter may wear a funny name
+        assert.ok(kinds.includes(mess), loot + ' -> ' + mess + ' in ' + names.join(','));
     }
 });
 

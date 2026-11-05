@@ -11,8 +11,12 @@ var Invasion = {
     ACTION_MS: 200,
     MAX_TURN_MS: 350,
     EXTRA_MS: { potion: 120, snack: 100, cry: 100, faint: 120, special: 150, graffiti: 100, enter: 150,
-        lost: 150, scroll: 150, saveScum: 150, elbereth: 120, backIn5: 100, quip: 100 },
-    SPEECH: ['snack', 'potion', 'special', 'graffiti', 'enter', 'cry', 'lost', 'scroll', 'saveScum', 'elbereth', 'backIn5', 'quip'],
+        lost: 150, scroll: 150, saveScum: 150, elbereth: 120, backIn5: 100, quip: 100, trap: 150 },
+    SPEECH: ['snack', 'potion', 'special', 'graffiti', 'enter', 'cry', 'lost', 'scroll', 'saveScum', 'elbereth', 'backIn5', 'quip', 'trap'],
+    // Presentation-only asides (Flavor.rng): monsters chatting, dice, the people who made dungeons.
+    BANTER_CHANCE: 0.02,
+    ASIDE_CHANCE: 0.012,
+    DICE_CHANCE: 0.12,
     busy: false,
     extra: 0,
     speaking: false,
@@ -311,7 +315,7 @@ var Invasion = {
     reset: function (adventurer) {
         this.hero = Flavor.heroName();
         this.roster = Game.monsterList.filter(function (m) { return m.alive && !m.retired; });
-        this.stats = { fainted: 0, hits: 0, lootSmashed: 0, snacks: 0, potions: 0, doors: 0, heroHurt: 0, graffiti: 0, specials: 0 };
+        this.stats = { fainted: 0, hits: 0, lootSmashed: 0, snacks: 0, potions: 0, doors: 0, heroHurt: 0, graffiti: 0, specials: 0, traps: 0 };
         if (adventurer && adventurer.setClass) {
             adventurer.setClass(this.hero.cls);
         }
@@ -465,9 +469,20 @@ var Invasion = {
                         this.beat('quip', quip);
                     }
                 }
+                else if (Flavor.chance(this.BANTER_CHANCE)) {
+                    let awake = this.roster.filter(function (m) { return m.hp > 0; });
+                    if (awake.length >= 2) {
+                        let a = Flavor.rng.getItem(awake);
+                        let b = Flavor.rng.getItem(awake.filter(function (m) { return m !== a; }));
+                        this.beat('quip', this.say('monsterBanter', { monster: this.monsterName(a), other: this.monsterName(b) }, true));
+                    }
+                }
+                else if (Flavor.chance(this.ASIDE_CHANCE)) {
+                    this.beat('quip', this.say('devAside', {}, true));
+                }
                 break;
             case 'enter':
-                this.beat('enter', this.say('heroEnter'));
+                this.beat('enter', this.say(Flavor.pick('heroEnter', this.hero.cls)));
                 if (Flavor.chance(0.3) && this.roster.length > 0) {
                     this.say('heroAmulet');
                     this.say('rodneyReply', { monster: this.monsterName(Flavor.rng.getItem(this.roster)) });
@@ -481,19 +496,22 @@ var Invasion = {
                 this.say('heroHit', { monster: this.monsterName(data.monster) });
                 this.sound('hit');
                 if (data.monster.hp > 0 && ROT.RNG.getUniform() < 0.5) {
-                    this.say('monsterPain', { monster: this.monsterName(data.monster) }, true);
+                    this.say(Flavor.pick('monsterPain', data.monster.species), { monster: this.monsterName(data.monster) }, true);
                     this.sound('yelp');
+                }
+                else if (Flavor.chance(this.DICE_CHANCE)) {
+                    this.say('diceAside', {}, true);
                 }
                 break;
             case 'faint':
                 this.stats.fainted++;
                 this.bodies.push({ x: data.monster.x, y: data.monster.y, char: data.monster.char });
-                this.beat('faint', this.say('monsterFaint', { monster: this.monsterName(data.monster) }));
+                this.beat('faint', this.say(Flavor.pick('monsterFaint', data.monster.species), { monster: this.monsterName(data.monster) }));
                 this.sound('faint');
                 break;
             case 'loot':
                 this.stats.lootSmashed++;
-                this.beat('loot', this.say('lootSmash', { item: data.entity.name.toLowerCase() }));
+                this.beat('loot', this.say(Flavor.pick('lootSmash', data.entity.lootKey, 0.6), { item: data.entity.name.toLowerCase() }));
                 this.sound('smash');
                 break;
             case 'door':
@@ -566,6 +584,14 @@ var Invasion = {
                 this.sound('spray');
                 this.beat('elbereth');
                 break;
+            case 'trap':
+                this.stats.traps++;
+                this.flash(data.x, data.y);
+                this.say('trapSprung', { trap: data.name.toLowerCase() });
+                this.say('trap_' + data.kind);
+                this.sound(data.sound || 'spray');
+                this.beat('trap');
+                break;
             case 'heroHurt':
                 this.stats.heroHurt++;
                 this.flash(Game.adventurer.x, Game.adventurer.y);
@@ -583,6 +609,7 @@ var Invasion = {
             'Loot smashed: ' + s.lootSmashed + '   Doors kicked: ' + s.doors,
             'Snacks eaten on duty: ' + s.snacks + '   Potions quaffed: ' + s.potions,
             'Blood puddles (fake): ' + s.bloodPuddles + '   Walls vandalised: ' + s.graffiti,
+            'Traps sprung: ' + s.traps + '   Dice rolled: ' + this.diceRolled(),
             this.classStat() + ': ' + s.specials,
         ];
         // one screen for the whole report: a single Enter to read it all
@@ -699,6 +726,11 @@ var Invasion = {
         if (locked) {
             Game.engine.unlock();
         }
+    },
+
+    // A made-up number for the report (presentation only).
+    diceRolled: function () {
+        return this.stats.hits * 2 + this.stats.heroHurt + this.stats.traps * 3 + 1;
     },
 
     classStat: function () {
