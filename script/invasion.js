@@ -30,6 +30,7 @@ var Invasion = {
     // or when a new day's dungeon is generated (the player's pending unlock resumes it).
     start: function () {
         Game.phase = 'invasion';
+        this.takeFootageStart();
         Game.stopQuestBlink();
         Game.drawMap();
         if (!this.engineStarted) {
@@ -140,6 +141,75 @@ var Invasion = {
             return;
         }
         this.release();
+    },
+
+    // --- Rewind: the night is a simulation, so going back means rebuilding the
+    // morning (as Continue does) and running it again with the same dice. ---
+    morning: null,
+    rewoundFootage: null,
+
+    // Taken as the dungeon is built (the world and its dice)...
+    takeMorning: function () {
+        this.morning = {
+            save: Save.snapshot(),
+            flavor: Flavor.rng.getState(), // the banner clock and camera are rolled while building
+            cutscene: Game.player.cutscene,
+            footage: null,
+        };
+    },
+
+    // ...and as the footage starts: the title screen and the night conversation
+    // roll presentation dice and write to the log in between.
+    takeFootageStart: function () {
+        if (this.rewoundFootage != null) { // a rewind: put the presentation back as it was
+            let f = this.rewoundFootage;
+            this.rewoundFootage = null;
+            Flavor.rng.setState(f.flavor);
+            Flavor.lastLines = Object.assign({}, f.lastLines);
+            Game.log.lines = JSON.parse(JSON.stringify(f.log));
+            if (this.morning != null) {
+                this.morning.footage = f;
+            }
+            return;
+        }
+        if (this.morning != null && this.morning.footage == null) {
+            this.morning.footage = {
+                flavor: Flavor.rng.getState(),
+                lastLines: Object.assign({}, Flavor.lastLines),
+                log: JSON.parse(JSON.stringify(Game.log.lines)),
+            };
+        }
+    },
+
+    rewind: function () {
+        let m = this.morning;
+        if (Game.phase != 'invasion' || this.stage != null || m == null) {
+            return false;
+        }
+        if (this.timer != null) {
+            clearTimeout(this.timer);
+            this.timer = null;
+        }
+        this.gate = null;
+        this.held = false;
+        this.skipping = false;
+        this.fast = false;
+        let footage = m.footage;
+        Save.restore(m.save); // decodes fresh objects every time
+        Game.player.cutscene = m.cutscene;
+        Flavor.rng.setState(m.flavor);
+        // a fresh engine: the old one stays locked, waiting for a turn that never comes
+        Game.engine = new ROT.Engine(Game.scheduler);
+        this.engineStarted = false;
+        let paused = this.startPaused;
+        this.startPaused = true; // the rebuilt night waits on its first frame
+        this.rewoundFootage = footage;
+        Game.generateDungeon(); // on day 2+ this calls start()
+        this.startPaused = paused;
+        if (Game.phase != 'invasion' || !this.engineStarted) {
+            this.start();
+        }
+        return true;
     },
 
     toggleFast: function () {

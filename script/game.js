@@ -711,6 +711,7 @@ var Game = {
     },
 
     generateDungeon: function() {
+        Invasion.takeMorning(); // what rewinding the footage goes back to
         var thetheme=this.dungeonTheme;
         this.shift = {cleaned:0, passes:0, requestsDone:0, startPoints:this.yendorPoints};
         this.shiftEnded = false;
