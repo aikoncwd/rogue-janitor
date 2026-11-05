@@ -71,12 +71,15 @@ DayEvents.scatter = function (type, count) {
 
 DayEvents.inviteGuest = function () {
     let g = ROT.RNG.getItem(this.unseenGuests());
-    Game.run.guestsSeen = (Game.run.guestsSeen || []).concat([g.id]);
     let v = Visitors.add(g);
     if (v == null) {
-        return;
+        return; // a full lounge: they'll try another day
     }
+    Game.run.guestsSeen = (Game.run.guestsSeen || []).concat([g.id]);
     v.species = 'Guest';
+    if (g.spills) { // some guests arrive with their own mess (the DM's dice bag has a hole)
+        this.scatter(g.spills[0], g.spills[1]);
+    }
     let left = Requests.remaining(g.request);
     if (left > 0 && left <= 60) {
         Requests.push(v.convos, Requests.type(g.request));
@@ -121,14 +124,14 @@ DayEvents.leakRooms = function () {
 
 DayEvents.startLeak = function () {
     let room = ROT.RNG.getItem(this.leakRooms());
-    this.leak = { room: room, drips: 0 };
+    this.leak = { room: room, drips: 0, start: Game.turnCount }; // counted from now: the same after a Continue
     Game.log.push(Lore.eventNews.leak.replace('{room}', Rooms.name(room)));
 };
 
 DayEvents.guestTick = DayEvents.tick;
 DayEvents.tick = function () {
     let l = this.leak;
-    if (l != null && Game.turnCount % this.LEAK_EVERY == 0 && l.drips < this.LEAK_MAX) {
+    if (l != null && Game.turnCount > l.start && (Game.turnCount - l.start) % this.LEAK_EVERY == 0 && l.drips < this.LEAK_MAX) {
         let r = Game.rooms[l.room];
         let spots = [];
         for (let x = r[0]; x < r[2]; x++) {

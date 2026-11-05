@@ -149,7 +149,7 @@ Player.prototype.clean = function(verb) {
                     return;
                 }
                 if (verb=='fix' && Game.map[key].mess.trap) {
-                    Game.sendMessage(Flavor.line('trapRearm', {trap: Game.map[key].mess.displayName().replace(/^sprung /, '')}));
+                    Game.sendMessage(Flavor.line('trapRearm', {trap: Traps.KINDS[Game.map[key].mess.trap].name.toLowerCase()}));
                     Achievements.bump('traps');
                 }
                 else if (verb=='fix' && Game.map[key].mess.parent == null) {

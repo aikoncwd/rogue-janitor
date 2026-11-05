@@ -610,7 +610,7 @@ var Lore = {
             ],
         },
         {
-            id: 'dnd', name: 'Gary the Wandering Dungeon Master', char: '@', color: '#f96', request: 'dice',
+            id: 'dnd', name: 'Gary the Wandering Dungeon Master', char: '@', color: '#f96', request: 'dice', spills: ['Dice', 7],
             lines: [
                 "Ah, a janitor! Roll for initiative. Kidding. Mostly.",
                 "I run a campaign three dungeons over. My players never clean up after themselves either.",

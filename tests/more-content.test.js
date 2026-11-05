@@ -187,7 +187,8 @@ test('the janitor re-arms a sprung trap with fix', () => {
     m.trap = 'pie'; m.name = 'Sprung Cream Pie Trap';
     p.clean('fix');
     assert.equal(t.mess, null);
-    assert.ok(ctx.Game.log.lines.some(l => /cream pie trap/i.test(strip(l.text))));
+    const said = ctx.Game.log.lines.map(l => strip(l.text)).find(l => /cream pie trap/i.test(l));
+    assert.ok(said && !/sprung/i.test(said), said);
     assert.equal(ctx.Game.run.counts.traps, 1);
 });
 
@@ -247,6 +248,16 @@ test('a guest from another dungeon visits the lounge, with a favour when there i
     assert.ok(g[0].convos.length >= 2);
 });
 
+test('the wandering DM brings dice to ask about', () => {
+    const ctx = cleaningDay();
+    ctx.Game.day = 3;
+    ctx.Game.run.guestsSeen = ctx.Lore.guests.filter(g => g.id != 'dnd').map(g => g.id);
+    ctx.DayEvents.run('guest');
+    const gary = ctx.Game.monsterList.find(m => m.tags.visitor);
+    assert.ok(ctx.Requests.remaining('dice') > 0);
+    assert.ok(gary.convos.some(c => c[0].tags && 'offerSeen' in c[0].tags), 'asks the favour');
+});
+
 test('each guest only comes once a run', () => {
     const ctx = cleaningDay();
     ctx.Game.day = 3;
@@ -274,8 +285,9 @@ test('dice night spills dice all over', () => {
 test('a leaky ceiling drips water into one room, a few times', () => {
     const ctx = runEvent('leak');
     const before = Object.values(ctx.Game.map).filter(t => t.mess && t.mess.kind == 'Water').length;
+    const t0 = ctx.Game.turnCount;
     for (let i = 1; i <= ctx.DayEvents.LEAK_EVERY * (ctx.DayEvents.LEAK_MAX + 3); i++) {
-        ctx.Game.turnCount = i;
+        ctx.Game.turnCount = t0 + i;
         ctx.DayEvents.tick();
     }
     const after = Object.values(ctx.Game.map).filter(t => t.mess && t.mess.kind == 'Water').length;
