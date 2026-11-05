@@ -98,3 +98,110 @@ test('log lines: clock first, hanging indent, nothing wider than the window', ()
     for (let i = 2; i < lines.length; i++) assert.ok(lines[i].startsWith(' '.repeat(10)), JSON.stringify(lines[i]));
     for (const l of lines) assert.ok(ctx.Ui.plainLength(l) <= 40, l);
 });
+
+// --- Tab during the shift ---
+
+function cleaningDay(seed = 1234) {
+    const ctx = invading(seed);
+    ctx.__press(KEY.ESC);
+    finishHandover(ctx);
+    let n = 0;
+    while (ctx.Game.player.talking && n++ < 50) { ctx.Game.player.talking.lastConvoChange = 0; ctx.__press(KEY.ENTER); }
+    assert.equal(ctx.Game.phase, 'cleaning');
+    assert.equal(ctx.Game.player.talking, null);
+    return ctx;
+}
+
+function shown(ctx) {
+    ctx.__drawn.length = 0;
+    ctx.Game.drawMap();
+    return ctx.__drawn.filter(d => d.text).map(d => plain(d.text)).join('\n');
+}
+
+test('Tab opens the security log in the shift, and Tab or Esc close it', () => {
+    const ctx = cleaningDay();
+    let prevented = false;
+    ctx.__pressEvent({ keyCode: KEY.TAB, preventDefault() { prevented = true; } });
+    assert.equal(ctx.NightLog.isOpen, true);
+    assert.ok(prevented, 'the browser keeps its focus where it was');
+    assert.ok(shown(ctx).includes('Security Log'));
+    const p = ctx.Game.player;
+    const at = p.x + ',' + p.y;
+    ctx.__press(KEY.DOWN);
+    ctx.__press(37);
+    assert.equal(p.x + ',' + p.y, at, 'keys scroll the log, the janitor stays put');
+    ctx.__press(KEY.TAB);
+    assert.equal(ctx.NightLog.isOpen, false);
+    ctx.__press(KEY.TAB);
+    ctx.__press(KEY.ESC);
+    assert.equal(ctx.NightLog.isOpen, false);
+});
+
+test('scroll keys move through the log', () => {
+    const ctx = cleaningDay();
+    ctx.__press(KEY.TAB);
+    ctx.Game.drawMap();
+    assert.equal(ctx.Ui.offsets.nightlog, 0);
+    ctx.__press(KEY.END);
+    const last = ctx.Ui.offsets.nightlog;
+    assert.ok(last > 0 && isFinite(last), String(last));
+    ctx.__press(KEY.PGUP);
+    assert.ok(ctx.Ui.offsets.nightlog < last);
+    ctx.__press(KEY.HOME);
+    assert.equal(ctx.Ui.offsets.nightlog, 0);
+    ctx.__press(KEY.DOWN);
+    assert.equal(ctx.Ui.offsets.nightlog, 1);
+});
+
+test('Tab does nothing during the replay, a conversation or another window', () => {
+    const r = invading();
+    r.__press(KEY.TAB);
+    assert.equal(r.NightLog.isOpen, false);
+    const ctx = cleaningDay();
+    ctx.Game.player.talking = ctx.Game.monsterList.find(m => m.alive && m.retired);
+    ctx.__press(KEY.TAB);
+    assert.equal(ctx.NightLog.isOpen, false);
+    ctx.Game.player.talking = null;
+    ctx.__press(73); // I: pockets
+    assert.equal(ctx.Inventory.isOpen, true);
+    ctx.__press(KEY.TAB); // switches the pockets tab instead
+    assert.equal(ctx.NightLog.isOpen, false);
+});
+
+test('day 1: a comrade tells you about the tape and the Tab key', () => {
+    const ctx = cleaningDay();
+    const tips = ctx.Game.log.lines.filter(l => plain(l.text).includes('[Tab]'));
+    assert.equal(tips.length, 1);
+    const crew = ctx.Invasion.roster.filter(m => m.alive && m.retired);
+    assert.ok(crew.some(m => plain(tips[0].text).includes(m.name)), plain(tips[0].text));
+});
+
+test('later days: sometimes a comrade comments on the tape', () => {
+    for (const lucky of [true, false]) {
+        const ctx = bootHeadless({ seed: 3 });
+        ctx.Game.generateDungeon();
+        ctx.Game.day = 2;
+        ctx.Invasion.instant = true;
+        ctx.Flavor.chance = () => lucky;
+        ctx.Game.phase = 'invasion';
+        ctx.Game.engine.start();
+        const tips = ctx.Game.log.lines.filter(l => plain(l.text).includes('[Tab]'));
+        assert.equal(tips.length, lucky ? 1 : 0, String(lucky));
+        if (lucky) assert.ok(ctx.Flavor.pools.tapeComment.some(p => plain(tips[0].text).includes(plain(p).split('{monster}').pop().slice(0, 20))));
+    }
+});
+
+test('the help lists Tab for the security log', () => {
+    const ctx = bootHeadless();
+    const rows = ctx.Game.helpLines().map(plain);
+    assert.ok(rows.some(r => r.startsWith('Tab') && r.includes('security log')), rows.join('\n'));
+});
+
+test('tips use the comrade pools, each with {monster} and [Tab]', () => {
+    const ctx = bootHeadless();
+    for (const pool of ['tapeTip', 'tapeComment']) {
+        const lines = ctx.Flavor.pools[pool];
+        assert.ok(lines.length >= 3, pool);
+        for (const l of lines) assert.ok(l.includes('{monster}') && l.includes('[Tab]'), l);
+    }
+});

@@ -733,6 +733,29 @@ var Invasion = {
         DayEvents.start(); // the memo, and maybe a visitor or a birthday (or a ghost of an earlier hero)
         Game.pastHeroes.push({ full: this.hero.full, cls: this.hero.cls });
         Game.amuletStolen = Flavor.chance(0.25); // tomorrow's memo may mention it
+        this.tapeTip();
+    },
+
+    TAPE_COMMENT_CHANCE: 0.35,
+
+    // A comrade in the staff room mentions the security log: always on day 1
+    // (that's how you learn about Tab), now and then on later mornings.
+    tapeTip: function () {
+        let pool = Game.day <= 1 ? 'tapeTip' : 'tapeComment';
+        if (pool == 'tapeComment' && !Flavor.chance(this.TAPE_COMMENT_CHANCE)) {
+            return;
+        }
+        let crew = this.roster.filter(function (m) { return m.alive && m.retired; });
+        if (crew.length == 0) {
+            crew = Game.monsterList.filter(function (m) { return m.alive; });
+        }
+        if (crew.length == 0) {
+            return;
+        }
+        let line = Flavor.line(pool, { monster: this.monsterName(Flavor.rng.getItem(crew)) });
+        if (line) {
+            Game.log.push(line);
+        }
     },
 };
 

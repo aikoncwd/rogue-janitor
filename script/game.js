@@ -513,6 +513,7 @@ var Game = {
             row('E or X', 'examine what is around you'),
             row('O / C', 'open / close doors'),
             row('I', 'your pockets and achievements'),
+            row('Tab', "last night's security log"),
             row('#', 'extended commands, for the curious'),
             '',
             head('SETTINGS'),

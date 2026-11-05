@@ -392,6 +392,10 @@ Player.prototype.handleEvent = function(e) {
         Inventory.handleKey(e);
         return;
     }
+    if (NightLog.isOpen) {
+        NightLog.handleKey(e);
+        return;
+    }
     if (EasterEggs.handleKey(e)) {
         return; // typing a #command or answering the quit question
     }
@@ -456,6 +460,15 @@ Player.prototype.handleEvent = function(e) {
             }
             else {
                 Game.drawMap();
+            }
+            return;
+            // Tab: last night's security log
+            case 9:
+            if (e.preventDefault) {
+                e.preventDefault(); // keep the browser's focus where it is
+            }
+            if (!this.instructions && this.examining == null) {
+                NightLog.open();
             }
             return;
             // x to examine

@@ -19,7 +19,7 @@ A run is **five working days**, about the length of a coffee break.
 
 ## A day at work
 
-1. **Night.** A hero kicks the door in. You aren't playing yet: it's a recording, with a blinking `● REC` and a ticking clock. Fast-forward with `Space` or skip with `Esc`.
+1. **Night.** A hero kicks the door in. You aren't playing yet: it's a recording, with a blinking `● REC` and a ticking clock. The tape starts paused: `Space` plays or pauses, `→` steps one turn, `F` fast-forwards, `R` rewinds to the start and `Esc` skips. During your shift, `Tab` reads the whole night in the security log.
 2. **Morning.** A memo on the corkboard sets the day's goals. The mess is all yours: puddles to mop, litter to pick up, furniture to fix, footprints that spread if you walk through them.
 3. **Breaks.** The fainted monsters dust themselves off and retire to the staff lounge. Chat with them, do them favours, find what they lost and spend your zorkmids at Mimsy's shop.
 4. **Evening.** You get a report card and a plaque for your poor back, then a night out (or in) with your colleagues.
@@ -51,6 +51,7 @@ Do well all week and they may hand you the legendary **Mop of Yendor**. Do badly
 | `Z` | vacuum (from day 2) |
 | `E` / `X` | examine |
 | `I` | your pockets (`Tab` for achievements) |
+| `Tab` | last night's security log |
 | walk into someone | chat, pet, shop |
 | `?` | full help |
 | `V` / `T` | sound / music |

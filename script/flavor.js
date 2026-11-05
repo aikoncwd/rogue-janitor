@@ -53,6 +53,21 @@ var Flavor = {
             "You reach for the mop. Patience, it's still last night.",
         ],
 
+        // A comrade in the staff room tells you about the security log (day 1)...
+        tapeTip: [
+            '{monster} waves a tape at you: "Missed the good bits? The whole security log is up. Press [Tab]."',
+            '{monster}: "The floating eye saw everything. Everything. [Tab] if you want the gory details. Well, the ketchup details."',
+            '{monster} points at the camera: "It writes it all down, you know. Press [Tab] to read last night\'s log."',
+            '{monster}: "New here? Last night is all in the security log. [Tab]. Bring popcorn."',
+        ],
+        // ...and on later mornings, now and then, mentions it again.
+        tapeComment: [
+            '{monster} is rewatching last night on loop: "[Tab] if you want to see me faint again. I was magnificent."',
+            '{monster}: "Did you read the log? [Tab]. Page three. My best line yet."',
+            '{monster} sighs: "The floating eye got my bad side again. It\'s all in the log. [Tab]."',
+            '{monster}: "Someone check the security log. [Tab]. I want to know who kicked MY door."',
+        ],
+
         heroEnter: [
             "{hero} kicks open the front door. \"FOR GLORY AND LOOT!\"",
             "{hero} strides in, cape billowing for no discernible reason.",
