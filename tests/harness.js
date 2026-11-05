@@ -37,6 +37,7 @@ const DEFAULT_FILES = [
     'script/inventory.js',
     'script/nightlog.js',
     'script/events.js',
+    'script/guests.js',
 ];
 
 function makeContext() {

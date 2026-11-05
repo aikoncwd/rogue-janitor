@@ -28,12 +28,13 @@ Do well all week and they may hand you the legendary **Mop of Yendor**. Do badly
 
 ## Highlights
 
-- **A different mess every night.** A procedurally generated dungeon, a fully simulated adventure you only see the aftermath of, and twelve hero classes who each make a mess in their own way (wizards scorch, rangers miss, bards leave sheet music everywhere...).
+- **A different mess every night.** A procedurally generated dungeon, a fully simulated adventure you only see the aftermath of, and sixteen hero classes who each make a mess in their own way (wizards scorch, rangers miss, bards leave sheet music everywhere...). Heroes smash thrones, kick sinks, raid snack machines and walk straight into glitter, pie and whoopee-cushion traps that you get to re-arm.
 - **New gear as the week goes on.** A vacuum for fluff, a squeegee for whole puddles and a scrub brush for stubborn stains.
 - **Combos and goals.** Clean one thing after another to build a streak, and tick off the morning memo for points and zorkmids.
 - **Colleagues worth talking to.** Favours, lost items (watch for the `!`), keepsakes when you help, and gossip about how their shift went.
 - **Mimsy the Mimic's Perfectly Useless Shop.** Snacks, posters and a Turbo-Vac 3000 that works exactly like your old vacuum. Hang the decorations up in the lounge.
-- **Shift events.** A fountain that floods a room, a dragon napping in a corridor and Gribble the goblin intern, who is very eager to help.
+- **A chatty security log.** Hundreds of lines for the night: every species faints its own way, the furniture has opinions, the dice are rolled in the margins and the occasional roguelike developer gets a wave.
+- **Shift events.** A fountain that floods a room, a dragon napping in a corridor, Gribble the goblin intern, a loose Brogue monkey, the dragon's dice hoard spilt on the way to dice night, a leaky ceiling and visitors from other dungeons (a watervine farmer from Qud, a recycler bot from the Complex...) with favours of their own.
 - **Over 20 achievements**, some of them secret, plus NetHack-style `#commands` and a famous code or two.
 - **Chiptune music and sound effects** synthesized live in the browser, with no audio files at all.
 - **Saves every morning.** Close the tab and pick the run up later.
