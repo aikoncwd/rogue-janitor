@@ -390,6 +390,13 @@ var Game = {
                 this.display.draw(x, 0, ' ', '#fff', wall);
             }
             this.display.drawText(Math.max(0, Math.floor((this.layoutInfo.mapCols - len) / 2)), 0, '%b{' + wall + '}' + banner);
+            // and the replay keys right under it, always in view
+            let controls = Invasion.controlsText(this.layoutInfo.mapCols);
+            let clen = controls.replace(/%c\{[^}]*\}/g, '').length;
+            for (let x = 0; x < this.layoutInfo.mapCols; x++) {
+                this.display.draw(x, 1, ' ', '#fff', wall);
+            }
+            this.display.drawText(Math.max(0, Math.floor((this.layoutInfo.mapCols - clen) / 2)), 1, '%b{' + wall + '}' + controls);
         }
 
         this.drawChrome();

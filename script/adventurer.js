@@ -392,7 +392,11 @@ Adventurer.prototype.damage = function() {
 
 }
 
-Adventurer.prototype.act = function () {
+// `released`: the first-frame gate letting this turn through.
+Adventurer.prototype.act = function (released) {
+    if (!released && this.turns == -1 && Invasion.holdFirst(this)) {
+        return Invasion.firstFrameGate(this); // the footage starts paused on its first frame
+    }
     this.takeTurn();
     if (this.active) {
         Invasion.afterHeroTurn();

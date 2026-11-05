@@ -49,7 +49,7 @@ var Flavor = {
         playbackNag: [
             "You can't do anything. It's a recording.",
             "You shout at the screen. The hero does not hear you.",
-            "This already happened. Space to fast-forward, Esc to skip.",
+            "This already happened. Space plays, → steps, Esc skips.",
             "You reach for the mop. Patience, it's still last night.",
         ],
 
