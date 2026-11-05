@@ -34,6 +34,7 @@ var Game = {
     lastlastMessageTime:-1,
     coffeeThreshold:Math.floor(40*ROT.RNG.getUniform())+20,
     inviteOutThreshold:Math.floor(15*ROT.RNG.getUniform())+80,
+    chatThreshold:60,
     convoTags:{},
     day: 1,
     unionist: null,
@@ -673,6 +674,12 @@ var Game = {
     checkCleanMilestones: function() {
         let toReturn = this.cleanPercent();
         let canAsk = function(m) { return m.alive && m.retired && !m.partying && !m.tags.visitor; };
+        // somewhere in between, a comrade who just wants to talk (not one already on an errand)
+        let free = function(m) { return canAsk(m) && m.quests.length == 0; };
+        if (toReturn > this.chatThreshold && this.monsterList.some(free)) {
+            this.chatThreshold += 200;
+            Flavor.rng.getItem(this.monsterList.filter(free)).chatQuest();
+        }
         if ((toReturn > this.coffeeThreshold || toReturn > this.inviteOutThreshold) && this.monsterList.some(canAsk)) {
             this.coffeeThreshold+=200;
             let sendIndex;
@@ -726,6 +733,7 @@ var Game = {
         this.combo = {count: 0, lastTurn: -99, bestToday: 0};
         this.coffeeThreshold = Math.floor(10*ROT.RNG.getUniform()+20*ROT.RNG.getUniform())+30;
         this.inviteOutThreshold =Math.floor(7*ROT.RNG.getUniform()+8*ROT.RNG.getUniform())+80;
+        this.chatThreshold = Math.floor((this.coffeeThreshold + this.inviteOutThreshold) / 2); // halfway: no rng, nothing shifts
         //thetheme=this.makeTheme(300.0/360);
         if ('paint' in this.convoTags) {
             switch(this.convoTags.paint) {

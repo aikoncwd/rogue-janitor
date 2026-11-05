@@ -222,6 +222,9 @@ var Scenes = {
     },
 
     forPlan: function (plan) {
+        if (typeof Visits != 'undefined' && Visits.planFor(plan)) {
+            return Visits.planFor(plan).scene;
+        }
         if (plan == 'dinner' || plan == 'drinks' || plan == 'dancing') {
             return plan;
         }

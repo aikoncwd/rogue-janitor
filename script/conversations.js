@@ -944,112 +944,25 @@ var ConversationBuilder = {
         owner.convos.push(newConvo);
     },
 
+    // The food run, its delivery, the comrade who just wants to talk and tonight's plan
+    // all live in visits.js.
     coffeeConvo: function(tags,speaker) {
-        var newConvo;
-        let option=Math.floor(6*ROT.RNG.getUniform());
-        switch (option) {
-            default:
-            case 0:
-            newConvo = [
-                {text:"Hey! I'm running to the cafe. Want anything?","I'd love a coffee!":1,"How about some tea?":2,"Can I have a donut?":3,"No thanks":4},
-                {text:ROT.RNG.getItem(this.words)+"! I'll bring you some coffee when I've got it!",any:-1,tags:{food:'coffee'}},
-                {text:ROT.RNG.getItem(this.words)+"! I'll bring you some tea when I've got it!",any:-1,tags:{food:'tea'}},
-                {text:ROT.RNG.getItem(this.words)+"! I'll bring you back a donut when I've got it!",any:-1,tags:{food:'donut'}},
-                {text:"Okie doke!",any:-1},
-            ];
-            break;
-            case 1:
-            newConvo = [
-                {text:"I'm going to go swing by Monster Pizza. Want anything?","Pepperoni!":1,"Marinara's my favourite!":2,"Vegetables! All of them!":3,"No thanks":4},
-                {text:ROT.RNG.getItem(this.words)+"! I'll be back with a pepperoni pizza shortly :D",any:-1,tags:{food:'pepperoni pizza'}},
-                {text:ROT.RNG.getItem(this.words)+"! Pizza marinara coming right up :)",any:-1,tags:{food:'pizza marinara'}},
-                {text:ROT.RNG.getItem(this.words)+"! Vegetable pizza coming up!",any:-1,tags:{food:'vegetable pizza'}},
-                {text:"Okie doke!",any:-1},
-            ];
-            break;
-            case 2:
-            newConvo = [
-                {text:"I'm going to "+RandomName(false)+"'s Healthy Select. Want anything?","How about a yummy wrap?":1,"Guacamole!":2,"Salad!":3,"No thanks":4},
-                {text:ROT.RNG.getItem(this.words)+"! I'll bring you your wrap when I've got it!",any:-1,tags:{food:'wrap'}},
-                {text:ROT.RNG.getItem(this.words)+"! I'll bring you some guacamole when it's ready!",any:-1,tags:{food:'guacamole'}},
-                {text:ROT.RNG.getItem(this.words)+"! Salad, on its way!",any:-1,tags:{food:'salad'}},
-                {text:"Okie doke!",any:-1},
-            ];
-            break;
-            case 3:
-            newConvo = [
-                {text:"I'm going to "+RandomName(false)+"'s All-day Breakfast. Want anything?","Pancakes please!":1,"Tofu Scramble would be awesome!":2,"Bagel!":3,"No thanks":4},
-                {text:ROT.RNG.getItem(this.words)+"! Pancakes will be on their way shortly!",any:-1,tags:{food:'pancakes'}},
-                {text:ROT.RNG.getItem(this.words)+"! I will be back with your tofu scramble!",any:-1,tags:{food:'tofu scramble'}},
-                {text:ROT.RNG.getItem(this.words)+"! Bagels rule! I will bring you a bagel!",any:-1,tags:{food:'bagel'}},
-                {text:"Okie doke!",any:-1},
-            ];
-            break;
-            case 4:
-            newConvo = [
-                {text:"I'm heading to the Minetown Bakery. Want anything?","A cinnamon roll!":1,"Lembas, please!":2,"Something with sprinkles!":3,"No thanks":4},
-                {text:ROT.RNG.getItem(this.words)+"! One cinnamon roll, coming up!",any:-1,tags:{food:'cinnamon roll'}},
-                {text:ROT.RNG.getItem(this.words)+"! Lembas it is. One bite and you're full for a week!",any:-1,tags:{food:'lembas'}},
-                {text:ROT.RNG.getItem(this.words)+"! The sprinkliest thing they have!",any:-1,tags:{food:'sprinkle donut'}},
-                {text:"Okie doke!",any:-1},
-            ];
-            break;
-            case 5:
-            newConvo = [
-                {text:"I'm popping over to the Joppa Juice Bar. Want anything?","A watervine smoothie!":1,"Fresh water, a whole dram!":2,"Something with a mango!":3,"No thanks":4},
-                {text:ROT.RNG.getItem(this.words)+"! Watervine smoothie. Live and drink!",any:-1,tags:{food:'watervine smoothie'}},
-                {text:ROT.RNG.getItem(this.words)+"! A whole dram! You're rich now!",any:-1,tags:{food:'dram of fresh water'}},
-                {text:ROT.RNG.getItem(this.words)+"! Mango juice, Brogue-style!",any:-1,tags:{food:'mango juice'}},
-                {text:"Okie doke!",any:-1},
-            ];
-            break;
-        }
-        
-        return newConvo;
+        return Visits.foodRun(speaker);
     },
 
     deliverConvo: function(tags,speaker) {
-        let food;
-        if ('food' in tags && tags.food != false) {
-            food = tags.food;
-        }
-        else {
+        if (!('food' in tags) || tags.food == false) {
             return null;
         }
-        var newConvo;
-        let enjoy = ["I really hope you enjoy it :)", "Careful, it's still warm!", "I got you an extra napkin. You're welcome.",
-            "The cashier rolled a d20 for your order and got a 20. It's extra good.", "Enjoy! You earned it!"];
-        newConvo = [
-            {text:"Here's the "+food+" you asked for!",any:1},
-            {text:ROT.RNG.getItem(enjoy),any:-1},
-        ];
-        tags.food=false;
-        return newConvo;
+        return Visits.delivery(tags);
+    },
+
+    chatConvo: function(tags,speaker) {
+        return Visits.chat(speaker);
     },
 
     invitationConvo: function(tags,speaker) {
-        var newConvo;
-        if (speaker.species == 'Imp' || speaker.species == 'Balor' || speaker.species == 'Dragon' ) {
-            newConvo = [
-                { text: "Holy heck you cleaned so much! I'm impressed!", any: 1 },
-                { text: "Hey, I'm hosting a barbeque tonight. Yes, we're using raging hellfire. From me. Wanna come?", y: 2, n: 4 },
-                { text: ROT.RNG.getItem(this.words)+"! We can all leave together when you're ready to call it a day!", any: 3, globalTags: { invitationAccepted: true, yendorPoints: 10, dinnerPlan: speaker.name+"'s barbeque", dinnerHost: speaker.name } },
-                { text: "Remember, it doesn't need to be spotless! Your health and happiness are way more important than work; call it a day on your own terms!", any: -1 },
-                { text: "That's alright :) I'll invite you to the next one!", any: 3 },
-            ];
-        }
-        else {
-            let planOpts = ['dinner', 'drinks', 'dancing', 'dice night', 'karaoke'];
-            let plan = ROT.RNG.getItem(planOpts);
-            newConvo = [
-                { text: "Hey! You've done so much cleaning, holy cow!", any: 1 },
-                { text: "Listen, a bunch of us were planning to get together for " + plan + " after work. Wanna come?", y: 2, n: 4 },
-                { text: ROT.RNG.getItem(this.words)+"! We'll leave together when you're ready to call it a day!", any: 3, globalTags: { invitationAccepted: true, yendorPoints: 10, dinnerPlan: plan, dinnerHost: speaker.name } },
-                { text: "Remember, it doesn't need to be spotless! Your health and happiness are way more important than work; call it a day on your own terms!", any: -1 },
-                { text: "That's alright :) We do something every day; we'll keep you in the loop for future plans!", any: 3 },
-            ];
-        }
-        return newConvo;
+        return Visits.invitation(speaker);
     },
 
     victoryPrompt: function() {
@@ -1078,47 +991,11 @@ var ConversationBuilder = {
         
         let messages;
         if ('invitationAccepted' in Game.convoTags && Game.convoTags.invitationAccepted) {
-            var description=[
-                "It's really delightful, and you have a fantastic night with your comrades!",
-                "You have a really wonderful evening!",
-                "It's so fun! You are rejuvenated by the fun night!"
-            ];
-            switch(Game.convoTags.dinnerPlan) {
-                default:
-                description.push('The barbeque is so good! Lots of fantastic flamed food!');
-                description.push('The barbeque melts when the hellfire gets a bit too warm. You roast marshmallows on the remains though, so it is still good!');
-                description.push('Who knew monster fire was better than propane AND charcoal? So good!');
-                break;
-                case 'dinner':
-                description.push("You have a really delicious meal and are pleasantly full by the end of it!");
-                description.push("It's buffet style and you get a lot of really good food!");
-                description.push("You have some ramen. At the end, your fortune cookie says:'Your day tomorrow will be "+ROT.RNG.getItem(this.words).toLowerCase()+"'. Wow!");
-                break;
-                case 'dancing':
-                description.push("You dance the whole night. It's so fun and energetic!");
-                description.push("Some really good classic metal is played and you headbang the whole night!");
-                description.push("Some wicked good music from the 90's plays. Such nostalgia! Wow! ");
-                break;
-                case 'dice night':
-                description.push("The dragon runs the game. You play a level 1 Janitor. You save the kingdom by mopping the final boss's lair!");
-                description.push("You roll three natural 20s in a row. The whole table screams. The dragon has to lie down.");
-                description.push("The campaign is 'Dungeons and Dishwashers'. You win. Everybody wins. There are snacks.");
-                break;
-                case 'karaoke':
-                description.push("The harpy sings a power ballad. Every glass in the place shatters. Nobody minds.");
-                description.push("You and a skeleton duet 'Dancing in the Dark'. Bones rattle. A standing ovation.");
-                description.push("The ogre sings a lullaby. Half the bar falls asleep. It's the best night ever.");
-                break;
-                case 'drinks':
-                description.push("You have a beverage called a 'Gin and "+RandomName(false)+"'. It's surprisingly "+ROT.RNG.getItem(this.words)+"?");
-                description.push("Everyone has a round and boisterously jokes about the day's events. It's fun!");
-                description.push("It's actually pretty quiet; lots of folks stayed in tonight, so it's a relatively quiet night with 3 or 4 of you.");
-                break;
-            }
+            let night = Visits.night(Game.convoTags.dinnerPlan);
             messages=[
-                "Leave for the day and head out with everyone to "+Game.convoTags.dinnerPlan+"?",
-                "You and your comrades leave together for "+Game.convoTags.dinnerPlan+"!",
-                {message: ROT.RNG.getItem(description), scene: Scenes.forPlan(Game.convoTags.dinnerPlan)},
+                "Leave for the day and head out with everyone to "+night.label+"?",
+                "You and your comrades leave together for "+night.label+"!",
+                {message: night.description, scene: night.scene},
                 "Eventually, the night comes to an end. Your eyes grow heavy and it is time to rest.",
                 {message: "You go home, and get a nice, full 8 hours of sleep.", scene: 'sleep'}
                 ];
@@ -1127,12 +1004,15 @@ var ConversationBuilder = {
             messages=[
                 "Leave for the day and go home?",
                 "You leave for the day, and head home.",
-                {message: "You have a really relaxing evening at home! You read a book and play some video games.", scene: 'home'},
+                Visits.homeNight(),
                 {message: "Eventually, it's time to sleep. You go to bed and have a nice, full 8 hours of sleep.", scene: 'sleep'}
             ];
         }
         if ('animal' in Game.convoTags && Game.convoTags.animal != 'none') {
             messages.push("You have a really happy dream about "+Game.convoTags.animal+"s!");
+        }
+        if (Game.convoTags.sharedDream) { // someone told you their dream today
+            messages.push(Game.convoTags.sharedDream + " (Thanks a lot, " + Game.convoTags.dreamer + ".)");
         }
         // the plaque, then the report (the report *is* the identification)
         Scenes.setPlaque(Game.plaqueLines());
@@ -1172,7 +1052,7 @@ var ConversationBuilder = {
                 nextMsg.globalTags=Object.assign({}, nextMsg.globalTags, {endShift:true}); // you said yes: the shift is over
             }
             if (i==(messages.length-1)) {
-                nextMsg.globalTags=lastDay ? {endRun:true,invitationAccepted:false} : {nextDay:true,invitationAccepted:false};
+                nextMsg.globalTags=lastDay ? {endRun:true,invitationAccepted:false,sharedDream:false} : {nextDay:true,invitationAccepted:false,sharedDream:false};
                 nextMsg.any=-1;
                 //if (Game.yendorPoints+Game.cleanPercent() > Game.targetPoints && !Game.victory) {
                 //    nextMsg.any=(i+1);
