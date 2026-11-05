@@ -35,8 +35,8 @@ Tile.prototype.getArt = function() {
     this.visible=true;
     if (this.secretDoor != null && Game.phase == 'cleaning') {
         let dist = Math.abs(this.x - Game.player.x)+Math.abs(this.y-Game.player.y);
-        let probability=1.0/parseFloat(0.5*dist);//Math.pow(0.7,parseFloat(dist));
-        if (Flavor.rng.getUniform()<probability) { // drawing must not move the world RNG
+        let probability=1.0/parseFloat(0.5*dist);
+        if (Math.random()<probability) { // drawing is render-only: it must not move any game RNG
             Game.sendMessage(this.secretDoor.sound,false);
         }
     }

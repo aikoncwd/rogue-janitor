@@ -1,21 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
-
-function cleaningDay(seed = 1234) {
-    const ctx = toIntro(bootHeadless({ seed, begin: true }));
-    ctx.Invasion.instant = true;
-    ctx.__press(13);
-    ctx.Invasion.instant = false;
-    let n = 0;
-    while (ctx.Game.player.talking && n++ < 50) {
-        ctx.Game.player.talking.lastConvoChange = 0;
-        ctx.__press(13);
-    }
-    return ctx;
-}
+const { cleaningDay, strip } = require('./harness');
 
 function log(ctx, n = 3) {
     return ctx.Game.log.recent(n).map(l => strip(l.text)).join(' | ');
@@ -149,4 +134,127 @@ test('the intern goes home after 60 turns', () => {
     ctx.DayEvents.run('intern');
     for (let t = 0; t < 61; t++) ctx.DayEvents.tick();
     assert.strictEqual(ctx.DayEvents.intern, null);
+});
+
+// 7. soot on important tiles
+test('the dragon\'s soot never lands on important tiles', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.day = 3;
+    ctx.DayEvents.run('dragon');
+    const d = ctx.DayEvents.dragon;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+        const t = G.map[(d.x + a) + ',' + (d.y + b)];
+        if (t && t !== G.map[d.x + ',' + d.y]) t.important = true;
+    }
+    for (let k = 0; k < 6; k++) {
+        G.turnCount = ctx.DayEvents.DRAGON_PUFF_EVERY * (k + 1);
+        ctx.DayEvents.tick();
+    }
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+        const t = G.map[(d.x + a) + ',' + (d.y + b)];
+        assert.ok(!(t && t.mess && t.mess.kind == 'Soot'), 'soot at ' + a + ',' + b);
+    }
+});
+
+// 8. the intern and doors
+test('the intern does not stop in a doorway', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.day = 2;
+    ctx.DayEvents.run('intern');
+    const it = ctx.DayEvents.intern;
+    assert.ok(it);
+    const p = G.player;
+    // the tile the player just left is an open door
+    const dx = p.x + 1, dy = p.y;
+    const t = G.map[dx + ',' + dy];
+    t.entity = null; t.mess = null; t.door = '-'; t.open = true; t.passable = true;
+    p.prevX = dx; p.prevY = dy;
+    if (Math.max(Math.abs(it.x - p.x), Math.abs(it.y - p.y)) <= 1) {
+        // move the intern out of reach, so it wants to follow
+        const far = Object.keys(G.map).find(k => {
+            const [x, y] = k.split(',').map(Number);
+            const tile = G.map[k];
+            return tile.passable && tile.entity == null && tile.door == null && Math.max(Math.abs(x - p.x), Math.abs(y - p.y)) > 2;
+        });
+        G.map[it.x + ',' + it.y].entity = null;
+        [it.x, it.y] = far.split(',').map(Number);
+        G.map[far].entity = it;
+    }
+    const [ix, iy] = [it.x, it.y];
+    ctx.DayEvents.tick();
+    assert.notDeepStrictEqual([it.x, it.y], [dx, dy]);
+    assert.deepStrictEqual([it.x, it.y], [ix, iy]);
+});
+
+test('a fountain fixed after the flood is a fountain again', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.day = 3;
+    const f = ctx.GetEntity('Fountain', G.player.x + 3, G.player.y);
+    ctx.DayEvents.run('flood');
+    const tile = G.map[f.x + ',' + f.y];
+    tile.mess = null; // fixed (what the fix tool does: put the parent back)
+    tile.entity = f;
+    assert.strictEqual(f.getArt()[0], '{');
+});
+
+test('a questing comrade can swap past the sleeping dragon', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.day = 3;
+    ctx.DayEvents.run('dragon');
+    const d = ctx.DayEvents.dragon;
+    const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [d.x + dx, d.y + dy]).find(([x, y]) => G.map[x + ',' + y] && G.map[x + ',' + y].passThrough());
+    const m = G.monsterList.find(x => x.alive && x.retired && !x.tags.visitor);
+    G.map[m.x + ',' + m.y].entity = null;
+    m.x = spot[0]; m.y = spot[1];
+    G.map[spot[0] + ',' + spot[1]].entity = m;
+    const [dx, dy] = [d.x, d.y];
+    assert.ok(m.moveTo(dx, dy, true), 'swapped');
+    assert.deepStrictEqual([m.x, m.y], [dx, dy]);
+    assert.deepStrictEqual([d.x, d.y], spot);
+    assert.strictEqual(G.map[spot[0] + ',' + spot[1]].entity, d);
+});
+
+test('the intern does not jump to yesterday\'s spot', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.day = 2;
+    G.player.prevX = 9999; G.player.prevY = 9999;
+    ctx.DayEvents.start();
+    assert.strictEqual(G.player.prevX, null);
+});
+
+test('the dragon does not roll onto a door', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.day = 3;
+    ctx.DayEvents.run('dragon');
+    const d = ctx.DayEvents.dragon;
+    const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [d.x + dx, d.y + dy]).find(([x, y]) => G.map[x + ',' + y] && G.map[x + ',' + y].passThrough());
+    G.map[G.player.x + ',' + G.player.y].entity = null;
+    G.player.x = spot[0]; G.player.y = spot[1];
+    const t = G.map[spot[0] + ',' + spot[1]];
+    t.entity = G.player;
+    t.door = '-'; t.open = true; // the player stands in a doorway
+    for (let i = 0; i < 3; i++) d.cleanerAct();
+    assert.deepStrictEqual([G.player.x, G.player.y], spot, 'no swap onto a door');
+    assert.match(G.log.recent(2).map(l => strip(l.text)).join(' '), /dragon/i);
+});
+
+test('the dragon puffs counting from its nap, the same after a Continue', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.day = 3;
+    G.turnCount = 1234; // a Continue keeps whatever the counter was
+    ctx.DayEvents.run('dragon');
+    const d = ctx.DayEvents.dragon;
+    assert.strictEqual(d.start, 1234);
+    for (let i = 0; i < ctx.DayEvents.DRAGON_PUFF_EVERY - 1; i++) { G.turnCount++; ctx.DayEvents.tick(); }
+    assert.strictEqual(d.puffs, 0);
+    G.turnCount++;
+    ctx.DayEvents.tick();
+    assert.strictEqual(d.puffs, 1);
 });

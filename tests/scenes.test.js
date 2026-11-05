@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
+const { bootHeadless, toIntro, strip } = require('./harness');
 
 function cleaning(seed = 1234) {
     const ctx = toIntro(bootHeadless({ seed, begin: true }));

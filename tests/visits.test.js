@@ -204,3 +204,22 @@ test('every frame of a scene is drawn from the same left column', () => {
         assert.equal(lefts.size, 1, name);
     }
 });
+
+test('made-up names in chatter do not move the world RNG', () => {
+    const ctx = cleaning();
+    const state = JSON.stringify(ctx.ROT.RNG.getState());
+    for (let i = 0; i < 5; i++) ctx.Visits.withName('Ask {name} about it.');
+    ctx.Visits.fill('{name} brings {word} to {game}.');
+    assert.strictEqual(JSON.stringify(ctx.ROT.RNG.getState()), state);
+    assert.doesNotMatch(ctx.Visits.withName('Ask {name}.'), /\{name\}/);
+    assert.strictEqual(ctx.Visits.withName('No name here.'), 'No name here.');
+});
+
+test('running out of one list forgets only that list', () => {
+    const ctx = cleaning();
+    ctx.Game.run.chatsSeen = ['species-chat', 'a', 'b'];
+    const list = [{ id: 'a' }, { id: 'b' }];
+    const pick = ctx.Visits.fresh(list, 'chatsSeen', x => x.id);
+    assert.ok(ctx.Game.run.chatsSeen.includes('species-chat'));
+    assert.ok(ctx.Game.run.chatsSeen.includes(pick.id));
+});

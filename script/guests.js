@@ -1,40 +1,32 @@
 // More shift events: a visitor from another dungeon (with a favour to ask), a loose
 // Brogue monkey, the dragon's dice hoard spilt on the way to dice night, and a leaky
 // ceiling. They join DayEvents' pool like events.js does. World changes use ROT.RNG.
-DayEvents.EVENTS.push('guest', 'monkey', 'diceNight', 'leak');
 DayEvents.leak = null;
 DayEvents.LEAK_EVERY = 12;
 DayEvents.LEAK_MAX = 8;
 DayEvents.MONKEY_PEELS = [6, 10];
 DayEvents.DICE = [8, 13];
 
-DayEvents.guestEligible = DayEvents.eligible;
-DayEvents.eligible = function (name) {
-    switch (name) {
-        case 'guest': return Game.day >= 2 && this.unseenGuests().length > 0;
-        case 'monkey': return Game.day >= 2;
-        case 'diceNight': return Game.day >= 2;
-        case 'leak': return Game.day >= 2 && this.leakRooms().length > 0;
-    }
-    return this.guestEligible(name);
-};
+DayEvents.define('guest', {
+    eligible: function () { return Game.day >= 2 && this.unseenGuests().length > 0; },
+    run: function () { return this.inviteGuest(); },
+});
+DayEvents.define('monkey', {
+    eligible: function () { return Game.day >= 2; },
+    run: function () { this.looseMonkey(); },
+});
+DayEvents.define('diceNight', {
+    eligible: function () { return Game.day >= 2; },
+    run: function () { this.spillDice(); },
+});
+DayEvents.define('leak', {
+    eligible: function () { return Game.day >= 2 && this.leakRooms().length > 0; },
+    run: function () { this.startLeak(); },
+});
 
-DayEvents.guestRun = DayEvents.run;
-DayEvents.run = function (name) {
-    switch (name) {
-        case 'guest': Game.todayEvent = name; this.inviteGuest(); return;
-        case 'monkey': Game.todayEvent = name; this.looseMonkey(); return;
-        case 'diceNight': Game.todayEvent = name; this.spillDice(); return;
-        case 'leak': Game.todayEvent = name; this.startLeak(); return;
-    }
-    this.guestRun(name);
-};
-
-DayEvents.guestStart = DayEvents.start;
-DayEvents.start = function () {
+DayEvents.onStart(function () {
     this.leak = null;
-    this.guestStart();
-};
+});
 
 DayEvents.unseenGuests = function () {
     let seen = (Game.run && Game.run.guestsSeen) || [];
@@ -73,7 +65,7 @@ DayEvents.inviteGuest = function () {
     let g = ROT.RNG.getItem(this.unseenGuests());
     let v = Visitors.add(g);
     if (v == null) {
-        return; // a full lounge: they'll try another day
+        return false; // a full lounge: they'll try another day
     }
     Game.run.guestsSeen = (Game.run.guestsSeen || []).concat([g.id]);
     v.species = 'Guest';
@@ -128,8 +120,7 @@ DayEvents.startLeak = function () {
     Game.log.push(Lore.eventNews.leak.replace('{room}', Rooms.name(room)));
 };
 
-DayEvents.guestTick = DayEvents.tick;
-DayEvents.tick = function () {
+DayEvents.onTick(function () {
     let l = this.leak;
     if (l != null && Game.turnCount > l.start && (Game.turnCount - l.start) % this.LEAK_EVERY == 0 && l.drips < this.LEAK_MAX) {
         let r = Game.rooms[l.room];
@@ -151,7 +142,6 @@ DayEvents.tick = function () {
             }
         }
     }
-    this.guestTick();
-};
+});
 
 if (typeof module !== 'undefined') module.exports = DayEvents;

@@ -55,11 +55,27 @@ var Visitors = {
 
 // Something small and cozy that happens during the shift, plus the daily memo.
 var DayEvents = {
-    EVENTS: ['inspector', 'birthday', 'mimicStain', 'rubberDuck', 'bones', 'rodney'],
+    // Every shift event registers here with define(): EVENTS keeps the order they were
+    // added in (picks are seeded, so the order matters), HANDLERS holds what they do.
+    EVENTS: [],
+    HANDLERS: {},
+    resets: [], // run when a shift starts: forget yesterday's dragon, intern, leak...
+    ticks: [],  // run once per player turn during the shift
     NONE_CHANCE: 0.25,
+
+    // def: { eligible() -> bool, run() -> false when it could not happen }
+    define: function (name, def) {
+        this.EVENTS.push(name);
+        this.HANDLERS[name] = def;
+    },
+    onStart: function (fn) { this.resets.push(fn); },
+    onTick: function (fn) { this.ticks.push(fn); },
 
     // Called when the shift starts (after the hand-over).
     start: function () {
+        for (let i = 0; i < this.resets.length; i++) {
+            this.resets[i].call(this);
+        }
         Game.todayEvent = null;
         let memo = Game.amuletStolen ? Lore.amuletMemo : Flavor.rng.getItem(Lore.memos);
         Game.amuletStolen = false;
@@ -113,67 +129,91 @@ var DayEvents = {
     },
 
     eligible: function (name) {
-        switch (name) {
-            case 'bones': return Game.day >= 3 && Game.pastHeroes != null && Game.pastHeroes.length > 0;
-            case 'rodney': return Game.day >= 4;
-            case 'rubberDuck': return this.fountain() != null;
-            case 'mimicStain': return this.mopMesses().length > 0;
-            case 'birthday': return this.loungeMonsters().length > 0;
-            case 'inspector': return true;
-        }
-        return false;
+        let h = this.HANDLERS[name];
+        return h != null && h.eligible.call(this);
     },
 
+    // Runs an event. Today's event is only set when it really happened (a visitor who
+    // finds no room in a full lounge never came, so nobody can be judged by them).
     run: function (name) {
-        Game.todayEvent = name;
-        switch (name) {
-            case 'inspector':
-                Visitors.add(Lore.visitors.inspector);
-                Game.log.push(Lore.eventNews.inspector);
-                break;
-            case 'birthday': {
-                let m = ROT.RNG.getItem(this.loungeMonsters());
-                m.birthday = true;
-                let spot = Visitors.freeLoungeTile();
-                if (spot != null) {
-                    makeVariant(spot[0], spot[1], 'AppleCore', 'Birthday Cake');
-                }
-                let lines = Lore.birthdayLines;
-                let talk = [];
-                for (let i = 0; i < lines.length; i++) {
-                    talk.push({ text: lines[i], any: i == lines.length - 1 ? -1 : i + 1 });
-                }
-                talk[talk.length - 1].globalTags = { yendorPoints: 30 };
-                m.convos.push(talk);
-                Game.log.push(Lore.eventNews.birthday.replace('{monster}', m.name));
-                break;
-            }
-            case 'mimicStain':
-                ROT.RNG.getItem(this.mopMesses()).mimic = true;
-                Game.log.push(Lore.eventNews.mimicStain);
-                break;
-            case 'rubberDuck':
-                this.fountain().examineText = "There's a rubber duck in it. It knows things. You explain your problems to it.";
-                break;
-            case 'bones': {
-                let hero = ROT.RNG.getItem(Game.pastHeroes);
-                let killedBy = ROT.RNG.getItem(Lore.killedBy);
-                let def = Lore.visitors.bones;
-                Visitors.add({
-                    name: 'Ghost of ' + hero.full,
-                    char: def.char,
-                    color: def.color,
-                    lines: def.lines.map(function (l) { return l.replace('{hero}', hero.full).replace('{killedBy}', killedBy); }),
-                });
-                Game.log.push(Lore.eventNews.bones);
-                break;
-            }
-            case 'rodney':
-                Visitors.add(Lore.visitors.rodney);
-                Game.log.push(Lore.eventNews.rodney);
-                break;
+        let happened = this.HANDLERS[name].run.call(this) !== false;
+        Game.todayEvent = happened ? name : null;
+        return happened;
+    },
+
+    tick: function () {
+        for (let i = 0; i < this.ticks.length; i++) {
+            this.ticks[i].call(this);
         }
     },
+
+    // A visitor who drops by with a news line. False when the lounge is full.
+    visit: function (def, news) {
+        if (Visitors.add(def) == null) {
+            return false;
+        }
+        Game.log.push(news);
+        return true;
+    },
 };
+
+DayEvents.define('inspector', {
+    eligible: function () { return true; },
+    run: function () { return this.visit(Lore.visitors.inspector, Lore.eventNews.inspector); },
+});
+
+DayEvents.define('birthday', {
+    eligible: function () { return this.loungeMonsters().length > 0; },
+    run: function () {
+        let m = ROT.RNG.getItem(this.loungeMonsters());
+        let spot = Visitors.freeLoungeTile();
+        if (spot != null) {
+            makeVariant(spot[0], spot[1], 'AppleCore', 'Birthday Cake');
+        }
+        let lines = Lore.birthdayLines;
+        let talk = [];
+        for (let i = 0; i < lines.length; i++) {
+            talk.push({ text: lines[i], any: i == lines.length - 1 ? -1 : i + 1 });
+        }
+        talk[talk.length - 1].globalTags = { yendorPoints: 30 };
+        m.convos.push(talk);
+        Game.log.push(Lore.eventNews.birthday.replace('{monster}', m.name));
+    },
+});
+
+DayEvents.define('mimicStain', {
+    eligible: function () { return this.mopMesses().length > 0; },
+    run: function () {
+        ROT.RNG.getItem(this.mopMesses()).mimic = true;
+        Game.log.push(Lore.eventNews.mimicStain);
+    },
+});
+
+DayEvents.define('rubberDuck', {
+    eligible: function () { return this.fountain() != null; },
+    run: function () {
+        this.fountain().examineText = "There's a rubber duck in it. It knows things. You explain your problems to it.";
+    },
+});
+
+DayEvents.define('bones', {
+    eligible: function () { return Game.day >= 3 && Game.pastHeroes != null && Game.pastHeroes.length > 0; },
+    run: function () {
+        let hero = ROT.RNG.getItem(Game.pastHeroes);
+        let killedBy = ROT.RNG.getItem(Lore.killedBy);
+        let def = Lore.visitors.bones;
+        return this.visit({
+            name: 'Ghost of ' + hero.full,
+            char: def.char,
+            color: def.color,
+            lines: def.lines.map(function (l) { return l.replace('{hero}', hero.full).replace('{killedBy}', killedBy); }),
+        }, Lore.eventNews.bones);
+    },
+});
+
+DayEvents.define('rodney', {
+    eligible: function () { return Game.day >= 4; },
+    run: function () { return this.visit(Lore.visitors.rodney, Lore.eventNews.rodney); },
+});
 
 if (typeof module !== 'undefined') module.exports = { Visitors, DayEvents };

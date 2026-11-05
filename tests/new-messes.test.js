@@ -150,3 +150,26 @@ test('some rooms start out with cobwebs in their corners', () => {
     }
     assert.ok(total > 0);
 });
+
+// A free floor tile next to the player: [x, y, keyCode towards it].
+function freeBeside(ctx) {
+    const G = ctx.Game;
+    const dirs = { '1,0': 39, '-1,0': 37, '0,1': 40, '0,-1': 38 };
+    for (const d in dirs) {
+        const [dx, dy] = d.split(',').map(Number);
+        const t = G.map[(G.player.x + dx) + ',' + (G.player.y + dy)];
+        if (t && t.passThrough() && t.mess == null) return [G.player.x + dx, G.player.y + dy, dirs[d]];
+    }
+    throw new Error('no free tile beside the player');
+}
+
+test('push messages lower-case the chest', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const [x, y, key] = freeBeside(ctx);
+    const chest = ctx.GetEntity('Chest', x, y);
+    assert.strictEqual(chest.name, 'Treasure Chest');
+    ctx.__press(key);
+    const last = G.log.recent(3).map(l => l.text).join(' ');
+    assert.match(last, /the treasure chest/);
+});

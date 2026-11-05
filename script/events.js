@@ -1,7 +1,6 @@
 // The new shift events: a flooding fountain, a sleeping dragon, a goblin intern.
 // They join DayEvents' pool. The dragon and the intern are plain map objects (like
 // Mimsy): not comrades, no quests, no scheduler. World changes use ROT.RNG.
-DayEvents.EVENTS.push('flood', 'dragon', 'intern');
 DayEvents.dragon = null;
 DayEvents.intern = null;
 DayEvents.DRAGON_PUFF_EVERY = 15;
@@ -10,34 +9,27 @@ DayEvents.INTERN_TURNS = 60;
 DayEvents.INTERN_MAX_MESSES = 10;
 DayEvents.INTERN_MESS_CHANCE = 0.15;
 
-DayEvents.baseEligible = DayEvents.eligible;
-DayEvents.eligible = function (name) {
-    switch (name) {
-        case 'flood': return Game.day >= 3 && this.fountain() != null;
-        case 'dragon': return Game.day >= 3 && this.corridorSpots().length > 0;
-        case 'intern': return Game.day >= 2;
-    }
-    return this.baseEligible(name);
-};
+DayEvents.define('flood', {
+    eligible: function () { return Game.day >= 3 && this.fountain() != null; },
+    run: function () { this.flood(); },
+});
+DayEvents.define('dragon', {
+    eligible: function () { return Game.day >= 3 && this.corridorSpots().length > 0; },
+    run: function () { this.napDragon(); },
+});
+DayEvents.define('intern', {
+    eligible: function () { return Game.day >= 2; },
+    run: function () { return this.hireIntern(); },
+});
 
-DayEvents.baseRun = DayEvents.run;
-DayEvents.run = function (name) {
-    switch (name) {
-        case 'flood': Game.todayEvent = name; this.flood(); return;
-        case 'dragon': Game.todayEvent = name; this.napDragon(); return;
-        case 'intern': Game.todayEvent = name; this.hireIntern(); return;
-    }
-    this.baseRun(name);
-};
-
-DayEvents.baseStart = DayEvents.start;
-DayEvents.start = function () {
+DayEvents.onStart(function () {
     this.dragon = null;
     this.intern = null;
     Game.player.prevX = null; // yesterday's footsteps were on another map
     Game.player.prevY = null;
-    this.baseStart();
-};
+    // ...and so was yesterday's puddle: nobody tracks it into a fresh morning
+    [Game.player].concat(Game.petList || []).forEach(function (w) { w.spreading = null; w.spreadCount = 0; });
+});
 
 // Corridor tiles away from doors where something big could nap.
 DayEvents.corridorSpots = function () {
@@ -91,6 +83,7 @@ DayEvents.napDragon = function () {
     let s = ROT.RNG.getItem(this.corridorSpots());
     let dragon = {
         x: s[0], y: s[1], char: 'D', color: '#c33', name: 'a sleeping dragon', bumps: 0, puffs: 0,
+        start: Game.turnCount, // puffs are counted from now: the same after a Continue
         tags: {dragon: true},
         getArt: function () { return [this.char, this.color, '#000']; },
         describe: function () { return 'A big friendly dragon, fast asleep in the corridor. Zzz.'; },
@@ -142,7 +135,7 @@ DayEvents.bumpDragon = function (d) {
 DayEvents.hireIntern = function () {
     let spot = Visitors.freeLoungeTile();
     if (spot == null) {
-        return;
+        return false; // no room in the lounge: HR keeps Gribble for another day
     }
     let intern = {
         x: spot[0], y: spot[1], char: 'g', color: '#8f8', name: 'Gribble the Intern', turns: 0, messes: 0,
@@ -174,9 +167,10 @@ DayEvents.sendIntern = function (message) {
 };
 
 // Once per player turn during the shift.
-DayEvents.tick = function () {
+DayEvents.onTick(function () {
     let d = this.dragon;
-    if (d != null && Game.turnCount % this.DRAGON_PUFF_EVERY == 0 && d.puffs < this.DRAGON_MAX_PUFFS) {
+    let since = d != null ? Game.turnCount - d.start : 0;
+    if (d != null && since > 0 && since % this.DRAGON_PUFF_EVERY == 0 && d.puffs < this.DRAGON_MAX_PUFFS) {
         let spots = [];
         for (let a = -1; a <= 1; a++) {
             for (let b = -1; b <= 1; b++) {
@@ -216,6 +210,6 @@ DayEvents.tick = function () {
         it.messes++;
         makeMess(it.x, it.y, ROT.RNG.getItem(['Wrapper', 'AppleCore', 'Water']));
     }
-};
+});
 
 if (typeof module !== 'undefined') module.exports = DayEvents;

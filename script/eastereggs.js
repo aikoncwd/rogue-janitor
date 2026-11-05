@@ -8,7 +8,6 @@ var EasterEggs = {
     KONAMI: [38, 38, 40, 40, 37, 39, 37, 39, 66, 65],
     history: [],
     tried: {},
-    prayedDay: -1,
 
     openPrompt: function () {
         this.prompt = '';
@@ -71,8 +70,9 @@ var EasterEggs = {
         switch (verb) {
             case 'pray':
                 this.tried.pray = true;
-                if (this.prayedDay != Game.day) {
-                    this.prayedDay = Game.day;
+                // kept in the run: saved with it, and forgotten when a new run starts
+                if (Game.run.prayedDay != Game.day) {
+                    Game.run.prayedDay = Game.day;
                     Game.sendMessage("You feel a hopeful feeling. The bucket refills.");
                 }
                 else {

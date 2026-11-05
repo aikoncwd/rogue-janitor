@@ -30,10 +30,8 @@ var Game = {
     shift: {cleaned:0, passes:0, requestsDone:0, startPoints:0},
     screen: null,
     lastMessage: "",
-    lastlastMessage: "",
-    lastlastMessageTime:-1,
-    coffeeThreshold:Math.floor(40*ROT.RNG.getUniform())+20,
-    inviteOutThreshold:Math.floor(15*ROT.RNG.getUniform())+80,
+    coffeeThreshold:0, // set for each day by generateDungeon
+    inviteOutThreshold:0,
     chatThreshold:60,
     convoTags:{},
     day: 1,
@@ -83,7 +81,7 @@ var Game = {
     // only started by Invasion.start() once the intro screen is dismissed.
     setup: function() {
         this.scheduler = new ROT.Scheduler.Simple();
-        this.player = new Player(-1,-1,-1);
+        this.player = new Player(-1,-1);
         this.fov = new ROT.FOV.PreciseShadowcasting(function(x,y){
             return Game.lightPasses(x,y);
         });
@@ -135,7 +133,7 @@ var Game = {
         if (this.screenOpen()) {
             return; // the shop and the pockets own the letters (their own listener handles them)
         }
-        if (e.keyCode == 84 && !this.typingInConvo()) { // T: music on/off
+        if (e.keyCode == 84) { // T: music on/off (conversations never use T)
             Music.toggle();
             if (this.phase != 'cleaning' || this.player.talking == null) {
                 this.drawMap();
@@ -273,10 +271,6 @@ var Game = {
         }
     },
 
-    // Conversations read letters (y/n/digits); T is never one of them, but stay safe.
-    typingInConvo: function() {
-        return false;
-    },
 
     // Which tune fits what is on screen right now.
     musicTrack: function() {
@@ -475,7 +469,8 @@ var Game = {
             Ui.window({
                 id: 'help', title: 'Rogue Janitor: How to Clean', width: 64,
                 body: this.helpLines(),
-                footer: Ui.key('[↑↓]') + ' scroll   ' + Ui.key('[?]') + ' or ' + Ui.key('[Esc]') + ' back to work',
+                footer: [Ui.key('[↑↓]') + ' scroll   ' + Ui.key('[?]') + ' or ' + Ui.key('[Esc]') + ' back to work',
+                    Ui.key('↑↓') + ' scroll  ' + Ui.key('Esc') + ' back'],
             });
         }
         else if (Shop.isOpen) {
@@ -650,8 +645,6 @@ var Game = {
             msg=null;
         }
         if (msg != null) {
-            this.lastlastMessage=msg;
-            this.lastlastMessageTime=4;
             this.lastMessage=msg;
             this.log.push(msg);
         }
@@ -666,7 +659,7 @@ var Game = {
             return 100;
         }
         let cleaned = Game.messNumbers[1] - Game.messNumbers[0];
-        return Math.floor(100 * cleaned / Game.messNumbers[1]);
+        return Math.max(0, Math.min(100, Math.floor(100 * cleaned / Game.messNumbers[1])));
     },
 
     // Cleanliness milestones: a comrade offers coffee, later an evening out.
@@ -678,7 +671,7 @@ var Game = {
         let free = function(m) { return canAsk(m) && m.quests.length == 0; };
         if (toReturn > this.chatThreshold && this.monsterList.some(free)) {
             this.chatThreshold += 200;
-            Flavor.rng.getItem(this.monsterList.filter(free)).chatQuest();
+            ROT.RNG.getItem(this.monsterList.filter(free)).chatQuest(); // a world change: the world RNG
         }
         if ((toReturn > this.coffeeThreshold || toReturn > this.inviteOutThreshold) && this.monsterList.some(canAsk)) {
             this.coffeeThreshold+=200;
@@ -707,7 +700,6 @@ var Game = {
 
     makeTheme: function(hueint,sat=0.5) {
         let hue=parseFloat(hueint)/360.0;
-        //offsethue=parseFloat(hueint+60 % 360)/360.0;
         var colors=[
             ROT.Color.hsl2rgb([hue,0.1*sat,0.6]),
             ROT.Color.hsl2rgb([hue,sat,0.4]),
@@ -734,7 +726,6 @@ var Game = {
         this.coffeeThreshold = Math.floor(10*ROT.RNG.getUniform()+20*ROT.RNG.getUniform())+30;
         this.inviteOutThreshold =Math.floor(7*ROT.RNG.getUniform()+8*ROT.RNG.getUniform())+80;
         this.chatThreshold = Math.floor((this.coffeeThreshold + this.inviteOutThreshold) / 2); // halfway: no rng, nothing shifts
-        //thetheme=this.makeTheme(300.0/360);
         if ('paint' in this.convoTags) {
             switch(this.convoTags.paint) {
                 default:
@@ -787,21 +778,6 @@ var Game = {
         }
     },
 
-    generateDiner: function() {
-        var thetheme = {
-            floorColor:'#ddd',
-            corridorWalls:['#a0a','#505'],
-            roomWalls:['#f0f','#808'],
-            doorColor:['#ddd','#842'],
-        };
-        this.generateMap(300,[6,8],0,thetheme);
-        //this.addStairs();
-        //this.adventurer = new Adventurer(this.stairs[0][0],this.stairs[0][1]);
-        //this.populateRooms();
-        this.addDoors(thetheme);
-        this.scheduler.add(Game.player,true);
-    },
-
     addSecretRoom: function(size,theme,spacing,doorSound=null) {
         let position=[0,0];
         while (!this.checkFits(size,position,spacing)) {
@@ -815,26 +791,22 @@ var Game = {
 
     secretCorridor: function(roomCenters,theme,doorSound=null) {
         let lastCenter = [roomCenters[roomCenters.length-1][0], roomCenters[roomCenters.length-1][1]];
-        let index;// = Math.floor((roomCenters.length-1) * ROT.RNG.getUniform());
         let allCells=this.freeCells.concat(this.hallCells);
         let best = 1000;
         let startCenter=[0,0];
-        //let index=-1;
-        for (let i = 0; i < allCells.length - 1; i++) {
+        for (let i = 0; i < allCells.length; i++) {
             let key = allCells[i];
             if (key in this.map && this.map[key].mess == null && this.map[key].passThrough()) {
                 let parts=key.split(',');
                 let px=parseInt(parts[0]);
                 let py=parseInt(parts[1]);
                 if (Math.abs(lastCenter[0] - px) + Math.abs(lastCenter[1] - py) < best) {
-                    index = i;
                     best = Math.abs(lastCenter[0] - px) + Math.abs(lastCenter[1] - py);
                     startCenter[0]=px;
                     startCenter[1]=py;
                 }
             }
         }
-        //let startCenter = roomCenters[index];
         let direction=[0,0];
         let position=[startCenter[0],startCenter[1]];
         if (Math.abs(lastCenter[0]-startCenter[0]) > Math.abs(lastCenter[1]-startCenter[1])) {
@@ -843,14 +815,12 @@ var Game = {
         else {
             direction=[0,Math.sign(lastCenter[1]-startCenter[1])];
         }
-        //let keepGoing=true;
         let secretDoorPlaced=false;
         let outside=false;
         while (position[0] != lastCenter[0] || position[1] != lastCenter[1]) {
             for (let i=-1;i<2;i++) {
                 for (let j=-1;j<2;j++) {
                     let key = (position[0]+i)+','+(position[1]+j);
-                    //this.map[key] = new Tile(position[0]+i,position[1]+j,'.',theme.floorColor,'#000',true,true);
 
                     if (i==0 && j==0) {
                         if (key in Game.map && !Game.map[key].passable) {
@@ -859,7 +829,6 @@ var Game = {
                                 outside=true;
                             }
                             else {
-                                //this.map[key].char='x';
                                 this.map[key].secretDoor = {
                                     char:'+',
                                     door:'-',
@@ -879,7 +848,6 @@ var Game = {
                 }
             }
             if (outside==secretDoorPlaced) {
-                //direction=[Math.sign(lastCenter[0]-position[0]),Math.sign(lastCenter[1]-position[1])];
                 if (Math.abs(lastCenter[0]-position[0])+ ((ROT.RNG.getUniform()>0.5) ? 1 : 0) > Math.abs(lastCenter[1]-position[1])) {
                     direction=[Math.sign(lastCenter[0]-position[0]),0];
                 }
@@ -896,7 +864,6 @@ var Game = {
                         direction=[0,Math.sign(lastCenter[1]-position[1])];
                     }
                 }
-                //if (position[0]+direction[0])
 
             }
             if (direction[0]==0 && direction[1]==0) {
@@ -914,8 +881,6 @@ var Game = {
         this.messNumbers=[0,0];
         this.roomCenters=[];
         var breaker=0;
-        //let minMax=[4,10];
-        //let targSize=Math.min(400+30*this.day,800);
         this.map={};
         this.freeCells=[];
         this.hallCells=[];
@@ -1030,14 +995,11 @@ var Game = {
             for (let j=-1;j<roomSize[1]+1;j++) {
                 let key = (i+roomCorner[0])+','+(j+roomCorner[1]);
                 
-                //console.log(key);
                 if (i>=0 && i<roomSize[0] && j>=0 && j<roomSize[1]) {
-                    //this.map[key]='.';
                     this.map[key] = new Tile(i+roomCorner[0],j+roomCorner[1],'.',theme.floorColor,'#000',true,true);
                     this.freeCells.push(key);
                 }
                 else {
-                    //this.map[key]='#';
                     if (!(key in this.map) || !this.map[key].passable) {
                         this.map[key] = new Tile(i+roomCorner[0],j+roomCorner[1],'#',theme.roomWalls[0],theme.roomWalls[1],false,false);
                     }
@@ -1068,12 +1030,10 @@ var Game = {
     },
 
     connectRoom: function(roomCenters,xy=-1,theme=this.dungeonTheme) {
-        //console.log(roomCenters);
 
         let lastCenter = [roomCenters[roomCenters.length-1][0], roomCenters[roomCenters.length-1][1]];
         let index = Math.floor((roomCenters.length-1) * ROT.RNG.getUniform());
         let best = 1000;
-        //let index=-1;
         for (let i=0;i<roomCenters.length-1;i++) {
             if (xy==0) {
                 if (Math.abs(lastCenter[0]-roomCenters[i][0]) < best) {
@@ -1108,7 +1068,6 @@ var Game = {
                             startedDigging=true;
                         }
                         if (i==0 && j==0) {
-                            //console.log(key);
                             if (this.map[key].char == '.' && startedDigging) {
                                 if (this.getRoomIndex(lastCenter[0],lastCenter[1]) >= 0) {
                                     this.rooms[this.getRoomIndex(lastCenter[0],lastCenter[1])][4]++;
@@ -1118,11 +1077,9 @@ var Game = {
                             if (key in this.map && this.map[key].char != '.') {
                                 this.hallCells.push(key);
                             }
-                            //this.map[key]='.';
                             this.map[key] = new Tile(lastCenter[0]+i,lastCenter[1]+j,'.',theme.floorColor,'#000',true,true);
                         }
                         else if (!(key in this.map)) {
-                            //this.map[key]='#';
                             this.map[key] = new Tile(lastCenter[0]+i,lastCenter[1]+j,'#',theme.corridorWalls[0],theme.corridorWalls[1],false,false);
                         }
                     }
@@ -1154,7 +1111,6 @@ var Game = {
                 let center1 = [Math.round((this.rooms[i][0]+this.rooms[i][2])/2),Math.round((this.rooms[i][1]+this.rooms[i][3])/2)];
                 let center2 = [Math.round((this.rooms[j][0]+this.rooms[j][2])/2),Math.round((this.rooms[j][1]+this.rooms[j][3])/2)];
                 let dist = Math.abs(center1[0] - center2[0]) + Math.abs(center1[1] - center2[1]);
-                //console.log(dist);
                 if (dist > best[2]) {
                     best[0]=i;
                     best[1]=j;
@@ -1197,25 +1153,9 @@ var Game = {
             for (let x = this.rooms[i][0]; x < this.rooms[i][2]; x++) {
                 for (let y = this.rooms[i][1]; y < this.rooms[i][3]; y++) {
                     roomSize++;
-                    let wallCount = 0;
-                    let floorCount = 0;
-                    for (let ii = -1; ii < 2; ii++) {
-                        for (let jj = -1; jj < 2; jj++) {
-                            let key = (x + ii) + ',' + (y + jj);
-                            if (key in this.map) {
-                                if (this.map[key].passThrough()) {
-                                    floorCount++;
-                                }
-                                else {
-                                    wallCount++;
-                                }
-                            }
-                        }
-                    }
-                    if (wallCount==3 && floorCount==6) {
+                    if (this.alongWall(x, y, function(t) { return t.passThrough(); })) {
                         let key=x+','+y;
                         validForItems.push(key);
-                        //continue;
                     }
                 }
             }
@@ -1320,7 +1260,6 @@ var Game = {
             ];
             let feederPos=[ this.rooms[this.animalRoomID][0]+1 , this.rooms[this.animalRoomID][1]+1 ];
             let foodBowl = new FoodBowl(feederPos[0],feederPos[1]);
-            //let feederKey = feederPos[0]+','+feederPos[1];
             if (this.petList.length>0 && this.playerPet==null && this.player.cutscene==null) {
                 let mostLove=[-1,-1];
                 for (let i=0;i<this.petList.length;i++) {
@@ -1334,7 +1273,6 @@ var Game = {
                     this.player.cutscene=[{message:"%c{#ff0}"+this.playerPet.name+" loves you a lot! They have adopted you.%c{}",any:-1}]
                 }
             }
-            //console.log('center'+animalCenter);
             let iterations=Math.min(8,Math.floor(this.yendorPoints/200)+2);
             for (let i=0;i<iterations;i++) {
                 if (i<this.petList.length) {
@@ -1346,7 +1284,7 @@ var Game = {
                     }
                 }
                 else {
-                    let newPet = AddPet(animalCenter[0],animalCenter[1],this.convoTags.animal);//new Pet(animalCenter[0],animalCenter[1],'d','Dog');
+                    let newPet = AddPet(animalCenter[0],animalCenter[1],this.convoTags.animal);
                 }
             };
         }
@@ -1358,22 +1296,7 @@ var Game = {
 
         for (let x = this.rooms[this.partyRoomID][0]; x < this.rooms[this.partyRoomID][2]; x++) {
             for (let y = this.rooms[this.partyRoomID][1]; y < this.rooms[this.partyRoomID][3]; y++) {
-                let wallCount = 0;
-                let floorCount = 0;
-                for (let ii = -1; ii < 2; ii++) {
-                    for (let jj = -1; jj < 2; jj++) {
-                        let key = (x + ii) + ',' + (y + jj);
-                        if (key in this.map) {
-                            if (this.map[key].passable) {
-                                floorCount++;
-                            }
-                            else {
-                                wallCount++;
-                            }
-                        }
-                    }
-                }
-                if ((wallCount == 3 && floorCount == 6)) {//} || (wallCount == 5 && floorCount == 4)) {
+                if (this.alongWall(x, y, function(t) { return t.passable; })) {
                     let key = x + ',' + y;
                     if (Game.map[key].entity == null) {
                         validPartySpots.push(key);
@@ -1385,22 +1308,7 @@ var Game = {
 
         for (let x = this.rooms[this.staffRoomID][0]; x < this.rooms[this.staffRoomID][2]; x++) {
             for (let y = this.rooms[this.staffRoomID][1]; y < this.rooms[this.staffRoomID][3]; y++) {
-                let wallCount = 0;
-                let floorCount = 0;
-                for (let ii = -1; ii < 2; ii++) {
-                    for (let jj = -1; jj < 2; jj++) {
-                        let key = (x + ii) + ',' + (y + jj);
-                        if (key in this.map) {
-                            if (this.map[key].passable) {
-                                floorCount++;
-                            }
-                            else {
-                                wallCount++;
-                            }
-                        }
-                    }
-                }
-                if ((wallCount == 3 && floorCount == 6)) {//} || (wallCount == 5 && floorCount == 4)) {
+                if (this.alongWall(x, y, function(t) { return t.passable; })) {
                     let key = x + ',' + y;
                     if (Game.map[key].entity == null) {
                         validSpots.push(key);
@@ -1430,7 +1338,6 @@ var Game = {
                     }
                 }
                 if (suitableForTable) {
-                    //let key=x+','+y;
                     GetEntity('Table', x, y);
                 }
             }
@@ -1446,9 +1353,6 @@ var Game = {
         let partyCommenced=false;
         let donePlacing=false;
         for (let i = 0; i < this.monsterList.length; i++) {
-            //if (this.monsterList[i].level != level) {
-            //    continue;
-            //}
             this.monsterList[i].spreadCount=-1;
             this.monsterList[i].spreading=null;
             this.monsterList[i].alive=false; // default, incase we run out of space
@@ -1465,15 +1369,20 @@ var Game = {
             if (!partyCommenced) {
                 if (this.monsterList[i].questItem != null && !this.monsterList[i].questItem.pickedUp) {
                     let questPos = this.randomFarFromPlayer();
-                    this.monsterList[i].questItem.x = questPos[0];
-                    this.monsterList[i].questItem.y = questPos[1];
-                    let questKey = questPos[0] + ',' + questPos[1];
-                    Game.map[questKey].mess = this.monsterList[i].questItem;
+                    if (questPos != null) {
+                        this.monsterList[i].questItem.x = questPos[0];
+                        this.monsterList[i].questItem.y = questPos[1];
+                        Game.map[questPos[0] + ',' + questPos[1]].mess = this.monsterList[i].questItem;
+                        Game.messNumbers[0]++; // it is a mess like any other: count it
+                        Game.messNumbers[1]++;
+                    }
                 }
                 else if (this.monsterList[i].questItem == null && questItemIndex >= 0) {
                     if (questItemIndex == 0 || (this.unionist != null && this.unionist == this.monsterList[i].name)) {
                         let questPos = this.randomFarFromPlayer();
-                        QuestMess(this.monsterList[i], questPos[0], questPos[1]);
+                        if (questPos != null) {
+                            QuestMess(this.monsterList[i], questPos[0], questPos[1]);
+                        }
                         questItemIndex -= 1000;
                     }
                 }
@@ -1482,14 +1391,13 @@ var Game = {
                 this.monsterList[i].alive = true;
                 this.monsterList[i].retired = true;
                 this.monsterList[i].partying=false;
-                //ConversationBuilder.buildConvos(this.monsterList[i]);
                 let index = Math.floor(ROT.RNG.getUniform() * validSpots.length);
                 Game.map[validSpots[index]].entity = this.monsterList[i];
                 let parts = validSpots[index].split(',');
                 this.monsterList[i].x = parseInt(parts[0]);
                 this.monsterList[i].y = parseInt(parts[1]);
                 validSpots.splice(index, 1);
-                if (validSpots.length <= maxPlace || validSpots == null) {
+                if (validSpots.length <= maxPlace) {
                     partyCommenced = true;
                 }
             }
@@ -1497,14 +1405,13 @@ var Game = {
                 this.monsterList[i].alive = true;
                 this.monsterList[i].retired = true;
                 this.monsterList[i].partying=true;
-                //ConversationBuilder.buildConvos(this.monsterList[i],true);
                 let index = Math.floor(ROT.RNG.getUniform() * validPartySpots.length);
                 Game.map[validPartySpots[index]].entity = this.monsterList[i];
                 let parts = validPartySpots[index].split(',');
                 this.monsterList[i].x = parseInt(parts[0]);
                 this.monsterList[i].y = parseInt(parts[1]);
                 validPartySpots.splice(index, 1);
-                if (validPartySpots.length <= maxParty || validPartySpots == null) {
+                if (validPartySpots.length <= maxParty) {
                     donePlacing=true;
                 }
             }
@@ -1527,11 +1434,7 @@ var Game = {
             let parts = validSpots[index].split(',');
             let px = parseInt(parts[0]);
             let py = parseInt(parts[1]);
-            //console.log(px+','+py);
             let exitDoor = GetEntity('ExitDoor', px, py);
-            //let ughKey=exitDoor.x+','+exitDoor.y;
-            //Game.map[ughKey].lastSeen='?';
-            //console.log('exit:'+exitDoor.x+","+exitDoor.y);
             let best=[0,0,100];
             for (let i =-5;i<6;i++) {
                 for (let j=-2;j<3;j++) {
@@ -1575,8 +1478,29 @@ var Game = {
         Decor.place(); // keepsakes and decorations you chose to put up
     },
 
+    // A free floor tile far from the player, or null when none could be found.
+    // A tile with a straight wall on one side: three walls and six open tiles around
+    // it, counting itself (`open` says what counts as open).
+    alongWall: function(x, y, open) {
+        let walls = 0, floors = 0;
+        for (let i = -1; i < 2; i++) {
+            for (let j = -1; j < 2; j++) {
+                let t = this.map[(x + i) + ',' + (y + j)];
+                if (t) {
+                    if (open(t)) {
+                        floors++;
+                    }
+                    else {
+                        walls++;
+                    }
+                }
+            }
+        }
+        return walls == 3 && floors == 6;
+    },
+
     randomFarFromPlayer: function(tries=10) {
-        var best=[0,0,0];
+        var best=[0,0,-1];
         var i=0;
         var attempts=0;
         while (i<tries && attempts++ < 1000) { // give up rather than hang on a crowded map
@@ -1595,7 +1519,7 @@ var Game = {
                 tries--;
             }
         }
-        return [best[0],best[1]];
+        return best[2] < 0 ? null : [best[0],best[1]];
     },
 
     checkConditions: function(conditions,speaker=null)  {
@@ -1615,10 +1539,7 @@ var Game = {
         }
 
         if ('questItemGot' in conditions && speaker!=null) {
-            if (speaker.questItem != null && conditions.questItemGot == speaker.questItem.pickedUp) {
-                success&=true;
-            }
-            else {
+            if (speaker.questItem == null || conditions.questItemGot != speaker.questItem.pickedUp) {
                 success=false;
             }
         }
@@ -1633,14 +1554,14 @@ var Game = {
             }
             if (keys[i] in Game.convoTags) {
                 if (typeof Game.convoTags[keys[i]] == typeof conditions[keys[i]]) {
-                    success &= (Game.convoTags[keys[i]] == conditions[keys[i]]); // do they match?
+                    success = success && Game.convoTags[keys[i]] == conditions[keys[i]]; // do they match?
                 }
                 else {
-                    success &= conditions[keys[i]]; // condition is "does it exist?"
+                    success = success && !!conditions[keys[i]]; // condition is "does it exist?"
                 }
             }
             else {
-                success &= !(conditions[keys[i]]); // condition is "does it not exist?"
+                success = success && !conditions[keys[i]]; // condition is "does it not exist?"
             }
         }
         return success;
@@ -1903,7 +1824,7 @@ var Game = {
 
     // What a pile of coins is worth: 1-3 zm, a little more for the odd ones.
     coinValue: function(mess) {
-        let value = 1 + Math.floor(3 * Flavor.rng.getUniform());
+        let value = 1 + Math.floor(3 * ROT.RNG.getUniform()); // money is gameplay: the world RNG
         if (mess && mess.name != mess.kind) {
             value += 2;
         }
@@ -1911,8 +1832,11 @@ var Game = {
     },
 
     freshRun: function() {
+        let got = typeof Achievements != 'undefined' ? Achievements.load() : {};
         return {grades: [], cleanPcts: [], requestsDone: 0, zorkmidsEarned: 0, chattedWith: [], bestCombo: 0,
-            newAchievements: [], counts: {slips: 0, fortunes: 0}};
+            newAchievements: [], counts: {slips: 0, fortunes: 0},
+            achievementsAtStart: Object.keys(got).filter(function(id) { return got[id]; }),
+            prayedDay: -1};
     },
 
     // The shift is over (the player confirmed leaving): record the day and pay.
@@ -2033,6 +1957,7 @@ var Game = {
         this.runEndPending = false;
         // a fresh engine: the last run's one stayed locked when it ended
         this.engine = new ROT.Engine(this.scheduler);
+        this.player.hasTurn = false;
         Invasion.engineStarted = false;
         this.generateDungeon();
     },
@@ -2047,8 +1972,10 @@ var Game = {
         this.day++;
         this.dungeonRooms = this.roomsForDay(this.day);
         this.yendorPoints += this.cleanPercent(); // the Mop is decided at the end of the run
+        // last night is over: a Continue must not offer it again
+        this.convoTags.invitationAccepted = false;
+        this.convoTags.sharedDream = false;
         Save.write(); // a new morning: Continue starts here
-        //this.engine.unlock();
         this.generateDungeon();
     },
 };

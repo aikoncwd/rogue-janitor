@@ -50,7 +50,6 @@ function AddPet(x,y,species) {
     return newPet;
 }
 
-//function Entity(x,y,char,color,species,hp=1,tags={},level=1,bgColor='#000',attachToWall=false) {
 Pet.prototype = Object.create(Entity.prototype);
 
 Pet.prototype.cleanerAct = function() {
@@ -65,32 +64,7 @@ Pet.prototype.cleanerAct = function() {
     ConversationBuilder.petConvo(this);
 
     this.metPlayer=true;
-    let choice=this.convos.length-1;
-    if (choice>=0) {
-        let acceptable=true;
-        do {
-            acceptable=true;
-            if ('conditions' in this.convos[choice][0]) {
-                acceptable = Game.checkConditions(this.convos[choice][0].conditions,this);
-            }
-            if (!acceptable) {
-                choice--;
-            }
-            if (choice < 0) {
-                break;
-            }
-        } while(!acceptable);
-        this.convoIndex=choice;
-        if (choice>=0) {
-            this.convoInnerDex=0;
-        }
-    }
-    else {
-        this.convoIndex=-1;
-    }
-    window.addEventListener("keydown",this);
-    window.addEventListener("keypress",this);
-    Game.drawMap();
+    this.openConvo(); // the same way a comrade starts a chat
 };
 
 Pet.prototype.recenter = function(x,y) {
@@ -111,13 +85,7 @@ Pet.prototype.act = function() {
         this.runAnimations();
         return;
     }
-    if (this.spreadCount>0 && this.spreading != null) {
-        let newMess = makeMess(this.x,this.y,this.spreading);
-        this.spreadCount--;
-        if (this.spreadCount==0 && newMess.spreads!=null && newMess.spreads!="") {
-            newMess.spread(this);
-        }
-    }
+    tickSpread(this);
     this.lastSeen++;
     if (Game.phase == 'cleaning' && this.lastSeen<=1 && ROT.RNG.getUniform()>0.95 && (Game.lastMessage==null || Game.lastMessage=="")) {
         let punctuation=['.','.','!','!','!!'];
@@ -128,7 +96,6 @@ Pet.prototype.act = function() {
             Game.sendMessage(this.name+" "+this.sound[1].toLowerCase()+'s'+ROT.RNG.getItem(punctuation));
         }
     }
-    //console.log('pet act');
     if (this.home==null) {
         this.home=[this.x,this.y];
     }
@@ -137,8 +104,6 @@ Pet.prototype.act = function() {
         return;
     }
     else if (this.path.length>0) {
-        //console.log('trypath?');
-        //console.log(this.x+','+this.y+' --> '+this.path[0])
         if (this.moveTo(this.path[0][0],this.path[0][1])) {
             this.failures=0;
             this.path.shift();
@@ -196,8 +161,6 @@ Pet.prototype.act = function() {
                 this.path.shift();
                 this.path.shift();
             }
-            //console.log(targetPos);
-            //console.log(this.path);
         }
     }
     else {
@@ -270,7 +233,6 @@ Pet.prototype.petAction = function(action) {
             break;
         case 'hug':
             this.doAnimation('hug');
-            //this.runAnimation();
             Game.player.wait(1000);
             break;
     }
@@ -279,7 +241,6 @@ Pet.prototype.petAction = function(action) {
 Pet.prototype.doAnimation=function(anim) {
     this.animating=true;
     this.animQueue.push(anim);
-    //Game.engine.lock();
 };
 
 Pet.prototype.runAnimations=function() {
@@ -310,7 +271,6 @@ Pet.prototype.runAnimations=function() {
                 time=0;
             }
             else {
-                //let color=ROT.Color.toHex(ROT.Color.hsl2rgb([parseFloat(time)/parseFloat(limits['hug']),1,0.5]));
                 let petSet=0.3*Math.sin(3.14159 * (parseFloat(time)/4));
                 let color='#fff';
                 Game.display.draw(drawPos[0],drawPos[1]-petSet-0.6,'-',color);

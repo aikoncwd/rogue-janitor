@@ -1,16 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-function cleaningDay(seed = 1234) {
-    const ctx = toIntro(bootHeadless({ seed, begin: true }));
-    ctx.Invasion.instant = true;
-    ctx.__press(13);
-    ctx.Invasion.instant = false;
-    let n = 0;
-    while (ctx.Game.player.talking && n++ < 50) { ctx.Game.player.talking.lastConvoChange = 0; ctx.__press(13); }
-    return ctx;
-}
+const { cleaningDay } = require('./harness');
 
 // A small open room around the player with a torch on its north wall.
 function litRoom(ctx) {
@@ -55,5 +45,64 @@ test('drawing stays deterministic', () => {
     litRoom(ctx);
     const state = JSON.stringify(ctx.ROT.RNG.getState());
     for (let i = 0; i < 3; i++) ctx.Game.drawMap();
+    assert.strictEqual(JSON.stringify(ctx.ROT.RNG.getState()), state);
+});
+
+function wall(ctx, x, y) {
+    ctx.Game.map[x + ',' + y] = new ctx.Tile(x, y, '#', '#ddd', '#777', false, false);
+}
+
+// 9. torchlight and walls
+function litRoomTall(ctx) {
+    const G = ctx.Game;
+    const px = G.player.x, py = G.player.y;
+    for (let i = -4; i <= 4; i++) for (let j = -6; j <= 4; j++) {
+        if (i == 0 && j == 0) { G.map[px + ',' + py].mess = null; continue; }
+        const isWall = Math.abs(i) == 4 || j == 4 || j == -4;
+        G.map[(px + i) + ',' + (py + j)] = new ctx.Tile(px + i, py + j, isWall ? '#' : '.', '#ddd', isWall ? '#777' : '#000', !isWall, !isWall);
+    }
+    const torch = ctx.GetEntity('Torch', px, py - 3);
+    return { px, py, torch };
+}
+
+test('player art has the tile background', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const tile = G.map[G.player.x + ',' + G.player.y];
+    tile.bgColor = '#123456'; // a coloured floor: the janitor stands on it, not on black
+    const art = G.player.getArt();
+    assert.strictEqual(art[0], '@');
+    assert.strictEqual(art[2], '#123456');
+});
+
+test('torchlight does not go through the wall it hangs on', () => {
+    const ctx = cleaningDay();
+    const { px, py, torch } = litRoomTall(ctx);
+    assert.deepStrictEqual([torch.x, torch.y], [px, py - 4]);
+    assert.ok(ctx.Game.warmth(px, py - 3, [torch]) > 0, 'its own side is warm');
+    assert.strictEqual(ctx.Game.warmth(px, py - 5, [torch]), 0, 'the other side stays dark');
+});
+
+test('torchlight does not go round a pillar', () => {
+    const ctx = cleaningDay();
+    const { px, py, torch } = litRoomTall(ctx);
+    wall(ctx, px, py - 2);
+    assert.strictEqual(ctx.Game.warmth(px, py - 1, [torch]), 0);
+    assert.ok(ctx.Game.warmth(px + 1, py - 3, [torch]) > 0);
+});
+
+test('torchlight reaches along the wall it hangs on', () => {
+    const ctx = cleaningDay();
+    const { px, py, torch } = litRoomTall(ctx);
+    for (const dx of [-3, -2, -1, 1, 2, 3]) {
+        assert.ok(ctx.Game.warmth(px + dx, py - 3, [torch]) > 0, 'dx ' + dx);
+    }
+});
+
+test('torchlight drawing does not use the world RNG', () => {
+    const ctx = cleaningDay();
+    litRoomTall(ctx);
+    const state = JSON.stringify(ctx.ROT.RNG.getState());
+    ctx.Game.drawMap();
     assert.strictEqual(JSON.stringify(ctx.ROT.RNG.getState()), state);
 });

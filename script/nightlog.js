@@ -55,7 +55,12 @@ var NightLog = {
                 '',
             ],
             body: this.lines(this.windowWidth() - 4),
-            footer: k('[↑↓]') + ' scroll  ' + k('[PgUp/PgDn]') + ' page  ' + k('[Home/End]') + ' start/end  ' + k('[Tab]') + ' close',
+            footer: [ // the longest form that fits the window
+                k('[↑↓]') + ' scroll  ' + k('[PgUp/PgDn]') + ' page  ' + k('[Home/End]') + ' start/end  ' + k('[Tab]') + ' close',
+                k('↑↓') + ' scroll  ' + k('PgUp/PgDn') + ' page  ' + k('Home/End') + ' ends  ' + k('Tab') + ' close',
+                k('↑↓') + ' ' + k('PgUp/PgDn') + ' ' + k('Home/End') + ' ' + k('Tab') + ' close',
+                k('↑↓') + ' ' + k('Tab') + ' close',
+            ],
         };
     },
 

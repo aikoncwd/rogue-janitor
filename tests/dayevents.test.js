@@ -1,8 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
+const { bootHeadless, toIntro, strip } = require('./harness');
 
 function cleaningDay(seed = 1234) {
     const ctx = toIntro(bootHeadless({ seed, begin: true }));
@@ -84,7 +82,7 @@ test('inspector visits and judges the shift', () => {
 test('birthday: cake in the lounge and a birthday chat', () => {
     const ctx = cleaningDay();
     ctx.DayEvents.run('birthday');
-    const m = ctx.Game.monsterList.find(x => x.birthday);
+    const m = ctx.Game.monsterList.find(x => x.convos && x.convos.length && /birthday/i.test(convoText(x.convos[x.convos.length - 1])));
     assert.ok(m, 'someone has a birthday');
     let cake = null;
     for (const k in ctx.Game.map) {
@@ -172,4 +170,118 @@ test('past heroes are remembered', () => {
     const ctx = cleaningDay();
     assert.equal(ctx.Game.pastHeroes.length, 1);
     assert.equal(ctx.Game.pastHeroes[0].full, ctx.Invasion.hero.full);
+});
+
+function morning(seed, watched) {
+    const ctx = toIntro(bootHeadless({ seed, begin: true }));
+    if (watched) {
+        ctx.__press(13);
+        let n = 0;
+        while (ctx.Game.phase == 'invasion' && n++ < 4000) {
+            if (ctx.Invasion.stage != null) ctx.__press(13); // the hand-over card waits for a key
+            else ctx.__runTimers();
+        }
+        assert.strictEqual(ctx.Game.phase, 'cleaning', 'watched raid reached the morning');
+    }
+    else {
+        ctx.Invasion.instant = true;
+        ctx.__press(13);
+        ctx.Invasion.instant = false;
+    }
+    let n = 0;
+    while (ctx.Game.player.talking && n++ < 50) { ctx.Game.player.talking.lastConvoChange = 0; ctx.__press(13); }
+    return ctx;
+}
+
+test('visitors are never asked to coffee or dinner', () => {
+    const ctx = cleaningDay();
+    ctx.DayEvents.run('inspector');
+    const v = ctx.Game.monsterList.find(m => m.tags.visitor);
+    ctx.Game.messNumbers = [0, 100];
+    for (let i = 0; i < 300; i++) {
+        ctx.Game.coffeeThreshold = -1;
+        ctx.Game.cleanPercent();
+    }
+    assert.equal(v.quests.length, 0);
+});
+
+test("the ghost is a previous day's hero, never tonight's", () => {
+    const ctx = toIntro(bootHeadless({ begin: true }));
+    let seen = null;
+    const real = ctx.DayEvents.start.bind(ctx.DayEvents);
+    ctx.DayEvents.start = () => { seen = ctx.Game.pastHeroes.map(h => h.full); return real(); };
+    ctx.Invasion.instant = true;
+    for (let i = 0; i < 6 && ctx.Game.phase != 'cleaning'; i++) ctx.__press(13);
+    assert.deepEqual(seen, [], 'tonight\'s hero is not a past hero yet');
+    assert.equal(ctx.Game.pastHeroes.length, 1, 'remembered afterwards');
+});
+
+test('visitors never found the union', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.unionist = null;
+    const orig = ctx.RandomName;
+    ctx.RandomName = () => 'Marx';
+    try {
+        new ctx.Entity(G.player.x, G.player.y, 'V', '#fff', 'Visitor', 1, { monster: true, visitor: true }, 1);
+    } finally {
+        ctx.RandomName = orig;
+    }
+    assert.strictEqual(G.unionist, null);
+});
+
+test('the mimic stain still giggles when vacuumed', () => {
+    const ctx = morning(1234, false);
+    const G = ctx.Game;
+    G.day = 2;
+    const key = (G.player.x + 1) + ',' + G.player.y;
+    G.map[key] = new ctx.Tile(G.player.x + 1, G.player.y, '.', '#ddd', '#000', true, true);
+    const m = ctx.makeMess(G.player.x + 1, G.player.y, 'Cobweb');
+    m.mimic = true;
+    ctx.__press(90);
+    assert.match(G.log.recent(4).map(l => strip(l.text)).join(' '), /mimic/);
+});
+
+test('a visitor who finds the lounge full never came: no news, no verdict', () => {
+    for (const name of ['inspector', 'rodney']) {
+        const ctx = cleaningDay();
+        ctx.Game.day = 4;
+        ctx.Visitors.freeLoungeTile = () => null; // every seat taken
+        const before = ctx.Game.log.lines.length;
+        assert.strictEqual(ctx.DayEvents.run(name), false);
+        assert.strictEqual(ctx.Game.todayEvent, null, name);
+        assert.strictEqual(ctx.Game.log.lines.length, before, name + ' sent no news');
+    }
+});
+
+test('Gribble stays at HR when there is no room in the lounge', () => {
+    const ctx = cleaningDay();
+    ctx.Game.day = 2;
+    ctx.Visitors.freeLoungeTile = () => null;
+    ctx.DayEvents.run('intern');
+    assert.strictEqual(ctx.Game.todayEvent, null);
+    assert.strictEqual(ctx.DayEvents.intern, null);
+});
+
+test('every event is registered once, in a fixed order, with eligible and run', () => {
+    const ctx = cleaningDay();
+    const E = ctx.DayEvents.EVENTS;
+    assert.deepStrictEqual(Array.from(E), ['inspector', 'birthday', 'mimicStain', 'rubberDuck', 'bones', 'rodney',
+        'flood', 'dragon', 'intern', 'guest', 'monkey', 'diceNight', 'leak']);
+    for (const name of E) {
+        const h = ctx.DayEvents.HANDLERS[name];
+        assert.strictEqual(typeof h.eligible, 'function', name);
+        assert.strictEqual(typeof h.run, 'function', name);
+    }
+    assert.strictEqual(ctx.DayEvents.eligible('nonsense'), false);
+});
+
+test("yesterday's puddle is not tracked into a fresh morning", () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.player.spreading = 'Blood';
+    G.player.spreadCount = 6;
+    ctx.DayEvents.start();
+    assert.strictEqual(G.player.spreading, null);
+    assert.strictEqual(G.player.spreadCount, 0);
 });

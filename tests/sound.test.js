@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, cleaningDay } = require('./harness');
 
 function fakeAudioContext(counter) {
     const param = () => ({ value: 0, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, setTargetAtTime() {} });
@@ -101,4 +101,32 @@ test('unlock without Web Audio support stays silent', () => {
     ctx.Sfx.createContext = () => { throw new Error('no audio'); };
     ctx.Sfx.unlock();
     assert.equal(ctx.Sfx.play('hit'), false);
+});
+
+test('noise reuses one buffer', () => {
+    const ctx = cleaningDay();
+    let created = 0;
+    const node = () => ({ connect() {}, start() {}, stop() {}, frequency: { setValueAtTime() {} }, gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} } });
+    ctx.Sfx.ctx = {
+        sampleRate: 8000,
+        createBuffer(ch, len) { created++; const d = new Float32Array(len); return { getChannelData: () => d, length: len, duration: len / 8000 }; },
+        createBufferSource: node, createBiquadFilter: node, createGain: node,
+    };
+    ctx.Sfx.master = node();
+    ctx.Sfx.noise(0, 0.1);
+    ctx.Sfx.noise(0.2, 0.05);
+    ctx.Sfx.noise(0.4, 0.2);
+    assert.strictEqual(created, 1);
+});
+
+test('switching sound off stops the music scheduler, and on brings it back', () => {
+    const ctx = bootHeadless();
+    let halted = 0, resumed = 0;
+    ctx.Music.halt = () => { halted++; };
+    ctx.Music.resume = () => { resumed++; };
+    ctx.Sfx.enabled = true;
+    ctx.Sfx.toggle();
+    assert.strictEqual(halted, 1);
+    ctx.Sfx.toggle();
+    assert.strictEqual(resumed, 1);
 });

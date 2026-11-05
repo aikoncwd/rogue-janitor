@@ -32,7 +32,6 @@ function Adventurer(x,y) {
             this.destinations.push([center[0],center[1]]);
         }
     }
-    //console.log(this.destinations);
     Game.scheduler.add(this,true);
     this.path=null;
 }
@@ -41,7 +40,7 @@ Adventurer.prototype.nextDestination = function() {
     if (this.x == this.destinations[this.destinationIndex][0] && this.y == this.destinations[this.destinationIndex][1]) {
         this.destinations.splice(this.destinationIndex, 1);
     }
-    if (this.destinations.length==0 || this.destinations==null) {
+    if (this.destinations.length==0) {
         this.destinations=[[Game.stairs[1][0],Game.stairs[1][1]]];
         if (this.x==this.destinations[0][0] && this.y==this.destinations[0][1]) {
             this.leave();
@@ -75,29 +74,35 @@ Adventurer.prototype.leave = function() {
     Invasion.handover(exit[0],exit[1]);
 }
 
+// Every few turns the hero looks around: new monsters to fight, new loot to smash.
+// Things already on the lists are not added again.
 Adventurer.prototype.look = function() {
+    let self = this;
     this.fov.compute(this.x,this.y,10,function(x,y,r,visibility) {
-        if (x == Game.adventurer.x && y==Game.adventurer.y) {
+        if (x == self.x && y == self.y) {
             return;
         }
         let key = x+','+y;
-        if (key in Game.map && Game.map[key].entity != null && Game.map[key].entity instanceof Entity) {
-            if ('monster' in Game.map[key].entity.tags) {
-                //console.log('monster spotted');
-                Game.map[key].entity.active=true;
-                Game.adventurer.targets.push(Game.map[key].entity);
+        let e = key in Game.map ? Game.map[key].entity : null;
+        if (e == null || !(e instanceof Entity)) {
+            return;
+        }
+        if ('monster' in e.tags) {
+            e.active=true;
+            if (self.targets.indexOf(e) < 0) {
+                self.targets.push(e);
             }
-            else if ('loot' in Game.map[key].entity.tags && !('wall' in Game.map[key].entity.tags)) {
-                //console.log('loot identified');
-                
-                Game.adventurer.destinations.push([x,y]);
-                Game.adventurer.newDestinationFound=true;
-                //console.log(this.destinations);
+        }
+        else if ('loot' in e.tags && !('wall' in e.tags)) {
+            if (!self.destinations.some(function(d) { return d[0] == x && d[1] == y; })) {
+                self.destinations.push([x,y]);
+                self.newDestinationFound=true;
             }
         }
     });
 
     if (this.newDestinationFound) {
+        this.newDestinationFound=false;
         this.nextDestination();
     }
 }
@@ -405,7 +410,6 @@ Adventurer.prototype.damage = function() {
     Invasion.event('heroHurt', {by:null});
     let dx = Math.floor(3 * ROT.RNG.getUniform()) - 1;
     let dy = Math.floor(3 * ROT.RNG.getUniform()) - 1;
-    //let newMess1 = makeMess(this.x, this.y, "BloodPool");
     let newMess2 = makeMess(this.x + dx, this.y + dy, "BloodPool");
 
 }
@@ -434,13 +438,7 @@ Adventurer.prototype.takeTurn = function () {
         Invasion.event('enter', {});
     }
     Invasion.event('turn', {});
-    if (this.spreadCount>0 && this.spreading != null) {
-        let newMess = makeMess(this.x,this.y,this.spreading);
-        this.spreadCount--;
-        if (this.spreadCount==0 && newMess.spreads!=null && newMess.spreads!="") {
-            newMess.spread(this);
-        }
-    }
+    tickSpread(this);
     if (this.hp<=0 && this.turns % 5 ==0) {
         if (!this.savedOnce) {
             // the first time: "You die... Restoring from save."
@@ -454,8 +452,6 @@ Adventurer.prototype.takeTurn = function () {
             this.hp+=6;
         }
     }
-    //console.log(this.x+','+this.y);
-    //console.log(this.destinations);
     this.hunger--;
     if (this.hunger<=0) {
         let newMess = makeMess(this.x,this.y,"Wrapper");
@@ -517,9 +513,7 @@ Adventurer.prototype.takeTurn = function () {
             else {
                 return false;
             }
-        });//,{topology:4});
-        //console.log("Recalculating...");
-        //if (t)
+        });
         astar.compute(this.x,this.y,function(x,y){
             Game.adventurer.path.push([x,y]);
         });
@@ -527,10 +521,8 @@ Adventurer.prototype.takeTurn = function () {
         this.path.shift()
         this.recalculate=false;
     }
-    //console.log(this.currentTarget);
     if (this.path.length > 0) {
         let nextStep=this.path.shift()
-        //console.log(nextStep);
         if (!this.moveTo(nextStep[0],nextStep[1])) {
             let key=nextStep[0]+','+nextStep[1];
             if (key in Game.map) {
@@ -568,10 +560,6 @@ Adventurer.prototype.moveTo=function(x,y) {
     else {
         return false;
     }
-    /*console.log(Game.getRoomIndex(x,y));
-    if (Game.getRoomIndex(x,y)>=0) {
-        console.log('Exits:'+Game.rooms[Game.getRoomIndex(x,y)][4]);
-    }*/
     if (oldKey != newKey && oldKey in Game.map && Game.map[oldKey].entity==this) {
         Game.map[oldKey].entity=null;
     }

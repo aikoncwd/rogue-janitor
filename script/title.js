@@ -185,14 +185,14 @@ var Title = {
         out.push('');
         out = out.concat(this.vignette());
         out.push('');
-        out.push('%c{#777}Rogue Janitor 3.6.0-mop%c{}');
+        out.push('%c{#888}Rogue Janitor 3.6.0-mop%c{}');
         if (this.tagline.length <= cols) {
             out.push('%c{#ccc}' + this.tagline + '%c{}');
         }
         out.push('');
-        let saved = Save.read();
-        if (saved != null) {
-            out.push('%c{#fff}[c] Continue: day ' + saved.day + ' of ' + Game.LAST_DAY + '%c{}');
+        let savedDay = Save.savedDay();
+        if (savedDay != null) {
+            out.push('%c{#fff}[c] Continue: day ' + savedDay + ' of ' + Game.LAST_DAY + '%c{}');
             out.push('%c{#fff}[n] New game%c{}');
         }
         else {
@@ -200,15 +200,15 @@ var Title = {
                 out.push('%c{#f88}' + Save.problem + '%c{}');
             }
             out.push('%c{#fff}Shall I pick a mop for you? [ynaq]%c{}');
-            out.push('%c{#777}(any key clocks you in)%c{}');
+            out.push('%c{#888}(any key clocks you in)%c{}');
         }
         if (this.quitJoke) {
             out.push('%c{#f88}You can\'t quit before your shift. Union rules.%c{}');
         }
         let ach = Achievements.count();
-        out.push('%c{#777}[a] achievements (' + ach.got + ' / ' + ach.total + ')%c{}');
+        out.push('%c{#888}[a] achievements (' + ach.got + ' / ' + ach.total + ')%c{}');
         out.push('');
-        out.push('%c{#555}Original game by Lauren H · rot.js%c{}');
+        out.push('%c{#888}Original game by Lauren H · rot.js%c{}');
         return out;
     },
 

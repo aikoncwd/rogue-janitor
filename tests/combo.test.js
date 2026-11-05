@@ -1,21 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
-
-function cleaningDay(seed = 1234) {
-    const ctx = toIntro(bootHeadless({ seed, begin: true }));
-    ctx.Invasion.instant = true;
-    ctx.__press(13);
-    ctx.Invasion.instant = false;
-    let n = 0;
-    while (ctx.Game.player.talking && n++ < 50) {
-        ctx.Game.player.talking.lastConvoChange = 0;
-        ctx.__press(13);
-    }
-    return ctx;
-}
+const { bootHeadless, toIntro, cleaningDay, strip } = require('./harness');
 
 function clearAround(ctx, r = 2) {
     const G = ctx.Game;
@@ -108,4 +93,39 @@ test('best combo reaches the run', () => {
     clearAround(ctx);
     for (let i = 0; i < 6; i++) mopOne(ctx);
     assert.strictEqual(ctx.Game.run.bestCombo, 6);
+});
+
+function morning(seed, watched) {
+    const ctx = toIntro(bootHeadless({ seed, begin: true }));
+    if (watched) {
+        ctx.__press(13);
+        let n = 0;
+        while (ctx.Game.phase == 'invasion' && n++ < 4000) {
+            if (ctx.Invasion.stage != null) ctx.__press(13); // the hand-over card waits for a key
+            else ctx.__runTimers();
+        }
+        assert.strictEqual(ctx.Game.phase, 'cleaning', 'watched raid reached the morning');
+    }
+    else {
+        ctx.Invasion.instant = true;
+        ctx.__press(13);
+        ctx.Invasion.instant = false;
+    }
+    let n = 0;
+    while (ctx.Game.player.talking && n++ < 50) { ctx.Game.player.talking.lastConvoChange = 0; ctx.__press(13); }
+    return ctx;
+}
+
+test('a squeegee or vacuum press counts once in the combo', () => {
+    const ctx = morning(1234, false);
+    const G = ctx.Game;
+    G.day = 3;
+    for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) {
+        const key = (G.player.x + i) + ',' + (G.player.y + j);
+        if (i == 0 && j == 0) { G.map[key].mess = null; continue; }
+        G.map[key] = new ctx.Tile(G.player.x + i, G.player.y + j, '.', '#ddd', '#000', true, true);
+    }
+    for (const [dx, dy] of [[1, 0], [2, 0], [3, 0]]) ctx.makeMess(G.player.x + dx, G.player.y + dy, 'Water');
+    ctx.__press(77);
+    assert.strictEqual(G.combo.count, 1);
 });

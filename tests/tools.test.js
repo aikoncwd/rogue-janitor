@@ -1,21 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
-
-function cleaningDay(seed = 1234) {
-    const ctx = toIntro(bootHeadless({ seed, begin: true }));
-    ctx.Invasion.instant = true;
-    ctx.__press(13);
-    ctx.Invasion.instant = false;
-    let n = 0;
-    while (ctx.Game.player.talking && n++ < 50) {
-        ctx.Game.player.talking.lastConvoChange = 0;
-        ctx.__press(13);
-    }
-    return ctx;
-}
+const { cleaningDay, strip } = require('./harness');
 
 // An open 7x7 floor area around the player, cleared of messes and entities.
 function clearAround(ctx, r = 3) {
@@ -140,4 +125,50 @@ test('memo announces new equipment', () => {
     G.day = 2;
     ctx.DayEvents.start();
     assert.match(G.log.recent(6).map(l => strip(l.text)).join(' '), /vacuum/i);
+});
+
+// An open 9x9 floor around the player, nothing on it.
+function openFloor(ctx, r = 4) {
+    const G = ctx.Game;
+    const px = G.player.x, py = G.player.y;
+    for (let i = -r; i <= r; i++) for (let j = -r; j <= r; j++) {
+        if (i == 0 && j == 0) { G.map[px + ',' + py].mess = null; continue; }
+        G.map[(px + i) + ',' + (py + j)] = new ctx.Tile(px + i, py + j, '.', '#ddd', '#000', true, true);
+    }
+    return { px, py };
+}
+
+function wall(ctx, x, y) {
+    ctx.Game.map[x + ',' + y] = new ctx.Tile(x, y, '#', '#ddd', '#777', false, false);
+}
+
+// 2. squeegee
+test('the squeegee does not squeeze through the corner of a wall', () => {
+    const ctx = cleaningDay();
+    const { px, py } = openFloor(ctx);
+    // puddle A at (px+1,py+1), puddle B at (px+2,py+2); the corner between them is walled
+    wall(ctx, px + 2, py + 1);
+    wall(ctx, px + 1, py + 2);
+    ctx.makeMess(px + 1, py + 1, 'Water');
+    ctx.makeMess(px + 2, py + 2, 'Water');
+    const n = ctx.Game.player.squeegee((px + 1) + ',' + (py + 1));
+    assert.strictEqual(n, 1);
+    assert.ok(ctx.Game.map[(px + 2) + ',' + (py + 2)].mess, 'puddle B is still there');
+});
+
+test('the squeegee still goes diagonally across open floor', () => {
+    const ctx = cleaningDay();
+    const { px, py } = openFloor(ctx);
+    ctx.makeMess(px + 1, py + 1, 'Water');
+    ctx.makeMess(px + 2, py + 2, 'Water');
+    assert.strictEqual(ctx.Game.player.squeegee((px + 1) + ',' + (py + 1)), 2);
+});
+
+test('the squeegee only spreads over floor', () => {
+    const ctx = cleaningDay();
+    const { px, py } = openFloor(ctx);
+    wall(ctx, px + 2, py + 1);
+    ctx.makeMess(px + 1, py + 1, 'Water');
+    ctx.makeMess(px + 2, py + 1, 'Water'); // water "on" a wall
+    assert.strictEqual(ctx.Game.player.squeegee((px + 1) + ',' + (py + 1)), 1);
 });

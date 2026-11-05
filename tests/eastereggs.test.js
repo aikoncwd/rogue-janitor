@@ -1,8 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
+const { bootHeadless, toIntro, strip } = require('./harness');
 
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
 const KONAMI = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
 
 function cleaningDay(seed = 1234) {
@@ -172,4 +171,44 @@ test('tried eggs are hinted less', () => {
     assert.equal(w.pray, 0.25);
     assert.equal(w.xyzzy, 1);
     for (const k in ctx.Lore.hints) assert.ok(ctx.Lore.hints[k].length >= 2, k);
+});
+
+test('a hint never hides a colleague request', () => {
+    let checked = 0;
+    for (const seed of [1234, 1, 2, 3, 4, 5]) {
+    const ctx = cleaningDay(seed);
+    ctx.Flavor.chance = () => true;
+    ctx.Requests.CHANCE = 1;
+    const hints = [].concat(...Object.values(ctx.Lore.hints));
+    for (const m of ctx.Game.monsterList.filter(m => m.alive && !m.tags.visitor)) {
+        m.metPlayer = true;
+        ctx.ConversationBuilder.buildConvos(m);
+        const iHint = m.convos.findIndex(c => c[0] && hints.includes(c[0].text));
+        const iOffer = m.convos.findIndex(c => c[0] && c[0].tags && 'offerSeen' in c[0].tags);
+        if (iHint >= 0 && iOffer >= 0) {
+            assert.ok(iHint < iOffer, 'the offer is heard first');
+            checked++;
+        }
+    }
+    }
+    assert.ok(checked > 0, 'at least one colleague had both');
+});
+
+test('# does nothing on the help screen or while examining', () => {
+    const ctx = cleaningDay();
+    ctx.Game.player.instructions = true;
+    ctx.__pressEvent({ keyCode: 51, key: '#' });
+    assert.equal(ctx.EasterEggs.prompt, null, 'help screen');
+    ctx.Game.player.instructions = false;
+    ctx.Game.player.examining = [ctx.Game.player.x, ctx.Game.player.y];
+    ctx.__pressEvent({ keyCode: 51, key: '#' });
+    assert.equal(ctx.EasterEggs.prompt, null, 'examine mode');
+});
+
+test('#pray is per run: a new run may pray again on the same day number', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.run.prayedDay = G.day; // already prayed today, in the last run
+    G.run = G.freshRun();
+    assert.strictEqual(G.run.prayedDay, -1);
 });

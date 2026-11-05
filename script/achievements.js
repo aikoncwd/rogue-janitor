@@ -92,6 +92,18 @@ var Achievements = {
         return true;
     },
 
+    // What was unlocked since the run began. Measured against the set at the start of
+    // the run, so it survives a Continue (an unlock in an abandoned session is stored
+    // already, and would never be added to the run's list again).
+    newThisRun: function () {
+        let run = Game.run || {};
+        if (!Array.isArray(run.achievementsAtStart)) {
+            return run.newAchievements || []; // a save from before the snapshot existed
+        }
+        let got = this.load();
+        return Object.keys(got).filter(function (id) { return got[id] && run.achievementsAtStart.indexOf(id) < 0; });
+    },
+
     // Run counters with an achievement at a threshold.
     THRESHOLDS: {slips: ['slips10', 10], fortunes: ['fortunes5', 5], traps: ['traps5', 5], listened: ['listener', 3], snacks: ['snacks4', 4]},
     bump: function (name) {

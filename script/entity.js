@@ -14,7 +14,7 @@ function Entity(x,y,char,color,species,hp=1,tags={},level=1,bgColor='#000',attac
     this.spreadCount=0;
     this.damagedealt=0;
     this.friends=[];
-    let firstName=RandomName();
+    let firstName='monster' in tags ? RandomName() : null; // only comrades need a name
     this.bgColor=bgColor;
     this.unionStarter=false;
     this.species=species;
@@ -253,7 +253,7 @@ Entity.prototype.cancelConvo = function() {
         Game.endRun(); // the engine stays locked: the run is over
         return;
     }
-    if (Game.engine._lock > 0) {
+    if (Game.player.hasTurn) {
         Game.player.endTurn();
     }
     else {
@@ -274,7 +274,6 @@ Entity.prototype.progressConvo = function(newInnerDex) {
 }
 
 Entity.prototype.doConvo = function() {
-    //console.log(this.convoIndex + ',' + this.convoInnerDex);
     if (this.convoIndex>=0) {
         if (this.convoInnerDex<0) {
             // don't repeat, unless it's the last one
@@ -303,7 +302,6 @@ Entity.prototype.doConvo = function() {
                     if (newTags[i]=="petName") {
                         Game.nameRegistry.push(thisConvo.tags[newTags[i]]);
                         this.name=thisConvo.tags[newTags[i]]+" the "+this.species;
-                        //ConversationBuilder.petConvo(this);
                     }
                     if (newTags[i]=='petAction') {
                         this.petAction(thisConvo.tags[newTags[i]]);
@@ -341,10 +339,7 @@ Entity.prototype.doConvo = function() {
                         Achievements.bump('listened');
                         continue;
                     }
-                    if (newTags[i]=='victory') {
-                        Game.victory=true;
-                        Game.player.reach=2;
-                    }
+
                     Game.convoTags[newTags[i]] = thisConvo.globalTags[newTags[i]];
                 }
             }
@@ -421,36 +416,24 @@ Entity.prototype.handleEvent = function(e) {
     let success=false;
     let thisConvo = this.convos[this.convoIndex];
     if (this.convoIndex >= 0 && this.convoIndex < this.convos.length) {
-        //console.log('1');
-        //let thisConvo = this.convos[this.convoIndex];
         if (this.convoInnerDex >= 0 && this.convoInnerDex < thisConvo.length) {
-            //console.log('2');
 
             if ('any' in thisConvo[this.convoInnerDex]) {
-                //console.log('3');
 
                 if ((keyCode == 27 || keyCode == 8 || keyCode == 88 || keyCode==13) && (charCode == 0)) {
-                    //console.log('4');
 
-                    //this.convoInnerDex = thisConvo[this.convoInnerDex].any;
                     success = this.progressConvo(thisConvo[this.convoInnerDex].any);
-                    //success = true;
                 }
             }
         }
     }
     if (!success) {
-        //let thisConvo = this.convos[this.convoIndex];
         ch = ch.toLowerCase();
         if (ch in thisConvo[this.convoInnerDex]) {
-            //this.convoInnerDex = thisConvo[this.convoInnerDex][ch];
             success = this.progressConvo(thisConvo[this.convoInnerDex][ch]);
-            //success=true;
         }
         else if (ch in this.convoOptions) {
-            //this.convoInnerDex = this.convoOptions[ch];
             success = this.progressConvo(this.convoOptions[ch]);
-            //success=true;
         }
     }
     if (success) {
@@ -459,6 +442,26 @@ Entity.prototype.handleEvent = function(e) {
 }
 
 // talk to
+// Starts talking with the player: the newest conversation whose conditions hold.
+Entity.prototype.openConvo = function() {
+    Game.player.talking=this;
+    let choice=this.convos.length-1;
+    while (choice >= 0 && 'conditions' in this.convos[choice][0] &&
+        !Game.checkConditions(this.convos[choice][0].conditions,this)) {
+        choice--;
+    }
+    this.convoIndex=choice;
+    if (choice>=0) {
+        // open directly: the 200 ms key debounce must never swallow the first line
+        this.convoInnerDex=0;
+        this.lastConvoChange=Date.now();
+        Sfx.play('blip');
+    }
+    window.addEventListener("keydown",this);
+    window.addEventListener("keypress",this);
+    Game.drawMap();
+};
+
 Entity.prototype.cleanerAct = function() {
     if ('monster' in this.tags) {
         Game.lastMessage="";
@@ -473,37 +476,7 @@ Entity.prototype.cleanerAct = function() {
             }
         }
         this.metPlayer=true;
-        Game.player.talking=this;
-        let choice=this.convos.length-1;
-        if (choice>=0) {
-            let acceptable=true;
-            do {
-                acceptable=true;
-                if ('conditions' in this.convos[choice][0]) {
-                    acceptable = Game.checkConditions(this.convos[choice][0].conditions,this);
-                }
-                if (!acceptable) {
-                    choice--;
-                }
-                if (choice < 0) {
-                    break;
-                }
-            } while(!acceptable);
-            this.convoIndex=choice;
-            if (choice>=0) {
-                // open directly: the 200 ms key debounce must never swallow the first line
-                this.convoInnerDex=0;
-                this.lastConvoChange=Date.now();
-                Sfx.play('blip');
-            }
-        }
-        else {
-            this.convoIndex=-1;
-        }
-        window.addEventListener("keydown",this);
-        window.addEventListener("keypress",this);
-        Game.drawMap();
-//        Game.display.drawText(2,2*Game.offset[1]-3,this.name+' : "Wow that was a good day in the dungeon :^)"');
+        this.openConvo();
     }
     else if ('loot' in this.tags && ('wall' in this.tags || 'heavy' in this.tags)) {
         Game.sendMessage("The "+this.name.toLowerCase()+" won't budge.");
@@ -541,13 +514,7 @@ Entity.prototype.cleanerAct = function() {
 }
 
 Entity.prototype.retiredAct = function() {
-    if (this.spreadCount>0 && this.spreading != null) {
-        let newMess = makeMess(this.x,this.y,this.spreading);
-        this.spreadCount--;
-        if (this.spreadCount==0 && newMess.spreads!=null && newMess.spreads!="") {
-            newMess.spread(this);
-        }
-    }
+    tickSpread(this);
     if (this.home == null) {
         this.home = [this.x,this.y];
     }
@@ -583,13 +550,7 @@ Entity.prototype.act = function() {
         let newmess=makeMess(this.x,this.y,ROT.RNG.getItem(options));
         newmess.droppedBy=this;
     }
-    if (this.spreadCount>0 && this.spreading != null) {
-        let newMess = makeMess(this.x,this.y,this.spreading);
-        this.spreadCount--;
-        if (this.spreadCount==0 && newMess.spreads!=null && newMess.spreads!="") {
-            newMess.spread(this);
-        }
-    }
+    tickSpread(this);
     if ('trail' in this.tags && ROT.RNG.getUniform()<0.15) {
         let trailKey=this.x+','+this.y;
         if (trailKey in Game.map && Game.map[trailKey].mess == null) {
@@ -699,10 +660,6 @@ Entity.prototype.moveTo=function(x,y,questing) {
         }
         return false;
     }
-    /*console.log(Game.getRoomIndex(x,y));
-    if (Game.getRoomIndex(x,y)>=0) {
-        console.log('Exits:'+Game.rooms[Game.getRoomIndex(x,y)][4]);
-    }*/
     if (oldKey != newKey && oldKey in Game.map && Game.map[oldKey].entity==this) {
         Game.map[oldKey].entity=null;
     }
@@ -712,14 +669,10 @@ Entity.prototype.moveTo=function(x,y,questing) {
 Entity.prototype.questAct = function() {
     // determine target
     let targetPos = this.home;
-    //console.log(this.quests);
     if (this.quests[0] != null) {
-        //console.log("not null");
         if (typeof this.quests[0] === "string") {
-            //console.log ("is a string");
             if (this.quests[0] in ConversationBuilder) {
                 this.quests[0] = ConversationBuilder[this.quests[0]](this.convoTags,this);
-                //console.log(this.quests[0]);
             }
         }
         if (this.quests[0] != null) {
@@ -769,7 +722,8 @@ Entity.prototype.questAct = function() {
     this.moveTo(path[1][0],path[1][1],true);
 
     
-    if (dist <2 && this.quests[0] != null) {
+    // someone else got to you first: wait your turn (keep the errand for later)
+    if (dist <2 && this.quests[0] != null && Game.player.talking == null) {
         this.convos.push(this.quests[0]);
         this.cleanerAct();
         this.quests.shift();
@@ -777,7 +731,6 @@ Entity.prototype.questAct = function() {
 };
 
 Entity.prototype.invitationQuest=function() {
-    //var invitationConvo = ConversationBuilder.invitationConvo();
     this.addQuest('invitationConvo');
 };
 
@@ -787,7 +740,6 @@ Entity.prototype.chatQuest=function() {
 };
 
 Entity.prototype.coffeeQuest=function() {
-    //var wantCoffeeConvo = ConversationBuilder.coffeeConvo();
     this.addQuest('coffeeConvo');
     this.addQuest('deliverConvo');
 };
@@ -1055,5 +1007,16 @@ function RandomName(register=true) {
     if (register) {
         Game.nameRegistry.push(name);
     }
+    return name;
+}
+
+// A name for a line of chatter (a food run, a dream...). It is drawn from Flavor.rng,
+// so how often you chat never changes tomorrow's dungeon.
+function SideName() {
+    let world = ROT.RNG.getState();
+    ROT.RNG.setState(Flavor.rng.getState());
+    let name = RandomName(false);
+    Flavor.rng.setState(ROT.RNG.getState());
+    ROT.RNG.setState(world);
     return name;
 }
