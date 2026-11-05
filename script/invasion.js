@@ -204,6 +204,7 @@ var Invasion = {
         Flavor.rng.setState(m.flavor);
         // a fresh engine: the old one stays locked, waiting for a turn that never comes
         Game.engine = new ROT.Engine(Game.scheduler);
+        Game.player.hasTurn = false;
         this.engineStarted = false;
         let paused = this.startPaused;
         this.startPaused = true; // the rebuilt night waits on its first frame
@@ -410,6 +411,16 @@ var Invasion = {
         if (line) {
             this.transcript.push({ clock: this.clockText(), text: line });
         }
+    },
+
+    // The morning after: for the message bar only. The tape (and the security log)
+    // ends with the night.
+    sayMorning: function (pool) {
+        let line = Flavor.line(pool, { hero: '%c{' + this.heroColor() + '}' + this.hero.short + '%c{}' });
+        if (line != "") {
+            Game.log.push(line);
+        }
+        return line;
     },
 
     say: function (pool, vars, optional = false) {
@@ -753,8 +764,8 @@ var Invasion = {
             clearTimeout(this.timer);
             this.timer = null;
         }
-        this.say('monstersGetUp');
-        this.say('shiftBegins');
+        this.sayMorning('monstersGetUp');
+        this.sayMorning('shiftBegins');
         this.bodies = [];
         this.flashes = {};
         Game.forgetMap();

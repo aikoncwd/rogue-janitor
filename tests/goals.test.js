@@ -1,21 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
-
-function cleaningDay(seed = 1234) {
-    const ctx = toIntro(bootHeadless({ seed, begin: true }));
-    ctx.Invasion.instant = true;
-    ctx.__press(13);
-    ctx.Invasion.instant = false;
-    let n = 0;
-    while (ctx.Game.player.talking && n++ < 50) {
-        ctx.Game.player.talking.lastConvoChange = 0;
-        ctx.__press(13);
-    }
-    return ctx;
-}
+const { cleaningDay, strip } = require('./harness');
 
 function panelText(ctx) {
     ctx.Game.drawMap();
@@ -116,4 +101,43 @@ test('each goal gets its own memo line', () => {
     ctx.DayEvents.start();
     const memos = ctx.Game.log.lines.map(l => strip(l.text)).filter(t => /^MEMO: Goal:/.test(t)); // other memos may follow
     assert.strictEqual(memos.length, 2);
+});
+
+function endTalk(ctx) {
+    const t = ctx.Game.player.talking;
+    if (t) {
+        ctx.removeEventListener('keydown', t);
+        ctx.removeEventListener('keypress', t);
+        ctx.Game.player.talking = null;
+    }
+}
+
+// 1. chat goal
+test('the chat goal ticks the moment you talk to the third colleague', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    ctx.Objectives.list = [{ type: 'chat', label: 'Chat with 3 colleagues', done: false }];
+    G.monsterList.forEach(m => { m.playerTalkedToday = false; });
+    const lounge = G.monsterList.filter(m => m.alive && m.retired && !m.tags.visitor && m.convos);
+    assert.ok(lounge.length >= 3);
+    lounge[0].playerTalkedToday = true;
+    lounge[1].playerTalkedToday = true;
+    lounge[2].cleanerAct();
+    endTalk(ctx);
+    assert.strictEqual(ctx.Objectives.list[0].done, true);
+});
+
+test('pets are friends, not colleagues: they do not count for the chat goal', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    ctx.Objectives.list = [{ type: 'chat', label: 'Chat with 3 colleagues', done: false }];
+    G.monsterList.forEach(m => { m.playerTalkedToday = false; });
+    const lounge = G.monsterList.filter(m => m.alive && m.retired && !m.tags.visitor);
+    lounge[0].playerTalkedToday = true;
+    lounge[1].playerTalkedToday = true;
+    const pet = ctx.AddPet(G.player.x + 2, G.player.y, 'dog');
+    pet.cleanerAct();
+    endTalk(ctx);
+    assert.strictEqual(ctx.Objectives.chatted(), 2);
+    assert.strictEqual(ctx.Objectives.list[0].done, false);
 });

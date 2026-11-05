@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, cleaningDay } = require('./harness');
 
 function runFullDay(ctx) {
     ctx.Game.generateDungeon();
@@ -46,4 +46,52 @@ test('hero does not recompute its path while chasing a target that has not moved
         for (let i = 0; i < 4; i++) a.act();
         assert.ok(computes <= 1 + failedMoves, `seed ${seed}: computes ${computes} failed ${failedMoves}`);
     }
+});
+
+// A free floor tile next to the player: [x, y, keyCode towards it].
+function freeBeside(ctx) {
+    const G = ctx.Game;
+    const dirs = { '1,0': 39, '-1,0': 37, '0,1': 40, '0,-1': 38 };
+    for (const d in dirs) {
+        const [dx, dy] = d.split(',').map(Number);
+        const t = G.map[(G.player.x + dx) + ',' + (G.player.y + dy)];
+        if (t && t.passThrough() && t.mess == null) return [G.player.x + dx, G.player.y + dy, dirs[d]];
+    }
+    throw new Error('no free tile beside the player');
+}
+
+test('every map tile knows its own coordinates (secret-door hints depend on it)', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    let bad = [];
+    for (const k in G.map) {
+        const [x, y] = k.split(',').map(Number);
+        if (G.map[k].x !== x || G.map[k].y !== y) bad.push(k);
+    }
+    assert.deepStrictEqual(bad.slice(0, 5), []);
+});
+
+test('findFreeNear returns the nearest free tile', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const [x, y] = freeBeside(ctx);
+    assert.deepStrictEqual(Array.from(ctx.findFreeNear(x, y)), [x, y]);
+    // the player's own tile is occupied: the answer is one step away
+    const r = ctx.findFreeNear(G.player.x, G.player.y);
+    assert.strictEqual(Math.max(Math.abs(r[0] - G.player.x), Math.abs(r[1] - G.player.y)), 1);
+    assert.strictEqual(ctx.findFreeNear(100000, 100000, 3), null);
+});
+
+test('Pet.recenter does not move when nothing is free', () => {
+    const ctx = cleaningDay();
+    const pet = Object.create(ctx.Pet.prototype);
+    Object.assign(pet, { x: 7, y: 8, home: null, tags: { animal: true } });
+    const orig = ctx.findFreeNear;
+    ctx.findFreeNear = () => null;
+    try {
+        pet.recenter(50, 50);
+    } finally {
+        ctx.findFreeNear = orig;
+    }
+    assert.deepStrictEqual([pet.x, pet.y], [7, 8]);
 });

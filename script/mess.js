@@ -106,7 +106,19 @@ Mess.prototype.getArt = function() {
 Mess.prototype.spread = function(spreader) {
     if (spreader.spreadCount < this.spreadCount || spreader.spreading == this.spreads) {
         spreader.spreading=this.spreads;
-        spreader.spreadCount=this.spreadCount;//Math.max(this.spreadCount,spreader.spreadCount+2);
+        spreader.spreadCount=this.spreadCount;
+    }
+}
+
+// One step of a walker (janitor, comrade, pet, hero) who stepped in something:
+// leave a print, and when the last one is down, maybe pick up the next kind.
+function tickSpread(actor) {
+    if (actor.spreadCount > 0 && actor.spreading != null) {
+        let newMess = makeMess(actor.x, actor.y, actor.spreading);
+        actor.spreadCount--;
+        if (actor.spreadCount == 0 && newMess.spreads != null && newMess.spreads != "") {
+            newMess.spread(actor);
+        }
     }
 }
 

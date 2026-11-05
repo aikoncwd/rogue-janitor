@@ -9,4 +9,8 @@ body {
     box-sizing: border-box;
     padding: 0;
     margin: auto;
+}.noscript {
+    color: #ccc;
+    font-family: monospace;
+    padding: 2em;
 }

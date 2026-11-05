@@ -1,8 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
+const { bootHeadless, toIntro, cleaningDay, strip } = require('./harness');
 
 test('layout 100x40', () => {
     const ctx = bootHeadless();
@@ -135,4 +133,77 @@ test('drawMap works in a tiny window', () => {
     ctx.Game.drawMap();
     const bad = ctx.__drawn.filter(d => d.text && d.text.length && d.y >= 7);
     assert.equal(bad.length, 0);
+});
+
+function morning(seed, watched) {
+    const ctx = toIntro(bootHeadless({ seed, begin: true }));
+    if (watched) {
+        ctx.__press(13);
+        let n = 0;
+        while (ctx.Game.phase == 'invasion' && n++ < 4000) {
+            if (ctx.Invasion.stage != null) ctx.__press(13); // the hand-over card waits for a key
+            else ctx.__runTimers();
+        }
+        assert.strictEqual(ctx.Game.phase, 'cleaning', 'watched raid reached the morning');
+    }
+    else {
+        ctx.Invasion.instant = true;
+        ctx.__press(13);
+        ctx.Invasion.instant = false;
+    }
+    let n = 0;
+    while (ctx.Game.player.talking && n++ < 50) { ctx.Game.player.talking.lastConvoChange = 0; ctx.__press(13); }
+    return ctx;
+}
+
+// 3. panel in a short window
+test('a short panel drops the minimap and the lounge list, never the help keys', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.comboActive = () => true;
+    G.combo.count = 7;
+    ctx.Objectives.list = [
+        { type: 'spotless', room: 0, label: 'Leave it spotless', short: 'Spotless: Slightly Haunted Gallery of Many Doors', done: false },
+        { type: 'chat', label: 'Chat with 3 colleagues', done: false },
+    ];
+    ctx.Rooms.at = () => 'the Slightly Haunted Gallery of Many Doors';
+    for (const rows of [30, 26, 24, 22, 20]) {
+        const lines = ctx.Panel.lines('cleaning', rows).map(strip);
+        const text = lines.join('\n');
+        assert.ok(lines.length <= rows, rows + ' rows');
+        assert.match(text, /\[\?\] help/, rows + ' rows: ' + text);
+        assert.match(text, /\[T\] music/, rows + ' rows');
+        assert.match(text, /\[\+\/-\] zoom/, rows + ' rows');
+        assert.match(text, /MESS LEFT/, rows + ' rows: ' + text);
+        assert.match(text, /Day \d/, rows + ' rows');
+    }
+});
+
+test('a very short panel still shows MESS LEFT with a count', () => {
+    const ctx = cleaningDay();
+    ctx.Game.comboActive = () => true;
+    ctx.Game.combo.count = 7;
+    for (const rows of [11, 12, 13, 15]) {
+        const lines = ctx.Panel.lines('cleaning', rows).map(strip);
+        const i = lines.findIndex(l => /MESS LEFT/.test(l));
+        assert.ok(i >= 0, rows + ' rows: ' + lines.join('\n'));
+        assert.match(lines[i + 1] || '', /\d|Spotless/, rows + ' rows: ' + lines.join('\n'));
+        assert.ok(lines.some(l => /\[\?\] help/.test(l)));
+        assert.ok(lines.length <= rows);
+    }
+});
+
+test('the panel shows the whole room name', () => {
+    const ctx = morning(1234, false);
+    const G = ctx.Game;
+    G.roomNames = G.rooms.map(() => 'the Gallery of Loud Snoring');
+    const r = G.rooms.findIndex((x, i) => i != G.staffRoomID);
+    const room = G.rooms[r];
+    G.map[G.player.x + ',' + G.player.y].entity = null;
+    const free = [];
+    for (let x = room[0]; x < room[2]; x++) for (let y = room[1]; y < room[3]; y++) { const t = G.map[x + ',' + y]; if (t && t.passThrough()) free.push([x, y]); }
+    G.player.x = free[0][0]; G.player.y = free[0][1];
+    G.drawMap();
+    const text = ctx.__drawn.filter(d => d.text).map(d => strip(d.text)).join(' ');
+    assert.ok(text.includes('Loud Snoring'), 'room name cut off');
 });

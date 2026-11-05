@@ -1,21 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
-
-function cleaningDay(seed = 1234) {
-    const ctx = toIntro(bootHeadless({ seed, begin: true }));
-    ctx.Invasion.instant = true;
-    ctx.__press(13);
-    ctx.Invasion.instant = false;
-    let n = 0;
-    while (ctx.Game.player.talking && n++ < 50) {
-        ctx.Game.player.talking.lastConvoChange = 0;
-        ctx.__press(13);
-    }
-    return ctx;
-}
+const { bootHeadless, toIntro, cleaningDay, strip } = require('./harness');
 
 function signature(ctx) {
     const G = ctx.Game;
@@ -177,4 +162,93 @@ test('the lost-save line is shown once, not after every later run', () => {
     assert.ok(B.Save.problem);
     B.Game.newRun();
     assert.strictEqual(B.Save.problem, null);
+});
+
+function morning(seed, watched) {
+    const ctx = toIntro(bootHeadless({ seed, begin: true }));
+    if (watched) {
+        ctx.__press(13);
+        let n = 0;
+        while (ctx.Game.phase == 'invasion' && n++ < 4000) {
+            if (ctx.Invasion.stage != null) ctx.__press(13); // the hand-over card waits for a key
+            else ctx.__runTimers();
+        }
+        assert.strictEqual(ctx.Game.phase, 'cleaning', 'watched raid reached the morning');
+    }
+    else {
+        ctx.Invasion.instant = true;
+        ctx.__press(13);
+        ctx.Invasion.instant = false;
+    }
+    let n = 0;
+    while (ctx.Game.player.talking && n++ < 50) { ctx.Game.player.talking.lastConvoChange = 0; ctx.__press(13); }
+    return ctx;
+}
+
+function dayPicks(ctx) {
+    return JSON.stringify({
+        goals: ctx.Objectives.list.map(g => g.label),
+        rooms: ctx.Game.rooms.map((r, i) => ctx.Rooms.name(i)),
+        stock: ctx.Shop.stock.map(s => s.id),
+    });
+}
+
+test('Continue does not reroll the day\'s goals', () => {
+    const A = morning(1234, false);
+    // leave through the exit like a player: the night ends, the save is written, day 2's raid runs
+    A.Invasion.instant = true;
+    let door = null;
+    for (const k in A.Game.map) { const e = A.Game.map[k].entity; if (e && e.tags && 'exit' in e.tags) door = e; }
+    door.cleanerAct();
+    door.lastConvoChange = 0;
+    A.__press(89, 121);
+    let n = 0;
+    while (A.Game.player.talking && n++ < 40) { A.Game.player.talking.lastConvoChange = 0; A.__press(13); }
+    n = 0;
+    while (A.Game.phase != 'cleaning' && n++ < 10) A.__press(13);
+    n = 0;
+    while (A.Game.player.talking && n++ < 50) { A.Game.player.talking.lastConvoChange = 0; A.__press(13); }
+    const B = bootHeadless({ seed: 999, begin: true });
+    Object.assign(B.__storage, A.__storage);
+    B.__press(67, 99);
+    B.Invasion.instant = true;
+    B.Invasion.skip();
+    n = 0;
+    while (B.Game.phase != 'cleaning' && n++ < 10) B.__press(13);
+    n = 0;
+    while (B.Game.player.talking && n++ < 50) { B.Game.player.talking.lastConvoChange = 0; B.__press(13); }
+    assert.strictEqual(dayPicks(B), dayPicks(A));
+});
+
+test("the morning save forgets last night's invitation and shared dream", () => {
+    const A = cleaningDay(1234);
+    const G = A.Game;
+    G.convoTags.invitationAccepted = true;
+    G.convoTags.sharedDream = 'You dream of mops.';
+    G.nextDay();
+    const saved = JSON.parse(A.__storage['rj-save']);
+    assert.ok(!saved.convoTags.invitationAccepted, 'no invitation carried into the morning');
+    assert.ok(!saved.convoTags.sharedDream, 'no dream told twice');
+});
+
+test('a save that cannot be written does not leave an older morning behind', () => {
+    const A = cleaningDay(1234);
+    A.__storage['rj-save'] = '{"old":true}';
+    const setItem = A.localStorage.setItem;
+    A.localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+    assert.strictEqual(A.Save.write(), false);
+    A.localStorage.setItem = setItem;
+    assert.ok(!('rj-save' in A.__storage), 'the stale save is gone');
+});
+
+test('the title parses the save once, not on every redraw', () => {
+    const A = cleaningDay(1234);
+    A.Game.nextDay();
+    let reads = 0;
+    const read = A.Save.read.bind(A.Save);
+    A.Save.read = () => { reads++; return read(); };
+    A.Save.peek = null;
+    for (let i = 0; i < 10; i++) A.Title.lines(80);
+    assert.strictEqual(reads, 1);
+    assert.strictEqual(A.Save.savedDay(), 2);
 });

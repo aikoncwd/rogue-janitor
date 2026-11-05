@@ -70,7 +70,7 @@ var Panel = {
     // Like fit(), but for text with rot.js %c{...} colour codes: only visible
     // characters count, and the colour codes are kept.
     fitColored: function (text, width) {
-        let plain = text.replace(/%c\{[^}]*\}/g, '');
+        let plain = text.replace(/%[cb]\{[^}]*\}/g, '');
         if (plain.length <= width) {
             return text;
         }
@@ -78,7 +78,7 @@ var Panel = {
         let visible = 0;
         let i = 0;
         while (i < text.length && visible < width - 1) {
-            let code = text.slice(i).match(/^%c\{[^}]*\}/);
+            let code = text.slice(i).match(/^%[cb]\{[^}]*\}/);
             if (code) {
                 out += code[0];
                 i += code[0].length;

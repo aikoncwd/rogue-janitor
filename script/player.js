@@ -10,28 +10,28 @@ function Player(x,y) {
     this.keyMap[75] =0;
     this.keyMap[104] = 0;
     this.keyMap[85] = 1;
-    this.keyMap[33] = 1; //85
+    this.keyMap[33] = 1;
     this.keyMap[105] = 1;
     this.keyMap[76] = 2;
-    this.keyMap[39] = 2;//76
+    this.keyMap[39] = 2;
     this.keyMap[68] = 2;
     this.keyMap[102] = 2;
     this.keyMap[78] = 3;
-    this.keyMap[34] = 3;//78
+    this.keyMap[34] = 3;
     this.keyMap[99] = 3;
     this.keyMap[74] = 4;
-    this.keyMap[40] = 4;//74
+    this.keyMap[40] = 4;
     this.keyMap[83] = 4;
     this.keyMap[98] = 4;
     this.keyMap[66] = 5;
-    this.keyMap[35] = 5;//66
+    this.keyMap[35] = 5;
     this.keyMap[97] = 5;
     this.keyMap[72] = 6;
-    this.keyMap[37] = 6;//72
+    this.keyMap[37] = 6;
     this.keyMap[65] = 6;
     this.keyMap[100] = 6;
     this.keyMap[89] = 7;
-    this.keyMap[36] = 7;//89
+    this.keyMap[36] = 7;
     this.keyMap[103] = 7;
     this.spreading=null;
     this.spreadCount=0;
@@ -41,6 +41,7 @@ function Player(x,y) {
     this.paused=false;
     this.examining=null;
     this.instructions=false;
+    this.hasTurn=false;
 }
 
 Player.prototype.getArt = function() {
@@ -57,23 +58,16 @@ Player.prototype.getArt = function() {
 
 Player.prototype.act = function() {
     Game.engine.lock();
+    this.hasTurn = true; // the engine waits for us until endTurn()
     Game.turnCount++;
     if (Game.phase == 'cleaning') {
         DayEvents.tick(); // the dragon snores, the intern tags along
     }
-    //console.log(this.x+','+this.y);
-    if (this.spreadCount>0 && this.spreading != null) {
-        let newMess = makeMess(this.x,this.y,this.spreading);
-        this.spreadCount--;
-        if (this.spreadCount==0 && newMess.spreads!=null && newMess.spreads!="") {
-            newMess.spread(this);
-        }
-    }
+    tickSpread(this);
     if (this.cutscene != null) {
         Game.player.talking=Game.monsterList[0];
         Game.monsterList[0].convoIndex=Game.monsterList[0].convos.length;
         Game.monsterList[0].convoInnerDex=0;
-        //Game.monsterList[0].convos=[];
         Game.monsterList[0].convos.push(this.cutscene);
         this.cutscene=null;
         window.addEventListener("keydown",Game.monsterList[0]);
@@ -87,6 +81,7 @@ Player.prototype.act = function() {
 Player.prototype.endTurn = function() {
     Game.drawMap();
     window.removeEventListener("keydown", this);
+    this.hasTurn = false;
     Game.engine.unlock();
 }
 
@@ -174,9 +169,7 @@ Player.prototype.clean = function(verb) {
                         Achievements.unlock('elbereth');
                     }
                     else if (Game.map[key].mess.mimic) {
-                        Game.sendMessage("Hehe, that tickles!");
-                        Game.sendMessage("The stain was a mimic! It giggles and scurries off to the lounge.");
-                        Achievements.unlock('mimic');
+                        this.mimicCheck(Game.map[key].mess);
                     }
                     else if (Game.map[key].mess.kind == 'Lost Ring') {
                         // said below, when it goes in your pocket
@@ -214,11 +207,7 @@ Player.prototype.clean = function(verb) {
                 return;
             }
             else if (key in Game.map && Game.map[key].mess == null && Game.map[key].entity==null && Game.map[key].secretDoor != null) {
-                Game.map[key].openSecretDoor();
-                Effects.add(this.x+i, this.y+j, Effects.framesFor('sparkle'));
-                Game.yendorPoints+=10;
-                Game.sendMessage("%c{#ff0}You found a secret passageway!%c{}");
-                Achievements.unlock('secret');
+                this.foundSecret(this.x+i, this.y+j);
                 return;
             }
         }
@@ -241,7 +230,6 @@ Player.prototype.clean = function(verb) {
     else {
         Game.lastMessage="";
         Game.log.markStale();
-        Game.lastlastMessageTime--;
     }
 }
 
@@ -343,6 +331,15 @@ Player.prototype.squeegee = function(startKey) {
     return n;
 };
 
+// A secret door, found by poking at it or by walking into it.
+Player.prototype.foundSecret = function(x, y) {
+    Game.map[x+','+y].openSecretDoor();
+    Effects.add(x, y, Effects.framesFor('sparkle'));
+    Game.yendorPoints+=10;
+    Game.sendMessage("%c{#ff0}You found a secret passageway!%c{}");
+    Achievements.unlock('secret');
+};
+
 // The day's mimic stain giggles whatever you clean it with.
 Player.prototype.mimicCheck = function(mess) {
     if (mess && mess.mimic) {
@@ -421,7 +418,6 @@ Player.prototype.handleEvent = function(e) {
         Game.drawMap();
         return;
     }
-    //console.log(this.keyMap);
     if (!(code in this.keyMap)) {
         switch (code) {
             default:
@@ -471,9 +467,7 @@ Player.prototype.handleEvent = function(e) {
             if (e.preventDefault) {
                 e.preventDefault(); // keep the browser's focus where it is
             }
-            if (!this.instructions && this.examining == null) {
-                NightLog.open();
-            }
+            NightLog.open(); // help and examine have already taken their keys above
             return;
             // x to examine
             case 69:
@@ -503,21 +497,17 @@ Player.prototype.handleEvent = function(e) {
             return;
         }
     }
-    //console.log(code);
 
     // movement
     let diff = ROT.DIRS[8][this.keyMap[code]];
-    let testKey = (this.x+diff[0])+','+(this.y+diff[1]);
-    let parts = testKey.split(',');
+    let nx = this.x+diff[0], ny = this.y+diff[1];
 
-    if (this.moveTo(Math.round(parseInt(parts[0])), Math.round(parseInt(parts[1])))) {
+    if (this.moveTo(nx, ny)) {
         this.slide(diff);
-        Game.drawMap();
-        window.removeEventListener("keydown", this);
-        Game.engine.unlock();
+        this.endTurn();
     }
     else {
-        let testKey = Math.round(parseInt(parts[0]))+','+Math.round(parseInt(parts[1]));
+        let testKey = nx+','+ny;
         if (testKey in Game.map && Game.map[testKey].entity != null && Game.map[testKey].entity != this) {
             Game.map[testKey].entity.cleanerAct();
         }
@@ -561,10 +551,7 @@ Player.prototype.moveTo = function(x,y) {
     }
 
     if (newKey in Game.map && Game.map[newKey].secretDoor != null && Game.map[newKey].mess==null) {
-        Game.map[newKey].openSecretDoor();
-        Game.yendorPoints+=10;
-        Game.sendMessage("%c{#ff0}You found a secret passageway!%c{}");
-        Achievements.unlock('secret');
+        this.foundSecret(x, y);
         return true;
     }
 
@@ -586,11 +573,6 @@ Player.prototype.moveTo = function(x,y) {
     }
     Game.lastMessage="";
     Game.log.markStale();
-    Game.lastlastMessageTime--;
-    /*console.log(Game.getRoomIndex(x,y));
-    if (Game.getRoomIndex(x,y)>=0) {
-        console.log('Exits:'+Game.rooms[Game.getRoomIndex(x,y)][4]);
-    }*/
     if (oldKey != newKey && oldKey in Game.map && Game.map[oldKey].entity==this) {
         Game.map[oldKey].entity=null;
     }

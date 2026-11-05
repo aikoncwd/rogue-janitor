@@ -8,7 +8,9 @@ var Visits = {
         let seen = run[seenKey] || [];
         let pool = list.filter(function (it) { return seen.indexOf(idOf(it)) < 0; });
         if (pool.length == 0) {
-            seen = [];
+            // forget only this list: other things kept under the same key stay seen
+            let ids = list.map(idOf);
+            seen = seen.filter(function (id) { return ids.indexOf(id) < 0; });
             pool = list.slice();
         }
         let pick = Flavor.rng.getItem(pool);
@@ -106,7 +108,7 @@ var Visits = {
 
     foodRun: function (speaker) {
         let p = this.fresh(this.PLACES, 'placesSeen', function (x) { return x.id; });
-        let first = {text: p.ask.replace('{name}', RandomName(false))};
+        let first = {text: this.withName(p.ask)};
         let convo = [first];
         for (let i = 0; i < p.options.length; i++) {
             let o = p.options[i];
@@ -122,7 +124,6 @@ var Visits = {
     delivery: function (tags) {
         let convo = [{text: "Here's the " + tags.food + " you asked for!", any: 1}];
         if (tags.foodQuip) {
-            convo[0].any = 1;
             convo.push({text: tags.foodQuip, any: 2});
         }
         convo.push({text: Flavor.rng.getItem(this.ENJOY), any: -1});
@@ -407,28 +408,31 @@ var Visits = {
         return id && id.indexOf('barbeque') >= 0 ? this.BBQ : null;
     },
 
+    // Fills {name} with a made-up name (only when the line has one).
+    withName: function (line) {
+        return line.indexOf('{name}') >= 0 ? line.replace('{name}', SideName()) : line;
+    },
+
     // Fills {game}, {movie}, {word} and {name} in a plan line.
     fill: function (line) {
         let t = (typeof Game != 'undefined' && Game.convoTags) || {};
-        return line.replace('{game}', t.dinnerGame || 'NetHack').replace('{movie}', t.dinnerMovie || this.MOVIES[0])
-            .replace('{word}', Flavor.rng.getItem(ConversationBuilder.words).toLowerCase()).replace('{name}', RandomName(false));
+        return this.withName(line.replace('{game}', t.dinnerGame || 'NetHack').replace('{movie}', t.dinnerMovie || this.MOVIES[0])
+            .replace('{word}', Flavor.rng.getItem(ConversationBuilder.words).toLowerCase()));
     },
 
     invitation: function (speaker) {
         let fav = this.FAVOURITE[speaker.species];
         let words = ConversationBuilder.words;
         let useFav = fav == 'barbeque' || (fav != null && Flavor.chance(0.6));
-        {
-            if (fav == 'barbeque') {
-                return [
-                    {text: "Holy heck you cleaned so much! I'm impressed!", any: 1},
-                    {text: "Hey, I'm hosting a barbeque tonight. Yes, we're using raging hellfire. From me. Wanna come?", y: 2, n: 4},
-                    {text: Flavor.rng.getItem(words) + "! We can all leave together when you're ready to call it a day!", any: 3,
-                        globalTags: {invitationAccepted: true, yendorPoints: 10, dinnerPlan: speaker.name + "'s barbeque", dinnerHost: speaker.name}},
-                    {text: "Remember, it doesn't need to be spotless! Your health and happiness are way more important than work; call it a day on your own terms!", any: -1},
-                    {text: "That's alright :) I'll invite you to the next one!", any: 3},
-                ];
-            }
+        if (fav == 'barbeque') {
+            return [
+                {text: "Holy heck you cleaned so much! I'm impressed!", any: 1},
+                {text: "Hey, I'm hosting a barbeque tonight. Yes, we're using raging hellfire. From me. Wanna come?", y: 2, n: 4},
+                {text: Flavor.rng.getItem(words) + "! We can all leave together when you're ready to call it a day!", any: 3,
+                    globalTags: {invitationAccepted: true, yendorPoints: 10, dinnerPlan: speaker.name + "'s barbeque", dinnerHost: speaker.name}},
+                {text: "Remember, it doesn't need to be spotless! Your health and happiness are way more important than work; call it a day on your own terms!", any: -1},
+                {text: "That's alright :) I'll invite you to the next one!", any: 3},
+            ];
         }
         let plan = useFav ? this.planFor(fav)
             : this.fresh(this.PLANS, 'plansSeen', function (p) { return p.id; });

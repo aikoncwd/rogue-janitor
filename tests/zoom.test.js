@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
+const { bootHeadless, toIntro, cleaningDay } = require('./harness');
 
 const keyEv = (key, keyCode) => ({ key, keyCode, preventDefault() {} });
 
@@ -73,4 +73,22 @@ test('a resize before the game has started does not throw', () => {
     ctx.Game.screen = ctx.document.getElementById('gameContainer');
     assert.equal(ctx.Game.display, null);
     assert.doesNotThrow(() => ctx.Game.getSize());
+});
+
+// 11. manual zoom without localStorage
+test('a manual zoom survives the morning even without localStorage', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    ctx.localStorage.setItem = () => { throw new Error('blocked'); };
+    ctx.localStorage.getItem = () => null;
+    ctx.localStorage.removeItem = () => { throw new Error('blocked'); };
+    G.setFontSize(G.MIN_FONT + 2, true);
+    assert.strictEqual(G.manualZoom, true);
+    G.fitFontSize = () => G.MIN_FONT + 6;
+    G.applyAutoZoom();
+    assert.strictEqual(G.fontSize, G.MIN_FONT + 2);
+    G.setFontSize(G.MIN_FONT + 4, false); // 0 = automatic again
+    assert.strictEqual(G.manualZoom, false);
+    G.applyAutoZoom();
+    assert.strictEqual(G.fontSize, G.MIN_FONT + 6);
 });

@@ -47,6 +47,8 @@ var Ending = {
             requests: r.requestsDone || 0,
             friends: (r.chattedWith || []).length,
             zorkmids: r.zorkmidsEarned || 0,
+            bestCombo: r.bestCombo || 0,
+            goals: r.goalsDone || 0,
         };
     },
 
@@ -99,8 +101,10 @@ var Ending = {
         out.push(row('Requests done', String(s.requests)));
         out.push(row('Comrades befriended', String(s.friends)));
         out.push(row('Zorkmids earned', String(s.zorkmids)));
+        out.push(row('Memo goals done', String(s.goals)));
+        out.push(row('Best combo', 'x' + s.bestCombo));
         let ach = Achievements.count();
-        out.push(row('Achievements', (Game.run.newAchievements || []).length + ' new (' + ach.got + ' / ' + ach.total + ')'));
+        out.push(row('Achievements', Achievements.newThisRun().length + ' new (' + ach.got + ' / ' + ach.total + ')'));
         if (Game.run.silliest) {
             out.push(row('Silliest purchase', Panel.fit(Game.run.silliest, W - 25)));
         }

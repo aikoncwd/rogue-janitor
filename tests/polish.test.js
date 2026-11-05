@@ -1,8 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
+const { bootHeadless, toIntro, strip } = require('./harness');
 
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
 const keyEv = (key, keyCode) => ({ key, keyCode, preventDefault() {} });
 
 function cleaning(seed = 1234) {

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
+const { bootHeadless, toIntro, strip } = require('./harness');
 
 const KEY = { ENTER: 13, SPACE: 32, F: 70, ESC: 27, LEFT: 37, M: 77, V: 86, T: 84 };
 const plain = s => s.replace(/%c\{[^}]*\}/g, '');

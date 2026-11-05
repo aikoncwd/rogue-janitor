@@ -160,7 +160,10 @@ var Save = {
             return true;
         }
         catch (e) {
-            return false; // no storage: the run just can't be continued later
+            // no storage (or it is full): the run can't be continued later, and an
+            // older morning must not pretend to be this one
+            this.clear();
+            return false;
         }
     },
 
@@ -206,6 +209,24 @@ var Save = {
     exists: function () {
         return this.read() != null;
     },
+
+    // The saved day for the title screen, or null. The title redraws four times a
+    // second, so the save is only parsed again when what is stored has changed.
+    savedDay: function () {
+        let raw = null;
+        try {
+            raw = localStorage.getItem(this.KEY);
+        }
+        catch (e) {
+            return null;
+        }
+        if (this.peek == null || this.peek.raw !== raw) {
+            let data = raw == null ? null : this.read();
+            this.peek = {raw: raw, day: data != null ? data.day : null};
+        }
+        return this.peek.day;
+    },
+    peek: null,
 
     clear: function () {
         try {

@@ -182,10 +182,6 @@ var Inventory = {
         return {lines: out, focus: focus};
     },
 
-    lines: function () {
-        return this.listing().lines;
-    },
-
     // Below the list: the chosen item's description and what you can do with it.
     details: function () {
         let width = this.WIDTH - 4;
@@ -217,7 +213,8 @@ var Inventory = {
             Ui.window({
                 id: 'achievements', title: 'Your Pockets', width: this.WIDTH,
                 top: [this.tabBar(), ''], body: Achievements.entries(width),
-                footer: Ui.key('[↑↓]') + ' scroll   ' + Ui.key('[Tab]') + ' pockets   ' + Ui.key('[Esc]') + ' close',
+                footer: [Ui.key('[↑↓]') + ' scroll   ' + Ui.key('[Tab]') + ' pockets   ' + Ui.key('[Esc]') + ' close',
+                    Ui.key('↑↓') + ' ' + Ui.key('Tab') + ' pockets ' + Ui.key('Esc') + ' close'],
             });
             return;
         }
@@ -227,7 +224,8 @@ var Inventory = {
             top: [this.tabBar(), '', 'Wallet: %c{#ff0}' + Game.zorkmids + ' zm%c{}', ''],
             body: l.lines, focus: l.focus,
             bottom: ['%c{#444}' + '─'.repeat(width) + '%c{}'].concat(this.details()),
-            footer: Ui.key('[letter]') + ' look  ' + Ui.key('[Enter]') + ' use  ' + Ui.key('[Tab]') + ' achievements  ' + Ui.key('[Esc]') + ' close',
+            footer: [Ui.key('[letter]') + ' look  ' + Ui.key('[Enter]') + ' use  ' + Ui.key('[Tab]') + ' achievements  ' + Ui.key('[Esc]') + ' close',
+                Ui.key('a-z') + ' look ' + Ui.key('Enter') + ' use ' + Ui.key('Tab') + ' awards ' + Ui.key('Esc') + ' close'],
         });
     },
 };

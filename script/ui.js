@@ -3,7 +3,7 @@
 // bottom part and a line of key hints. Drawn over the map, centred on the screen.
 var Ui = {
     BG: '#14121a',
-    DIM: '#777',
+    DIM: '#888', // at least 4.5:1 on the window background
     offsets: {}, // scroll position of each window's body, by id
 
     // Visible length of a line with rot.js %c{...}/%b{...} codes.
@@ -124,11 +124,33 @@ var Ui = {
         this.offsets[id] = 0;
     },
 
-    // How many body rows a window gets on this screen.
+    // The footer line that fits `inner` columns. `footer` is a string or a list of
+    // forms, longest first (the last one is used when none fits, and gets clipped).
+    footerFor: function (footer, inner) {
+        let forms = Array.isArray(footer) ? footer : [footer];
+        for (let i = 0; i < forms.length; i++) {
+            if (forms[i].replace(/%[cb]\{[^}]*\}/g, '').length <= inner) {
+                return forms[i];
+            }
+        }
+        return forms[forms.length - 1];
+    },
+
+    // Whether the footer still fits on this screen: it is the first thing to go.
+    hasFooter: function (o) {
+        if (!o.footer) {
+            return false;
+        }
+        let rows = Game.screenSize[1];
+        return 2 + (o.top || []).length + (o.bottom || []).length + 2 + 3 <= rows;
+    },
+
+    // How many body rows a window gets on this screen (never taller than the screen).
     bodyRows: function (o) {
         let rows = Game.screenSize[1];
-        let fixed = 2 + (o.top || []).length + (o.bottom || []).length + (o.footer ? 2 : 0);
-        return Math.max(3, rows - 2 - fixed);
+        let fixed = 2 + (o.top || []).length + (o.bottom || []).length + (this.hasFooter(o) ? 2 : 0);
+        let roomy = Math.max(3, rows - 2 - fixed); // a margin above and below when there is space
+        return Math.max(1, Math.min(roomy, rows - fixed));
     },
 
     // o: {id, title, color, width, top, body, bottom, footer, focus}
@@ -143,6 +165,7 @@ var Ui = {
         let inner = w - 4;
         let top = o.top || [], body = o.body || [], bottom = o.bottom || [];
         let room = this.bodyRows(o);
+        let footer = this.hasFooter(o) ? this.footerFor(o.footer, inner) : null;
         let shown = Math.min(body.length, room);
         let maxOff = Math.max(0, body.length - shown);
         let off = Math.min(this.offsets[o.id] || 0, maxOff);
@@ -155,7 +178,9 @@ var Ui = {
             }
         }
         this.offsets[o.id] = off;
-        let h = 2 + top.length + shown + bottom.length + (o.footer ? 2 : 0);
+        // on a tiny screen even the fixed lines may not fit: the frame never leaves the
+        // screen, and lines that fall outside it are not drawn
+        let h = Math.min(rows, 2 + top.length + shown + bottom.length + (footer ? 2 : 0));
         let x0 = Math.max(0, Math.floor((cols - w) / 2));
         let y0 = Math.max(0, Math.floor((rows - h) / 2));
         let bg = this.BG;
@@ -187,31 +212,33 @@ var Ui = {
         let self = this;
         let y = y0 + 1;
         let put = function (line) {
-            if (line) {
-                // rot.js drops leading spaces, so indent by moving the start instead
+            if (line && y < y0 + h - 1) {
+                // rot.js drops leading spaces, so indent by moving the start instead.
+                // Lines are clipped, never wrapped: a wrapped line would spill over the frame.
                 let indent = line.match(/^ */)[0].length;
-                d.drawText(x0 + 2 + indent, y, '%b{' + bg + '}' + line.slice(indent), inner - indent);
+                d.drawText(x0 + 2 + indent, y, '%b{' + bg + '}' + Panel.fitColored(line.slice(indent), inner - indent));
             }
             y++;
         };
         top.forEach(put);
         let bodyY = y;
         body.slice(off, off + shown).forEach(put);
-        if (off > 0) {
+        let lastRow = y0 + h - 2; // the last row inside the frame
+        if (off > 0 && bodyY <= lastRow) {
             d.draw(x0 + w - 1, bodyY, '▲', '#ff0', bg);
         }
-        if (off + shown < body.length) {
+        if (off + shown < body.length && bodyY + shown - 1 <= lastRow) {
             d.draw(x0 + w - 1, bodyY + shown - 1, '▼', '#ff0', bg);
         }
         bottom.forEach(put);
-        if (o.footer) {
+        if (footer && y < y0 + h - 2) {
             for (let x = 1; x < w - 1; x++) {
                 d.draw(x0 + x, y, '─', '#444', bg);
             }
             d.draw(x0, y, '╟', color, bg);
             d.draw(x0 + w - 1, y, '╢', color, bg);
             y++;
-            put('%c{' + self.DIM + '}' + o.footer + '%c{}');
+            put('%c{' + self.DIM + '}' + footer + '%c{}');
         }
         return {x: x0, y: y0, w: w, h: h, offset: off, shown: shown};
     },

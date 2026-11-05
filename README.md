@@ -66,7 +66,13 @@ It is plain HTML and JavaScript, so there is no build step. Serve the folder wit
 npx serve .            # or: python -m http.server
 ```
 
-[rot.js](https://ondras.github.io/rot.js/hp/) is loaded from a CDN, so the first load needs an internet connection.
+[rot.js](https://ondras.github.io/rot.js/hp/) 2.2.1 ships with the game in `vendor/`, so it runs offline.
+
+To build the itch.io upload (`dist/rogue-janitor-itch.zip`, with `index.html` at its root):
+
+```sh
+node tools/build-itch.js
+```
 
 The tests run with Node's built-in runner, with no dependencies:
 

@@ -1,4 +1,5 @@
 rot.js
 *.zip
 .superpowers/
-!tests/vendor/rot.js
+dist/
+!vendor/rot.js

@@ -33,14 +33,12 @@ var ConversationBuilder = {
             newConversation.push(this.randomGeneric(speaker,party));
         }
 
-        //return newConversation;
         if (speaker.damagedealt>=4) {
             newConversation.push(this.lottaDamage(speaker));
         }
         else if (speaker.damagedealt<=1 && ROT.RNG.getUniform()>0.8) {
             newConversation.push(this.noDamage(speaker));
         }
-        //newConversation.push(this.impressed());
 
         if (speaker.questItem != null && !('questItemSuccess' in speaker.convoTags)) {
             this.searchQuestConvo(newConversation,speaker);
@@ -190,7 +188,6 @@ var ConversationBuilder = {
                         {action:"wipes away tears.",any:1},
                         {text:"I didn't get into Monster School :(",any:2},
                         {text:"I'm disappointed, but I've got a good gig here. Life goes on and all that.",any:-1,tags:{careerConcluded:false}},
-                        //{text:"I can still do "+speaker.convoTags.wantsCareer+" stuff as a hobby! I think that will be enough.",any:-1,tags:{careerConcluded:false}},
                     ];
                 }
             }
@@ -231,7 +228,6 @@ var ConversationBuilder = {
     },
 
     randomGeneric: function(speaker) {
-        //let option = Math.floor(ROT.RNG.getUniform() * 10);
         let possibilities=[
             [
                 "It's nice to relax after a long day in the dungeon!"
@@ -702,7 +698,6 @@ var ConversationBuilder = {
             }
             else {
                 if (!('wantsCareer' in speaker.convoTags)) {
-                    //if (ROT.RNG.getUniform())
                     option = 2;
                 }
             }
@@ -748,7 +743,6 @@ var ConversationBuilder = {
                         }
                         newConvo.push(next);
                     }
-                    //console.log(newConvo);
                     toReturn = newConvo;
             }
             breaker++;
@@ -798,7 +792,6 @@ var ConversationBuilder = {
             "I rolled a 1. Then another 1. The dice hate me today.","I swung, I missed, I fainted. In that order. Very fast.","The hero didn't even notice me. I was RIGHT THERE."];
         let closePhrases=["Sometimes you have a rough day, but it's alright! Tomorrow will friggin rule!","You get knocked down, but you just have to get back up again!","Rough days happen but I still love working here!","Next time the adventurer won't be so lucky!",
             "The RNG giveth, the RNG taketh away. Tomorrow it giveth again!","At least my fainting was on point. Ten out of ten fainting."];
-        //let option = Math.floor(8*ROT.RNG.getUniform());
         var conversation=[{text:ROT.RNG.getItem(openPhrases),any:1},
             {text:ROT.RNG.getItem(closePhrases),any:-1}
             ];
@@ -965,27 +958,6 @@ var ConversationBuilder = {
         return Visits.invitation(speaker);
     },
 
-    victoryPrompt: function() {
-        var nextConvo=[];
-        var victoryScene = [
-            "When you arrive at work, everyone greets you enthusiastically!",
-            "You've been here for a couple of weeks, and have already made a fantastic impression!",
-            "Everyone has banded together, and given you the best gift the dungeon has to offer:",
-            "You have been gifted the legendary %c{#ff0}Mop of Yendor%c{}!",
-            "Its mystic energies flow through your hands. You feel like your cleaning abilities have become supercharged. No mess will stand in your way again!",
-            "%c{#ff0}You have won the hearts of your comrades and, by extension, this game. Thank you for playing!%c{}"
-        ];
-        for (let i = 0; i < victoryScene.length; i++) {
-            var nextMsg = { message: victoryScene[i], any: (nextConvo.length + 1) };
-            if (i == (victoryScene.length - 1)) {
-                nextMsg.globalTags = { victory: true };
-                nextMsg.any = -1;
-            }
-            nextConvo.push(nextMsg);
-        }
-        return nextConvo;
-    },
-
     exitPrompt: function() {
         var nextConvo=[];
         
@@ -1052,11 +1024,9 @@ var ConversationBuilder = {
                 nextMsg.globalTags=Object.assign({}, nextMsg.globalTags, {endShift:true}); // you said yes: the shift is over
             }
             if (i==(messages.length-1)) {
-                nextMsg.globalTags=lastDay ? {endRun:true,invitationAccepted:false,sharedDream:false} : {nextDay:true,invitationAccepted:false,sharedDream:false};
+                // tags apply in order: clear the night's plans before nextDay saves the morning
+                nextMsg.globalTags=lastDay ? {invitationAccepted:false,sharedDream:false,endRun:true} : {invitationAccepted:false,sharedDream:false,nextDay:true};
                 nextMsg.any=-1;
-                //if (Game.yendorPoints+Game.cleanPercent() > Game.targetPoints && !Game.victory) {
-                //    nextMsg.any=(i+1);
-                //}
             }
 
             nextConvo.push(nextMsg);

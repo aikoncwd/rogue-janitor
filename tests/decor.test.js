@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless } = require('./harness');
+const { bootHeadless, cleaningDay, strip } = require('./harness');
 
 function freshDungeon(seed = 1234) {
     const ctx = bootHeadless({ seed });
@@ -103,4 +103,65 @@ test('dungeons are decorated with the new furniture', () => {
     for (const n of ['Clay Pot', 'Weapon Rack', 'Fountain', 'Rock', 'Column', 'Banner', 'Wall Torch', 'Table']) {
         assert.ok(seen.has(n), n + ' appears in some dungeon');
     }
+});
+
+function wall(ctx, x, y) {
+    ctx.Game.map[x + ',' + y] = new ctx.Tile(x, y, '#', '#ddd', '#777', false, false);
+}
+
+// 4. lounge spots and secret doors
+test('nothing is put up right in front of a secret door', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const spots = ctx.Shop.loungeSpots();
+    // a corner spot (5 walls): it keeps 4 walls even with a secret door next to it
+    const spot = spots.find(([x, y]) => {
+        let walls = 0;
+        for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
+            const n = G.map[(x + i) + ',' + (y + j)];
+            if (n && !n.passable) walls++;
+        }
+        return walls >= 5;
+    });
+    assert.ok(spot, 'a corner spot');
+    const side = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([a, b]) => G.map[(spot[0] + a) + ',' + (spot[1] + b)]).find(n => n && !n.passable);
+    side.secretDoor = { door: '+', char: '+', color: '#fff', bgColor: '#000', sound: 'creak' };
+    assert.ok(!ctx.Shop.loungeSpots().some(([x, y]) => x == spot[0] && y == spot[1]));
+});
+
+test('a secret door is not a wall for lounge decorations', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const spot = ctx.Shop.loungeSpots().find(([x, y]) => {
+        let walls = 0;
+        for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
+            const n = G.map[(x + i) + ',' + (y + j)];
+            if (n && !n.passable) walls++;
+        }
+        return walls == 3;
+    });
+    assert.ok(spot, 'a spot against a straight wall');
+    // turn one of its three walls into a secret door
+    let done = false;
+    for (let i = -1; i <= 1 && !done; i++) for (let j = -1; j <= 1 && !done; j++) {
+        const n = G.map[(spot[0] + i) + ',' + (spot[1] + j)];
+        if (n && !n.passable) { n.secretDoor = { door: '+', char: '+', color: '#fff', bgColor: '#000', sound: 'creak' }; done = true; }
+    }
+    const again = ctx.Shop.loungeSpots().some(([x, y]) => x == spot[0] && y == spot[1]);
+    assert.strictEqual(again, false);
+});
+
+// 5. decorations that did not fit
+test('decorations that did not fit say "no room today"', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const total = ctx.Decor.MAX + 3;
+    for (let i = 0; i < total; i++) {
+        G.inventory.push({ kind: 'decor', id: 'd' + i, name: 'Gnome ' + i, desc: 'A gnome.', placed: true });
+    }
+    const n = ctx.Decor.place();
+    assert.ok(n <= ctx.Decor.MAX && n < total);
+    const text = ctx.Inventory.listing().lines.map(strip).join('\n');
+    assert.strictEqual((text.match(/\[in the lounge\]/g) || []).length, n, text);
+    assert.strictEqual((text.match(/no room today/g) || []).length, total - n, text);
 });

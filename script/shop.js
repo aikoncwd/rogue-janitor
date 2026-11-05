@@ -189,7 +189,8 @@ var Shop = {
         Ui.window({
             id: 'shop', title: 'Mimsy\'s Perfectly Useless Shop', color: '#fd0', width: this.WIDTH,
             top: top, body: this.lines(), bottom: ['', wallet],
-            footer: Ui.key('[a-' + String.fromCharCode(96 + this.stock.length) + ']') + ' buy   ' + Ui.key('[Esc]') + ' leave the shop',
+            footer: [Ui.key('[a-' + String.fromCharCode(96 + this.stock.length) + ']') + ' buy   ' + Ui.key('[Esc]') + ' leave the shop',
+                Ui.key('a-' + String.fromCharCode(96 + this.stock.length)) + ' buy  ' + Ui.key('Esc') + ' leave'],
         });
     },
 };

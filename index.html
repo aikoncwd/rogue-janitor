@@ -2,11 +2,12 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="A cozy roguelike about the morning after: the hero raided the dungeon, you grab the mop.">
         <title>Rogue Janitor</title>
         <link href="style/style.css" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css?family=Share+Tech+Mono" rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/rot-js@2.2.1/dist/rot.js"></script>
-        <!--<script src="rot.js"></script>-->
+        <!-- rot.js 2.2.1, shipped with the game: it works offline and on itch.io -->
+        <script src="vendor/rot.js"></script>
         <script src="script/flavor.js"></script>
         <script src="script/lore.js"></script>
         <script src="script/messagelog.js"></script>
@@ -42,7 +43,8 @@
         <script src="script/visits.js"></script>
     </head>
     <body onLoad="Game.init()" onResize="Game.getSize()">
-        <div id="gameContainer">
+        <noscript><p class="noscript">Rogue Janitor needs JavaScript to run. The mop is waiting.</p></noscript>
+        <div id="gameContainer" role="application" aria-label="Rogue Janitor, a keyboard roguelike. Press ? in game for help.">
 
         </div>
     </body>

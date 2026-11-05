@@ -126,3 +126,16 @@ test('player glyph not drawn during invasion', () => {
     assert.ok(!ctx.__drawn.some(d => d.ch === '@' && d.fg === ctx.Game.player.color), 'the janitor is not drawn');
     assert.ok(ctx.__drawn.some(d => d.ch === '@' && d.fg === ctx.Game.adventurer.color), 'hero is drawn');
 });
+
+test('M-6: browser keys on the intro screen do not start the invasion', () => {
+    const ctx = toIntro(bootHeadless({ begin: true }));
+    let prevented = 0;
+    const ev = (keyCode, extra = {}) => Object.assign({ keyCode, preventDefault() { prevented++; } }, extra);
+    for (const e of [ev(116), ev(123), ev(122), ev(16), ev(17), ev(18), ev(82, { ctrlKey: true }), ev(82, { metaKey: true }), ev(9, { altKey: true })]) {
+        ctx.Game.onKey(e);
+    }
+    assert.equal(ctx.Game.phase, 'intro');
+    assert.equal(prevented, 0);
+    ctx.Game.onKey(ev(13));
+    assert.equal(ctx.Game.phase, 'invasion');
+});

@@ -30,7 +30,10 @@ test('the transcript keeps every line the night said, with the camera clock', ()
     const ctx = invading();
     const logged = [];
     const push = ctx.Game.log.push.bind(ctx.Game.log);
-    ctx.Game.log.push = t => { if (ctx.Game.phase == 'invasion') logged.push(t); push(t); };
+    let morning = false; // the morning lines belong to the message bar, not the tape
+    const finish = ctx.Invasion.finish.bind(ctx.Invasion);
+    ctx.Invasion.finish = () => { morning = true; finish(); };
+    ctx.Game.log.push = t => { if (ctx.Game.phase == 'invasion' && !morning) logged.push(t); push(t); };
     watchAll(ctx);
     const tr = ctx.Invasion.transcript;
     assert.ok(tr.length > 10, String(tr.length));
@@ -247,3 +250,48 @@ test('the how-to screen teaches the camera controls and the log', () => {
     assert.ok(!text.includes('fast-forward   '), 'the old Space line is gone');
     for (const l of ctx.Flavor.pools.howtoText) assert.ok(plain(l).length <= 64, plain(l));
 });
+
+test('the tape ends with the night, not with the morning lines', () => {
+    const ctx = invading();
+    watchAll(ctx);
+    const tr = ctx.Invasion.transcript.map(e => plain(e.text));
+    const morning = [ctx.Flavor.pools.shiftBegins, ctx.Flavor.pools.monstersGetUp].flat().map(plain);
+    for (const t of tr.slice(-2)) assert.ok(!morning.includes(t), 'morning line on the tape: ' + t);
+});
+
+for (const size of [[100, 40], [60, 24], [50, 20], [34, 12], [24, 8]]) {
+    test('windows stay inside a ' + size.join('x') + ' screen', () => {
+        const ctx = bootHeadless({ seed: 1234, begin: true, size });
+        toIntro(ctx);
+        ctx.Invasion.instant = true;
+        ctx.__press(13);
+        ctx.Invasion.instant = false;
+        let n = 0;
+        while (ctx.Game.player.talking && n++ < 50) { ctx.Game.player.talking.lastConvoChange = 0; ctx.__press(13); }
+        const [cols, rows] = ctx.Game.screenSize;
+        const windows = {
+            nightlog: () => ctx.NightLog.open(),
+            help: () => { ctx.Game.player.instructions = true; },
+            pockets: () => ctx.Inventory.openInv(),
+            shop: () => ctx.Shop.openShop(),
+        };
+        for (const [name, open] of Object.entries(windows)) {
+            open();
+            ctx.__drawn.length = 0;
+            ctx.__overflows.length = 0;
+            ctx.Game.drawMap();
+            const r = name == 'nightlog' ? ctx.Ui.window(ctx.NightLog.options()) : null;
+            assert.deepStrictEqual(ctx.__overflows, [], name + ' wraps a line');
+            for (const d of ctx.__drawn) {
+                if (d.text == null) continue;
+                assert.ok(d.x + d.width <= cols, name + ': "' + plain(d.text) + '" runs off the screen');
+                assert.ok(d.y < rows, name + ' draws below the screen');
+            }
+            if (r) assert.ok(r.y + r.h <= rows, 'the log fits the screen');
+            ctx.NightLog.close && ctx.NightLog.isOpen && ctx.NightLog.close();
+            ctx.Game.player.instructions = false;
+            ctx.Inventory.isOpen = false;
+            ctx.Shop.isOpen = false;
+        }
+    });
+}

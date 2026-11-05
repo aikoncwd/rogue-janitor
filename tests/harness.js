@@ -57,7 +57,10 @@ function makeContext() {
         __storage: storage,
     };
     ctx.window = {
-        addEventListener(type, fn) { listeners.push({ type, fn }); },
+        // like the browser: adding the same listener twice keeps one
+        addEventListener(type, fn) {
+            if (!listeners.some(l => l.type === type && l.fn === fn)) listeners.push({ type, fn });
+        },
         removeEventListener(type, fn) {
             const i = listeners.findIndex(l => l.type === type && l.fn === fn);
             if (i >= 0) listeners.splice(i, 1);
@@ -118,12 +121,25 @@ function load(ctx, file) {
     vm.runInContext(code, ctx, { filename: file });
 }
 
-function stubDisplay(ctx) {
+// The visible width of a rot.js colour-coded string.
+function visibleWidth(text) {
+    return String(text).replace(/%[cb]\{[^}]*\}/g, '').length;
+}
+
+// A display that records what is drawn. Text longer than its maxWidth would wrap
+// onto the rows below in rot.js, so it is listed in __overflows.
+function stubDisplay(ctx, size) {
+    ctx.__overflows = [];
     return {
         draw(x, y, ch, fg, bg) { ctx.__drawn.push({ x, y, ch, fg, bg }); },
-        drawText(x, y, text, maxWidth) { ctx.__drawn.push({ x, y, text, maxWidth }); return 1; },
+        drawText(x, y, text, maxWidth) {
+            const width = visibleWidth(text);
+            ctx.__drawn.push({ x, y, text, maxWidth, width });
+            if (maxWidth != null && width > maxWidth) ctx.__overflows.push({ x, y, text, maxWidth, width });
+            return maxWidth != null ? Math.max(1, Math.ceil(width / maxWidth)) : 1;
+        },
         clear() { ctx.__drawn.length = 0; },
-        computeSize() { return [100, 40]; },
+        computeSize() { return size.slice(); },
         setOptions(o) { ctx.__displayOptions = Object.assign(ctx.__displayOptions || {}, o); },
         getContainer() { return {}; },
     };
@@ -134,14 +150,14 @@ function stubDisplay(ctx) {
 // begin=true it runs Game.begin() like the browser does (day 1 intro screen).
 // paused=true keeps the game's real start (the footage paused on its first
 // frame); by default the replay runs by itself, as the older tests expect.
-function bootHeadless({ seed = 1234, files = DEFAULT_FILES, game = true, begin = false, paused = false } = {}) {
+function bootHeadless({ seed = 1234, files = DEFAULT_FILES, game = true, begin = false, paused = false, size = [100, 40] } = {}) {
     const ctx = makeContext();
-    load(ctx, 'tests/vendor/rot.js');
+    load(ctx, 'vendor/rot.js'); // the same copy the game ships with
     ctx.ROT.RNG.setSeed(seed);
     for (const f of files) load(ctx, f);
     if (game && ctx.Game) {
         ctx.Game.screen = ctx.document.getElementById('gameContainer');
-        ctx.Game.display = stubDisplay(ctx);
+        ctx.Game.display = stubDisplay(ctx, size);
         ctx.Game.getSize(false);
         ctx.Game.setup();
         if (ctx.Invasion && !paused) ctx.Invasion.startPaused = false;
@@ -159,8 +175,25 @@ function toIntro(ctx) {
     return ctx;
 }
 
+// Day 1, after an instant replay and the morning chats: the janitor is on the clock.
+function cleaningDay(seed = 1234) {
+    const ctx = toIntro(bootHeadless({ seed, begin: true }));
+    ctx.Invasion.instant = true;
+    ctx.__press(13);
+    ctx.Invasion.instant = false;
+    let n = 0;
+    while (ctx.Game.player.talking && n++ < 50) {
+        ctx.Game.player.talking.lastConvoChange = 0;
+        ctx.__press(13);
+    }
+    return ctx;
+}
+
+// Text without rot.js colour codes.
+const strip = s => String(s).replace(/%[cb]\{[^}]*\}/g, '');
+
 function run(ctx, code) {
     return vm.runInContext(code, ctx);
 }
 
-module.exports = { bootHeadless, toIntro, run, DEFAULT_FILES, makeContext, load };
+module.exports = { bootHeadless, toIntro, cleaningDay, strip, run, DEFAULT_FILES, makeContext, load, visibleWidth };

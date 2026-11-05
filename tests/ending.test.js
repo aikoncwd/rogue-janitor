@@ -1,21 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
-
-function cleaningDay(seed = 1234) {
-    const ctx = toIntro(bootHeadless({ seed, begin: true }));
-    ctx.Invasion.instant = true;
-    ctx.__press(13);
-    ctx.Invasion.instant = false;
-    let n = 0;
-    while (ctx.Game.player.talking && n++ < 50) {
-        ctx.Game.player.talking.lastConvoChange = 0;
-        ctx.__press(13);
-    }
-    return ctx;
-}
+const { cleaningDay, strip } = require('./harness');
 
 // A finished run: five grades and the given points before the last day's clean %.
 function lastDay(points, seed = 1234) {
@@ -150,4 +135,15 @@ test('the message log is not drawn over the ending', () => {
     ctx.Game.sendMessage('A leftover line from the shift.');
     const text = ctx.__drawn.filter(d => d.text).map(d => strip(d.text)).join('\n');
     assert.ok(!/leftover line/.test(text), 'log drawn over the ending');
+});
+
+test('the card shows the best combo and the memo goals of the run', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.run.bestCombo = 12;
+    G.run.goalsDone = 4;
+    ctx.Ending.start('senior');
+    const text = ctx.Ending.cardLines().map(strip).join('\n');
+    assert.match(text, /Best combo\s+x12/);
+    assert.match(text, /Memo goals done\s+4/);
 });

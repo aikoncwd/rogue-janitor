@@ -52,6 +52,15 @@ var Sfx = {
         } catch (e) {
             // storage unavailable: preference lasts for this session only
         }
+        // no sound means no music either: stop its scheduler instead of ticking silently
+        if (typeof Music !== 'undefined') {
+            if (this.enabled) {
+                Music.resume();
+            }
+            else {
+                Music.halt();
+            }
+        }
         return this.enabled;
     },
 

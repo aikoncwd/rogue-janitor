@@ -1,8 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, run } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
+const { bootHeadless, cleaningDay, strip } = require('./harness');
 
 test('rooms follow the 5-day table', () => {
     for (const seed of [1, 2, 3]) {
@@ -43,4 +41,15 @@ test('panel shows Day N / 5', () => {
     G.drawMap();
     const text = ctx.__drawn.filter(d => d.text).map(d => strip(d.text)).join('\n');
     assert.match(text, /Day 3 \/ 5/);
+});
+
+// 13. a new run forgets yesterday's memo
+test('a new run clears the goals and the room names', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    ctx.Objectives.list = [{ type: 'chat', label: 'Chat with 3 colleagues', done: true }];
+    G.roomNames = ['STALE'];
+    G.newRun();
+    assert.strictEqual(ctx.Objectives.list.length, 0);
+    assert.ok(!(G.roomNames || []).includes('STALE'));
 });

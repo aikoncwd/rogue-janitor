@@ -1,8 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
+const { bootHeadless, toIntro, strip } = require('./harness');
 
 function dungeon(seed = 1234) {
     const ctx = bootHeadless({ seed });
@@ -137,4 +135,23 @@ test('title sometimes shows a rumor', () => {
     ctx.Flavor.chance = () => true;
     for (let i = 0; i < ctx.Title.TAGLINE_FRAMES; i++) ctx.__runTimers();
     assert.ok(ctx.Lore.rumors.includes(ctx.Title.tagline), ctx.Title.tagline);
+});
+
+test('funny names keep their capitals in messages', () => {
+    const ctx = cleaningDay();
+    const p = ctx.Game.player;
+    const G = ctx.Game;
+    for (const k in G.map) if (G.map[k].mess && Math.abs(G.map[k].mess.x - p.x) <= 1 && Math.abs(G.map[k].mess.y - p.y) <= 1) G.map[k].mess = null;
+    const k = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => (p.x + dx) + ',' + (p.y + dy))
+        .find(k => G.map[k] && G.map[k].passable && G.map[k].entity == null);
+    const [x, y] = k.split(',').map(Number);
+    ctx.makeVariant(x, y, 'DroppedSword', 'Excalibur (rental)');
+    p.clean('get');
+    const text = G.log.lines.map(l => strip(l.text)).join('\n');
+    assert.ok(text.includes('You pick up the Excalibur (rental).'), text.slice(-200));
+    // plain messes are still lower case
+    ctx.makeMess(x, y, 'EmptyMug').name = 'Empty Coffee Mug';
+    G.map[k].mess.desc = null;
+    p.clean('get');
+    assert.ok(G.log.lines.some(l => strip(l.text) == 'You pick up the empty coffee mug.'));
 });

@@ -1,8 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bootHeadless, toIntro } = require('./harness');
-
-const strip = s => s.replace(/%c\{[^}]*\}/g, '');
+const { bootHeadless, toIntro, strip } = require('./harness');
 
 function cleaningDay(seed = 1234) {
     const ctx = toIntro(bootHeadless({ seed, begin: true }));
