@@ -325,6 +325,7 @@ var Invasion = {
         this.paused = this.startPaused;
         this.held = false;
         this.gate = null;
+        this.transcript = [];
     },
 
     // --- Playback banner: the invasion is last night's security footage ---
@@ -393,10 +394,17 @@ var Invasion = {
         return this.skipping === true;
     },
 
-    say: function (pool, vars, optional = false) {
-        if (this.quiet()) {
-            return '';
+    // Everything the night says goes to the security log (the transcript), with the
+    // camera clock; the message bar only gets it while the footage plays.
+    transcript: [],
+
+    record: function (line) {
+        if (line) {
+            this.transcript.push({ clock: this.clockText(), text: line });
         }
+    },
+
+    say: function (pool, vars, optional = false) {
         if (optional) {
             if (this.optionalLogged) {
                 return '';
@@ -406,7 +414,8 @@ var Invasion = {
         vars = vars || {};
         vars.hero = '%c{' + this.heroColor() + '}' + this.hero.short + '%c{}';
         let line = Flavor.line(pool, vars);
-        if (line != "") {
+        this.record(line);
+        if (line != "" && !this.quiet()) {
             Game.log.push(line);
         }
         return line;

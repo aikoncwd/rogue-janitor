@@ -174,9 +174,10 @@ var Game = {
         }
     },
 
-    // Mimsy's shop or your pockets are on screen.
+    // Mimsy's shop, your pockets or the security log are on screen.
     screenOpen: function() {
-        return this.phase == 'cleaning' && ((typeof Shop != 'undefined' && Shop.isOpen) || (typeof Inventory != 'undefined' && Inventory.isOpen));
+        return this.phase == 'cleaning' && ((typeof Shop != 'undefined' && Shop.isOpen) || (typeof Inventory != 'undefined' && Inventory.isOpen) ||
+            (typeof NightLog != 'undefined' && NightLog.isOpen));
     },
 
     // Font size that gives roughly TARGET_ROWS rows in the current window.
@@ -478,6 +479,9 @@ var Game = {
         }
         else if (Inventory.isOpen) {
             Inventory.draw();
+        }
+        else if (NightLog.isOpen) {
+            NightLog.draw();
         }
     },
 

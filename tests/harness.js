@@ -34,6 +34,7 @@ const DEFAULT_FILES = [
     'script/achievements.js',
     'script/shop.js',
     'script/inventory.js',
+    'script/nightlog.js',
     'script/events.js',
 ];
 
