@@ -445,6 +445,7 @@ Entity.prototype.handleEvent = function(e) {
 // Starts talking with the player: the newest conversation whose conditions hold.
 Entity.prototype.openConvo = function() {
     Game.player.talking=this;
+    ConversationBuilder.critterFirst(this); // the pets hang on this answer: never buried
     let choice=this.convos.length-1;
     while (choice >= 0 && 'conditions' in this.convos[choice][0] &&
         !Game.checkConditions(this.convos[choice][0].conditions,this)) {

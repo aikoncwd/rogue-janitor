@@ -323,3 +323,71 @@ test("a morning without pets forgets yesterday's petting zoo room", () => {
     nextMorning(ctx);
     assert.equal(G.animalRoomID, -1);
 });
+
+// --- the critter question is never buried ---
+
+function asker(ctx) {
+    const G = ctx.Game;
+    delete G.convoTags.animal;
+    const m = lounge(G)[0];
+    m.metPlayer = true;
+    m.convos = [[{ action: 'is vaping.', any: -1 }], ctx.ConversationBuilder.critterConvo()];
+    return m;
+}
+
+test('something pushed on top later does not bury the critter question', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const m = asker(ctx);
+    m.convos.push([{ text: 'Want to come to dinner tonight?', any: -1 }]); // e.g. an invitation
+    m.cleanerAct();
+    const c = m.convos[m.convoIndex];
+    assert.match(c[1].text, /favourite type of critter/);
+    G.player.talking.cancelConvo();
+});
+
+test('a first hello still comes before the critter question', () => {
+    const ctx = cleaningDay();
+    const m = asker(ctx);
+    m.convos.push([{ text: 'Later news', any: -1 }]);
+    m.convos.push(ctx.ConversationBuilder.meetingPlayer(m));
+    ctx.ConversationBuilder.critterFirst(m);
+    assert.ok(m.convos[m.convos.length - 1][0].greeting);
+    assert.match(m.convos[m.convos.length - 2][1].text, /favourite type of critter/);
+});
+
+test('a comrade with the critter question shows the ! marker until it is answered', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const m = asker(ctx);
+    m.questItem = null;
+    m.convoTags = {};
+    assert.equal(G.hasQuestToGive(m), true);
+    G.convoTags.animal = 'cat';
+    assert.equal(G.hasQuestToGive(m), false);
+    G.convoTags.animal = 'none';
+    assert.equal(G.hasQuestToGive(m), false);
+});
+
+test('answering it through the real conversation brings the pets the next morning', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const m = asker(ctx);
+    m.convos.push([{ text: 'Something else first', any: -1 }]);
+    m.cleanerAct();
+    const cats = 'I love cats!';
+    // walk the conversation: intro -> question -> pick cats
+    let guard = 0;
+    while (G.player.talking && guard++ < 10) {
+        const node = m.convos[m.convoIndex][m.convoInnerDex];
+        m.lastConvoChange = 0;
+        if (node && cats in node) {
+            const n = Object.keys(node).filter(k => typeof node[k] == 'number' && !['any'].includes(k)).indexOf(cats);
+            ctx.__pressEvent({ keyCode: 49 + n, key: String(1 + n), charCode: 49 + n });
+        }
+        else ctx.__press(13);
+    }
+    assert.equal(G.convoTags.animal, 'cat');
+    nextMorning(ctx);
+    assert.ok(G.petList.length >= 2);
+});
