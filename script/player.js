@@ -409,6 +409,9 @@ Player.prototype.handleEvent = function(e) {
         this.doExamine(code);
         return;
     }
+    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+        return; // browser shortcuts (Ctrl+1 switches tabs); AltGr (Ctrl+Alt) still types
+    }
     if (this.instructions) {
         if (code==88 || code==27 || code==8 || code == 191) {
             this.instructions=false;

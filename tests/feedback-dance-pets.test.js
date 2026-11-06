@@ -234,7 +234,7 @@ test('a secret room is heard from further away, louder when close, never once fo
     assert.equal(G.secretHint(), null, 'not every step');
     place(3, 0);
     const near = G.secretHint();
-    assert.match(strip(near), /right next to you/);
+    assert.match(strip(near), /^\u266A Right behind a wall here!/);
     for (let i = 0; i < G.SECRET_EVERY - 1; i++) assert.equal(G.secretHint(), null);
     assert.ok(G.secretHint(), 'reminded after a while');
     door.openSecretDoor();
@@ -251,4 +251,75 @@ test('the party room music shows up as a highlighted line in the log', () => {
     G.secretHint();
     const raw = G.log.lines[G.log.lines.length - 1].text;
     assert.match(raw, /^%c\{#f8f\}♪ /);
+});
+
+// --- review fixes ---
+
+test('two hidden rooms close together do not take turns every step', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const a = G.map[G.soundDoors()[0]];
+    // a second sounding door 6 tiles from the first
+    const b = new ctx.Tile(a.x + 6, a.y, '#', '#fff', '#000', false, false);
+    G.map[b.x + ',' + b.y] = b;
+    b.secretDoor = { char: '+', door: '-', color: '#fff', bgColor: '#000', sound: 'You hear barking.' };
+    G.soundDoorCache = null;
+    G.lastSecretHint = null;
+    let said = 0;
+    for (let i = 0; i < 10; i++) {
+        // step back and forth on the line between them, each door nearest in turn
+        G.player.x = i % 2 ? a.x + 1 : a.x + 5; G.player.y = a.y + 1;
+        if (G.secretHint()) said++;
+    }
+    assert.ok(said <= 2, 'said ' + said + ' times in 10 steps');
+});
+
+test('ending a dance early redraws, so nobody is left invisible', () => {
+    const ctx = cleaningDay();
+    let draws = 0;
+    const real = ctx.Game.drawMap.bind(ctx.Game);
+    ctx.Game.drawMap = () => { draws++; return real(); };
+    ctx.Dance.start();
+    ctx.Dance.timer = 1; // as if the overlay were up
+    draws = 0;
+    ctx.Dance.stop();
+    assert.ok(draws >= 1);
+    assert.equal(ctx.Effects.list.length, 0);
+});
+
+test('the crowd stays hidden a little longer than the janitor (their copies start late)', () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    const r = G.rooms[G.partyRoomID];
+    for (let x = r[0]; x <= r[2]; x++) for (let y = r[1]; y <= r[3]; y++) {
+        const t = G.map[x + ',' + y];
+        if (t && t.passable && t.entity == null && G.player.x != x) {
+            G.map[G.player.x + ',' + G.player.y].entity = null;
+            G.player.x = x; G.player.y = y; t.entity = G.player;
+        }
+    }
+    ctx.Effects.list = [];
+    ctx.Dance.start();
+    const mine = ctx.Effects.list.find(e => e.x == G.player.x && e.y == G.player.y);
+    const crowd = ctx.Effects.list.find(e => party(G).some(m => m.x == e.x && m.y == e.y));
+    assert.ok(crowd.frames.length > mine.frames.length);
+});
+
+test('Ctrl+1 (a browser tab shortcut) does not mop', () => {
+    const ctx = cleaningDay();
+    const seen = [];
+    ctx.Game.player.clean = verb => { seen.push(verb); return 0; };
+    ctx.__pressEvent({ keyCode: 49, key: '1', ctrlKey: true });
+    ctx.__pressEvent({ keyCode: 80, key: 'p', ctrlKey: true });
+    assert.deepEqual(seen, []);
+    ctx.__pressEvent({ keyCode: 49, key: '1' });
+    assert.deepEqual(seen, ['mop']);
+});
+
+test("a morning without pets forgets yesterday's petting zoo room", () => {
+    const ctx = cleaningDay();
+    const G = ctx.Game;
+    G.animalRoomID = 2; // left over from another run
+    nextMorning(ctx);
+    assert.equal(G.animalRoomID, -1);
 });

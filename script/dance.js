@@ -81,7 +81,8 @@ var Dance = {
         for (let i = 0; i < dancers.length; i++) {
             let d = dancers[i];
             let blank = [];
-            for (let f = 0; f < frames; f++) {
+            let late = i > 0 ? Math.ceil(160 / Effects.FRAME_MS) : 0; // the crowd's copies start late
+            for (let f = 0; f < frames + late; f++) {
                 blank.push([' ', '#000', null]);
             }
             Effects.add(d.x, d.y, blank);
@@ -170,6 +171,9 @@ var Dance = {
         }
         this.removeNodes();
         Effects.clear();
+        if (Effects.canRedraw()) {
+            Game.drawMap(); // the hidden glyphs come back even if the key does nothing
+        }
         return true;
     },
 

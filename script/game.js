@@ -841,12 +841,14 @@ var Game = {
         let band = best.d <= this.SECRET_NEAR ? 'near' : 'far';
         let last = this.lastSecretHint;
         let louder = last != null && last.key == best.key && band == 'near' && last.band == 'far';
-        if (last != null && last.key == best.key && !louder && this.secretMoves - last.move < this.SECRET_EVERY) {
+        // one reminder per SECRET_EVERY moves whatever door it is (two hidden rooms
+        // close together must not take turns every step); only "louder" jumps the queue
+        if (last != null && !louder && this.secretMoves - last.move < this.SECRET_EVERY) {
             return null;
         }
         this.lastSecretHint = { key: best.key, band: band, move: this.secretMoves };
         let msg = band == 'near'
-            ? '%c{#ff0}\u266A ' + best.sound + " It's coming from a wall right next to you! \u266A%c{}"
+            ? '%c{#ff0}\u266A Right behind a wall here! ' + best.sound + ' \u266A%c{}'
             : '%c{#f8f}\u266A ' + best.sound + ' \u266A%c{}';
         this.sendMessage(msg);
         return msg;
@@ -1335,6 +1337,7 @@ var Game = {
     },
 
     moveMonstersToLounge: function() {
+        this.animalRoomID = -1; // set again below when there are pets today
         this.daySeed = Math.floor(ROT.RNG.getUniform() * 1000000000); // one world roll: same in every mode
         // build the party room
         this.addSecretRoom([5,5],this.makeTheme(300,0.9),1,"You hear the sound of muffled music.");
