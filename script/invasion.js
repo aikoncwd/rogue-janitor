@@ -35,6 +35,7 @@ var Invasion = {
     start: function () {
         Game.phase = 'invasion';
         this.takeFootageStart();
+        this.welcome();
         Game.stopQuestBlink();
         Game.drawMap();
         if (!this.engineStarted) {
@@ -182,6 +183,19 @@ var Invasion = {
                 lastLines: Object.assign({}, Flavor.lastLines),
                 log: JSON.parse(JSON.stringify(Game.log.lines)),
             };
+        }
+    },
+
+    // The message bar as the paused footage opens: what this is and how to watch it.
+    welcome: function () {
+        let hero = '%c{' + this.heroColor() + '}' + this.hero.short + '%c{}';
+        let k = function (key) { return '%c{#ff0}' + key + '%c{}'; };
+        Game.log.push(Game.day <= 1
+            ? "%c{#ff0}Welcome, new janitor!%c{} This is last night's security footage."
+            : '%c{#ff0}Day ' + Game.day + ".%c{} Last night's security footage is ready.");
+        Game.log.push(hero + ' enters the dungeon...');
+        if (this.paused) {
+            Game.log.push('Press ' + k('Space') + ' to play, ' + k('→') + ' to step frame by frame, ' + k('Esc') + ' to skip.');
         }
     },
 

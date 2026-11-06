@@ -282,3 +282,32 @@ test('stepping into the hero\'s exit does not skip the curtain and the card', ()
     assert.equal(ctx.Invasion.stage, null, 'other keys still do');
     assert.equal(ctx.Game.phase, 'cleaning');
 });
+
+// The footage opens with a short welcome in the message bar: what it is, who came,
+// and how to watch it.
+test('the paused footage opens with a welcome and the controls in the message bar', () => {
+    const ctx = invading();
+    const lines = ctx.Game.log.lines.map(l => plain(l.text));
+    const at = lines.findIndex(l => l.startsWith('Welcome, new janitor!'));
+    assert.ok(at >= 0, lines.join('\n'));
+    assert.match(lines[at + 1], /enters the dungeon/);
+    assert.ok(lines[at + 1].startsWith(ctx.Invasion.hero.short));
+    assert.match(lines[at + 2], /Space to play, → to step frame by frame, Esc to skip/);
+});
+
+test('a rewind shows the welcome once, not twice', () => {
+    const ctx = invading();
+    ctx.__press(KEY.RIGHT);
+    ctx.__press(KEY.RIGHT);
+    ctx.__press(KEY.R);
+    const lines = ctx.Game.log.lines.map(l => plain(l.text));
+    assert.equal(lines.filter(l => l.startsWith('Welcome, new janitor!')).length, 1, lines.join('\n'));
+});
+
+test('later days say which day it is', () => {
+    const ctx = invading();
+    skipToCleaning(ctx);
+    ctx.Game.nextDay();
+    const lines = ctx.Game.log.lines.map(l => plain(l.text));
+    assert.ok(lines.some(l => l == "Day 2. Last night's security footage is ready."), lines.slice(-4).join('\n'));
+});

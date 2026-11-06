@@ -63,6 +63,43 @@ var Panel = {
         return '%c{' + color + '}' + '█'.repeat(filled) + '%c{#333}' + '█'.repeat(this.BAR_WIDTH - filled) + '%c{}';
     },
 
+    // The hero's full name, split so it can be read whole: the name, then the class
+    // on its own line. A name too long for one line wraps at a space (two lines at
+    // most; only what still does not fit is shortened).
+    heroNameLines: function (hero, width) {
+        let full = hero.full || '';
+        if (full.length <= width) {
+            return [full];
+        }
+        let lines = [];
+        let short = hero.short || full;
+        let words = short.split(' ');
+        let line = '';
+        for (let i = 0; i < words.length; i++) {
+            let next = line == '' ? words[i] : line + ' ' + words[i];
+            if (next.length > width && line != '') {
+                lines.push(line);
+                line = words[i];
+            }
+            else {
+                line = next;
+            }
+        }
+        lines.push(line);
+        if (lines.length > 2) { // at most two lines of name: the rest is shortened
+            lines = [lines[0], lines.slice(1).join(' ')];
+        }
+        let rest = full.slice(short.length).replace(/^,s*/, '').trim(); // "the Wizard" (or after a comma)
+        if (rest != '') {
+            if (/ (the|of) /.test(short)) {
+                rest = 'the ' + rest; // "Gary the Bold, Wizard" -> "Gary the Bold" / "the Wizard"
+            }
+            lines.push(rest);
+        }
+        let self = this;
+        return lines.map(function (l) { return self.fit(l, width); });
+    },
+
     fit: function (text, width) {
         return text.length > width ? text.slice(0, width - 1) + '…' : text;
     },
@@ -144,14 +181,15 @@ var Panel = {
         if (phase == 'invasion' || phase == 'intro') {
             let hero = Game.adventurer;
             let hp = hero ? Math.max(0, Math.min(hero.hp, this.HERO_HP_MAX)) : 0;
-            head = [
-                '%c{#fff}── INVASION ──%c{}',
-                '%c{' + Invasion.heroColor() + '}' + this.fit(Invasion.hero.full, w) + '%c{}',
+            let color = Invasion.heroColor();
+            head = ['%c{#fff}── INVASION ──%c{}'].concat(this.heroNameLines(Invasion.hero, w).map(function (l) {
+                return '%c{' + color + '}' + l + '%c{}';
+            })).concat([
                 'HP ' + this.bar(hp, this.HERO_HP_MAX, '#0c0') + ' ' + hp + '/' + this.HERO_HP_MAX,
                 'Turn ' + Invasion.turn,
                 '',
                 '%c{#fff}── MONSTERS ──%c{}',
-            ];
+            ]);
             let self = this;
             list = Invasion.roster.map(function (m) {
                 let st = self.monsterStatus(m);

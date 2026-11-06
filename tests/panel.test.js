@@ -53,7 +53,7 @@ test('invasion panel shows hero, statuses and truncation', () => {
     const lines = ctx.Panel.lines('invasion', 30).map(strip);
     assert.ok(lines.length <= 30);
     const text = lines.join('\n');
-    assert.ok(text.includes(ctx.Invasion.hero.full.slice(0, 20)));
+    assert.ok(lines.join(' ').includes(ctx.Invasion.hero.short), 'the hero name is there whole, over several lines');
     assert.ok(/Mon0 +fainted/.test(text), text);
     assert.ok(/Mon1 +fighting!/.test(text), text);
     assert.ok(/Mon2 +unharmed/.test(text), text);
@@ -206,4 +206,21 @@ test('the panel shows the whole room name', () => {
     G.drawMap();
     const text = ctx.__drawn.filter(d => d.text).map(d => strip(d.text)).join(' ');
     assert.ok(text.includes('Loud Snoring'), 'room name cut off');
+});
+
+test('the hero name is split over lines instead of being cut', () => {
+    const ctx = bootHeadless();
+    const P = ctx.Panel;
+    const w = P.WIDTH - 1;
+    assert.deepEqual(P.heroNameLines({ short: 'Bob', full: 'Bob the Rogue' }, w), ['Bob the Rogue']);
+    assert.deepEqual(P.heroNameLines({ short: 'Sir Reginald Fluffington', full: 'Sir Reginald Fluffington the Speedrunner' }, w),
+        ['Sir Reginald', 'Fluffington', 'the Speedrunner']);
+    assert.deepEqual(P.heroNameLines({ short: 'Gary the Unbelievably Bold', full: 'Gary the Unbelievably Bold, Paladin' }, w),
+        ['Gary the Unbelievably', 'Bold', 'the Paladin']);
+    assert.deepEqual(P.heroNameLines({ short: 'Prince Valiant', full: 'Prince Valiant the Speedrunner' }, w),
+        ['Prince Valiant', 'the Speedrunner']);
+    for (let i = 0; i < 500; i++) {
+        const lines = P.heroNameLines(ctx.Flavor.heroName(), w);
+        assert.ok(lines.length <= 3 && lines.every(l => l.length <= w), lines.join('|'));
+    }
 });
