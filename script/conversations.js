@@ -778,6 +778,39 @@ var ConversationBuilder = {
         "Okay, the lounge is settling a debate and you're the tiebreaker.",
         "Gee whiz I love dogs. And cats. Humans have good taste in critters.",
     ],
+    // Where a comrade keeps the critter question (still unanswered), or -1. Found by its
+    // text, so conversations from older saves count too.
+    pendingCritter: function(speaker) {
+        for (let i = speaker.convos.length - 1; i >= 0; i--) {
+            let c = speaker.convos[i];
+            if (c && c[1] && typeof c[1].text == 'string' && c[1].text.indexOf('favourite type of critter') >= 0 &&
+                (!c[0].conditions || Game.checkConditions(c[0].conditions, speaker))) {
+                return i;
+            }
+        }
+        return -1;
+    },
+
+    // Whatever else landed on a comrade's stack during the day (an invitation, a
+    // chat), the critter question is heard the next time you talk: it moves to the
+    // top. Only a first "nice to meet you" still goes before it.
+    critterFirst: function(speaker) {
+        let at = this.pendingCritter(speaker);
+        if (at < 0) {
+            return false;
+        }
+        let top = speaker.convos.length - 1;
+        if (speaker.convos[top] && speaker.convos[top][0] && speaker.convos[top][0].greeting) {
+            top--;
+        }
+        if (at >= top) {
+            return false;
+        }
+        let convo = speaker.convos.splice(at, 1)[0];
+        speaker.convos.splice(top, 0, convo);
+        return true;
+    },
+
     critterConvo: function(intro) {
         if (intro == null) {
             intro = ROT.RNG.getItem(this.critterIntros);
@@ -813,7 +846,7 @@ var ConversationBuilder = {
             "Hi! "+name+" here. Don't mind the ketchup, it's from work.",
             "*rolls a d20* Seventeen! That's a good first impression. Hi, I'm "+firstName+"!",
         ];
-        return [{text:ROT.RNG.getItem(greetings),any:-1}];
+        return [{text:ROT.RNG.getItem(greetings),any:-1,greeting:true}];
     },
 
     loveMyFriend: function(friend) {

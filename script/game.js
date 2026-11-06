@@ -532,6 +532,9 @@ var Game = {
         if (!m.convoTags.offerSeen && m.convos.some(function(c) { return c[0] && c[0].tags && 'offerSeen' in c[0].tags; })) {
             return true;
         }
+        if (!(m.tags && 'animal' in m.tags) && ConversationBuilder.pendingCritter(m) >= 0) {
+            return true; // the favourite-critter question (pets depend on it)
+        }
         return m.questItem != null && !('questItemSuccess' in m.convoTags) && !m.convoTags.questHeard;
     },
 
