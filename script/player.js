@@ -377,6 +377,7 @@ Player.prototype.handleEvent = function(e) {
     if (this.paused || Game.phase != 'cleaning') {
         return;
     }
+    Dance.stop(); // any key ends a dance
     let code = e.keyCode;
     if (e.key === '?') {
         code = 191; // "?" sits on different physical keys depending on the keyboard layout
@@ -422,8 +423,9 @@ Player.prototype.handleEvent = function(e) {
         switch (code) {
             default:
             return;
-            // m for mop
+            // m for mop (1: the same, near WASD)
             case 77:
+            case 49:
             this.clean('mop');
             this.endTurn();
             return;
@@ -437,15 +439,17 @@ Player.prototype.handleEvent = function(e) {
             this.openClose(true);
             this.endTurn();
             return;
-            // g or p for get or pick up
+            // g or p for get or pick up (2: the same, near WASD)
             case 80:
             case 71:
+            case 50:
             this.clean('get');
             this.endTurn();
             return;
-            // r or f for repair or fix
+            // r or f for repair or fix (3: the same, near WASD)
             case 82:
             case 70:
+            case 51:
             this.clean('fix');
             this.endTurn();
             return;
@@ -504,6 +508,8 @@ Player.prototype.handleEvent = function(e) {
 
     if (this.moveTo(nx, ny)) {
         this.slide(diff);
+        Game.noticeRoom();
+        Game.secretHint();
         this.endTurn();
     }
     else {

@@ -58,6 +58,10 @@ Pet.prototype.cleanerAct = function() {
     if (!this.playerTalkedToday) {
         Game.yendorPoints+=2;
         this.playerTalkedToday=true;
+        let zoo = Game.petList.filter(function(p) { return p != Game.playerPet; });
+        if (zoo.length >= 2 && zoo.every(function(p) { return p.playerTalkedToday; })) {
+            Achievements.unlock('zoo');
+        }
     }
     Game.player.talking=this;
 

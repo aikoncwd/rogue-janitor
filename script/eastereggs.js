@@ -104,6 +104,10 @@ var EasterEggs = {
                 this.sessionName = rest;
                 Game.sendMessage("You call your mop: " + rest + ".");
                 break;
+            case 'dance':
+                this.tried.dance = true;
+                Dance.start();
+                break;
             case 'chat':
                 this.tried.chat = true;
                 Game.sendMessage("You talk to yourself. You agree with yourself.");

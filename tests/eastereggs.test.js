@@ -81,7 +81,7 @@ test('typing in the prompt does not toggle music, sound or zoom', () => {
 
 test('unknown command suggests #pray', () => {
     const ctx = cleaningDay();
-    type(ctx, '#dance\n');
+    type(ctx, '#moonwalk\n');
     assert.equal(last(ctx), 'Unknown extended command. (Try #pray.)');
 });
 

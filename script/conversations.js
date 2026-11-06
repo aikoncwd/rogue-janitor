@@ -10,6 +10,32 @@ var ConversationBuilder = {
         "is starting a conga line.","is air-guitaring on a mop.","is singing karaoke into a turkey leg."],
     words: ['Wicked','Sweet','Awesome','Tubular','Mondo','Heinous','Excellent','Epic','Metal','Hardcore',
         'Radical','Natural 20','Splendid','Righteous','Gnarly','Critical'],
+    // Small talk that only makes sense in the secret party room.
+    partyLines: [
+        ["This is my jam! Every song is my jam. I have a lot of jams."],
+        ["Shh, the room is secret. The music isn't. We're working on it."],
+        ["Snacks are on the table! The suspicious ones are from the mimic. It IS the table."],
+        ["You found us! Most people just hear the bass through the walls and get confused."],
+        ["The DJ is a skeleton. He only plays bangers. And xylophone solos. On himself."],
+        ["Don't tell the boss we're partying!", "...Oh right. There's no boss. TELL EVERYONE!"],
+        ["Ever seen a gelatinous cube do the limbo?", "It's not about getting under the bar. It's about absorbing it."],
+        ["We used to plan strikes in here. Now we plan playlists. Both are very serious work."],
+        ["Pro tip: when the hero shows up, you play dead. When the music shows up, you play alive!"],
+        ["I've been dancing since the hero left. My feet are asleep but my heart is awake!"],
+        ["Come on, janitor! Show us your moves! Type %c{#ff0}#dance%c{}!"],
+        ["The secret password is 'please'. We're very polite secret partiers."],
+        ["Is it a party room if nobody can find it?", "...Yes. Yes it is. And you found it!"],
+        ["I brought the glow sticks. They're actually glowing mushrooms. Say hi, Gary!"],
+    ],
+    partyLine: function(speaker) {
+        let lines = ROT.RNG.getItem(this.partyLines);
+        let convo = [];
+        for (let i = 0; i < lines.length; i++) {
+            convo.push({text: lines[i], any: i < lines.length - 1 ? i + 1 : -1});
+        }
+        return convo;
+    },
+
     buildConvos: function(speaker,party=false) {
         speaker.playerTalkedToday=false;
         var newConversation;
@@ -50,8 +76,9 @@ var ConversationBuilder = {
                 {text:"This used to be where we held union meetings...",any:2},
                 {text:"But since overthrowing the boss, we can have those meetings publicly instead!",any:3},
                 {text:"We've still got this room though so, now we use it to party!",any:4},
-                {text:"Hang out and dance for a while :)",any:-1,globalTags:{foundPartyRoom:true}}
+                {text:"Hang out and dance for a while :) Type %c{#ff0}#dance%c{} if you've got the moves!",any:-1,globalTags:{foundPartyRoom:true}}
             ];
+            newConversation.push(this.partyLine(speaker)); // heard right after the welcome
             newConversation.push(partyRoomDiscovery);
         }
 
@@ -709,15 +736,7 @@ var ConversationBuilder = {
                     ];
                     break;
                 case 1:
-                    toReturn = [{ text: "Gee whiz I love dogs. And cats. Humans have good taste in critters.", any: 1, conditions: { animal: false } },
-                    { text: "What's your favourite type of critter?", "I love cats!": 2, "Dogs are good and I like to pet them!": 3, "Rabbits are great!": 4, "Rats are my favourite!": 5, "I love horses. Neigh!": 6, "I'm not really an animal person...": 7 },
-                    { text: "Wow! Cats! Me too!", any: -1, globalTags: { animal: 'cat' } },
-                    { text: "Wow! Dogs! Me too!", any: -1, globalTags: { animal: 'dog' } },
-                    { text: "Wow! Rabbits! Me too!", any: -1, globalTags: { animal: 'rabbit' } },
-                    { text: "Wow! Rats! Me too!", any: -1, globalTags: { animal: 'rat' } },
-                    { text: "Wow! Horses! Me too!", any: -1, globalTags: { animal: 'horse' } },
-                    { text: "That's legit! More for me to cuddle myself, then!", any: -1, globalTags: { animal: 'none' } },
-                    ];
+                    toReturn = this.critterConvo("Gee whiz I love dogs. And cats. Humans have good taste in critters.");
                     break;
                 case 2:
                     let other;
@@ -750,6 +769,31 @@ var ConversationBuilder = {
         this.usedGenericOptions.push(toReturn[0].text);
 
         return toReturn;
+    },
+
+    // "What's your favourite critter?" Any animal answer brings pets: the next morning a
+    // secret Petting Zoo full of them appears. Skipped (first node's condition) once answered.
+    critterIntros: [
+        "Hey, quick question for the new janitor! It's important. Very important.",
+        "Okay, the lounge is settling a debate and you're the tiebreaker.",
+        "Gee whiz I love dogs. And cats. Humans have good taste in critters.",
+    ],
+    critterConvo: function(intro) {
+        if (intro == null) {
+            intro = ROT.RNG.getItem(this.critterIntros);
+        }
+        return [
+            { text: intro, any: 1, conditions: { animal: false } },
+            { text: "What's your favourite type of critter?", "I love cats!": 2, "Dogs are good and I like to pet them!": 3, "Rabbits are great!": 4, "Rats are my favourite!": 5, "I love horses. Neigh!": 6, "I'm not really an animal person...": 7 },
+            { text: "Wow! Cats! Me too!", any: 8, globalTags: { animal: 'cat' } },
+            { text: "Wow! Dogs! Me too!", any: 8, globalTags: { animal: 'dog' } },
+            { text: "Wow! Rabbits! Me too!", any: 8, globalTags: { animal: 'rabbit' } },
+            { text: "Wow! Rats! Me too!", any: 8, globalTags: { animal: 'rat' } },
+            { text: "Wow! Horses! Me too!", any: 8, globalTags: { animal: 'horse' } },
+            { text: "That's legit! More for me to cuddle myself, then!", any: -1, globalTags: { animal: 'none' } },
+            { text: "Psst. We'll sneak a few into a %c{#ff0}secret room%c{} tonight. Keep your ears open tomorrow!", any: 9 },
+            { text: "They get VERY attached to whoever pets them most. Just saying.", any: -1 },
+        ];
     },
 
     meetingPlayer: function(speaker) {
