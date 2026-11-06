@@ -9,7 +9,28 @@ body {
     box-sizing: border-box;
     padding: 0;
     margin: auto;
-}.noscript {
+}/* #dance: a copy of the @ laid over its cell, striking a pose on every beat */
+.rj-dancer {
+    position: fixed;
+    pointer-events: none;
+    text-align: center;
+    font-family: monospace;
+    animation-name: rj-dance;
+    animation-timing-function: steps(1, end);
+    animation-fill-mode: both;
+}
+@keyframes rj-dance {
+    0%    { transform: none; }
+    12.5% { transform: scaleX(-1); }
+    25%   { transform: none; }
+    37.5% { transform: scaleY(-1); }
+    50%   { transform: rotate(90deg); }
+    62.5% { transform: rotate(180deg); }
+    75%   { transform: rotate(270deg); }
+    87.5% { transform: scaleX(-1) translateY(-25%); }
+    100%  { transform: none; }
+}
+.noscript {
     color: #ccc;
     font-family: monospace;
     padding: 2em;

@@ -46,9 +46,9 @@ Do well all week and they may hand you the legendary **Mop of Yendor**. Do badly
 | --- | --- |
 | arrows, numpad, WASD, `hjkl yubn` | move |
 | `.` or `5` | wait a turn |
-| `M` | mop |
-| `P` / `G` | pick up |
-| `F` / `R` | fix |
+| `M` or `1` | mop |
+| `P` / `G` or `2` | pick up |
+| `F` / `R` or `3` | fix |
 | `Z` | vacuum (from day 2) |
 | `E` / `X` | examine |
 | `I` | your pockets (`Tab` for achievements) |

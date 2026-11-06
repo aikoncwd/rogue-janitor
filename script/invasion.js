@@ -35,6 +35,7 @@ var Invasion = {
     start: function () {
         Game.phase = 'invasion';
         this.takeFootageStart();
+        this.welcome();
         Game.stopQuestBlink();
         Game.drawMap();
         if (!this.engineStarted) {
@@ -182,6 +183,19 @@ var Invasion = {
                 lastLines: Object.assign({}, Flavor.lastLines),
                 log: JSON.parse(JSON.stringify(Game.log.lines)),
             };
+        }
+    },
+
+    // The message bar as the paused footage opens: what this is and how to watch it.
+    welcome: function () {
+        let hero = '%c{' + this.heroColor() + '}' + this.hero.short + '%c{}';
+        let k = function (key) { return '%c{#ff0}' + key + '%c{}'; };
+        Game.log.push(Game.day <= 1
+            ? "%c{#ff0}Welcome, new janitor!%c{} This is last night's security footage."
+            : '%c{#ff0}Day ' + Game.day + ".%c{} Last night's security footage is ready.");
+        Game.log.push(hero + ' enters the dungeon...');
+        if (this.paused) {
+            Game.log.push('Press ' + k('Space') + ' to play, ' + k('→') + ' to step frame by frame, ' + k('Esc') + ' to skip.');
         }
     },
 
@@ -342,9 +356,10 @@ var Invasion = {
     lastNag: -Infinity,
     NAG_MS: 5000,
     // Besides every movement key in Player.keyMap: action letters m p g f r o c x e,
+    // the action digits 1 2 3,
     // and the wait keys . / 5 / numpad 5 (NumLock off).
     REPLAY_KEYS: [32, 39, 102, 70, 82], // Space, right arrow, numpad 6, F, R
-    NAG_KEYS: [77, 80, 71, 79, 67, 88, 69, 190, 53, 12, 101],
+    NAG_KEYS: [77, 80, 71, 79, 67, 88, 69, 190, 53, 12, 101, 49, 50, 51],
 
     clockText: function () {
         let h24 = Math.floor(this.clockMinutes / 60) % 24;

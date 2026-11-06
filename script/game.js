@@ -497,9 +497,9 @@ var Game = {
             row('. or 5', 'wait a turn (numpad 5 and numpad . too)'),
             '',
             head('CLEANING') + ' %c{#777}(the tiles next to you)%c{}',
-            row('M', 'mop stains, puddles and footprints'),
-            row('P or G', 'pick up litter and lost things'),
-            row('F or R', 'fix broken furniture'),
+            row('M or 1', 'mop stains, puddles and footprints'),
+            row('G/P or 2', 'pick up litter and lost things'),
+            row('F/R or 3', 'fix broken furniture'),
             row('Z', 'vacuum all the fluff around you') + later(2),
             row('M on water', 'the squeegee clears the whole puddle') + later(3),
             row('M on stain', 'the scrub brush: tough ones in one pass') + later(4),
@@ -789,7 +789,73 @@ var Game = {
         this.buildRoom(size,position,theme);
     },
 
+    // Walking into a special room for the first time.
+    noticeRoom: function() {
+        let room = this.getRoomIndex(this.player.x, this.player.y);
+        if (room >= 0 && room == this.animalRoomID) {
+            Achievements.unlock('petRoom');
+        }
+    },
+
+    SECRET_HEAR: 12,  // tiles (king moves) from which a secret room can be heard
+    SECRET_NEAR: 4,   // ...and from which it is clearly right behind a wall
+    SECRET_EVERY: 15, // moves between two reminders of the same sound
+    secretMoves: 0,
+    lastSecretHint: null,
+
+    // The secret doors that make a sound (party music, pets), cached per map.
+    soundDoors: function() {
+        if (this.soundDoorCache == null || this.soundDoorCache.map !== this.map) {
+            let keys = [];
+            for (let key in this.map) {
+                let s = this.map[key].secretDoor;
+                if (s != null && s.sound) {
+                    keys.push(key);
+                }
+            }
+            this.soundDoorCache = { map: this.map, keys: keys };
+        }
+        return this.soundDoorCache.keys;
+    },
+
+    // After each step: a hidden room nearby makes itself heard, louder when close.
+    // Returns the message sent, or null.
+    secretHint: function() {
+        let p = this.player;
+        let best = null;
+        let keys = this.soundDoors();
+        for (let i = 0; i < keys.length; i++) {
+            let tile = this.map[keys[i]];
+            if (!tile || tile.secretDoor == null || !tile.secretDoor.sound) {
+                continue; // found already
+            }
+            let d = Math.max(Math.abs(tile.x - p.x), Math.abs(tile.y - p.y));
+            if (best == null || d < best.d) {
+                best = { key: keys[i], d: d, sound: tile.secretDoor.sound };
+            }
+        }
+        this.secretMoves++;
+        if (best == null || best.d > this.SECRET_HEAR) {
+            return null;
+        }
+        let band = best.d <= this.SECRET_NEAR ? 'near' : 'far';
+        let last = this.lastSecretHint;
+        let louder = last != null && last.key == best.key && band == 'near' && last.band == 'far';
+        // one reminder per SECRET_EVERY moves whatever door it is (two hidden rooms
+        // close together must not take turns every step); only "louder" jumps the queue
+        if (last != null && !louder && this.secretMoves - last.move < this.SECRET_EVERY) {
+            return null;
+        }
+        this.lastSecretHint = { key: best.key, band: band, move: this.secretMoves };
+        let msg = band == 'near'
+            ? '%c{#ff0}\u266A Right behind a wall here! ' + best.sound + ' \u266A%c{}'
+            : '%c{#f8f}\u266A ' + best.sound + ' \u266A%c{}';
+        this.sendMessage(msg);
+        return msg;
+    },
+
     secretCorridor: function(roomCenters,theme,doorSound=null) {
+        this.soundDoorCache = null; // a new secret door may make a sound
         let lastCenter = [roomCenters[roomCenters.length-1][0], roomCenters[roomCenters.length-1][1]];
         let allCells=this.freeCells.concat(this.hallCells);
         let best = 1000;
@@ -1226,7 +1292,52 @@ var Game = {
         return rng;
     },
 
+    COMRADES_MIN: 10,  // comrades in the lounge + party each morning, at least
+    PET_LOVE: 3,       // pets (any interaction) before an animal adopts you
+
+    // Comrades who had the night off join the morning when few were on shift.
+    // spotKey: where they walk in from (they are seated with everyone else).
+    topUpComrades: function(spotKey) {
+        if (spotKey == null) {
+            return 0;
+        }
+        let parts = spotKey.split(',');
+        let coming = this.monsterList.filter(function(m) { return !m.retired; }).length;
+        let kinds = ['Goblin','Kobold','Myconid','Newt','FruitBat','Imp','Slime','Harpy'];
+        let added = 0;
+        while (coming + added < this.COMRADES_MIN) {
+            GetEntity(ROT.RNG.getItem(kinds), parseInt(parts[0]), parseInt(parts[1]));
+            added++;
+        }
+        return added;
+    },
+
+    // How many of the morning's comrades go straight to the secret party.
+    partyMinimum: function(coming) {
+        if (coming >= 7) {
+            return 3;
+        }
+        return coming >= 4 ? 1 : 0;
+    },
+
+    // Until it is answered, one lounge comrade asks your favourite critter (the
+    // answer brings the pets), right after saying hello.
+    offerCritterQuestion: function() {
+        if ('animal' in this.convoTags) {
+            return null;
+        }
+        let lounge = this.monsterList.filter(function(m) { return m.alive && m.retired && !m.partying && !(m.tags && m.tags.visitor); });
+        if (lounge.length == 0) {
+            return null;
+        }
+        let m = ROT.RNG.getItem(lounge);
+        let at = m.metPlayer ? m.convos.length : m.convos.length - 1; // the greeting stays first
+        m.convos.splice(at, 0, ConversationBuilder.critterConvo());
+        return m;
+    },
+
     moveMonstersToLounge: function() {
+        this.animalRoomID = -1; // set again below when there are pets today
         this.daySeed = Math.floor(ROT.RNG.getUniform() * 1000000000); // one world roll: same in every mode
         // build the party room
         this.addSecretRoom([5,5],this.makeTheme(300,0.9),1,"You hear the sound of muffled music.");
@@ -1268,9 +1379,10 @@ var Game = {
                         mostLove[1]=i;
                     }
                 }
-                if (mostLove[0]>5) {
+                if (mostLove[0]>=this.PET_LOVE) {
                     this.playerPet=this.petList[mostLove[1]];
                     this.player.cutscene=[{message:"%c{#ff0}"+this.playerPet.name+" loves you a lot! They have adopted you.%c{}",any:-1}]
+                    Achievements.unlock('adopted');
                 }
             }
             let iterations=Math.min(8,Math.floor(this.yendorPoints/200)+2);
@@ -1342,6 +1454,8 @@ var Game = {
                 }
             }
         }
+        // never a near-empty lounge: if few comrades were on shift, some who had the night off drop by
+        this.topUpComrades(validSpots.length > 0 ? validSpots[0] : null);
         let level=4;
         let maxPlace=Math.floor(validSpots.length/2);
         let maxParty=Math.floor(validPartySpots.length/2);
@@ -1350,6 +1464,10 @@ var Game = {
             return (2*b.level+b.playerInteractions+b.friends.length) - (2*a.level+a.playerInteractions+a.friends.length);
         });
         let questItemIndex = Math.floor(maxPlace * ROT.RNG.getUniform());
+        // the secret party is never empty: the last few always go there
+        let coming = this.monsterList.filter(function(m) { return !m.retired; }).length;
+        let loungeQuota = coming - this.partyMinimum(coming);
+        let inLounge = 0;
         let partyCommenced=false;
         let donePlacing=false;
         for (let i = 0; i < this.monsterList.length; i++) {
@@ -1397,7 +1515,8 @@ var Game = {
                 this.monsterList[i].x = parseInt(parts[0]);
                 this.monsterList[i].y = parseInt(parts[1]);
                 validSpots.splice(index, 1);
-                if (validSpots.length <= maxPlace) {
+                inLounge++;
+                if (validSpots.length <= maxPlace || inLounge >= loungeQuota) {
                     partyCommenced = true;
                 }
             }
@@ -1427,6 +1546,7 @@ var Game = {
                 }
             }
         }
+        this.offerCritterQuestion();
 
         // Add exit door
         {

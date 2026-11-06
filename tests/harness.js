@@ -30,6 +30,7 @@ const DEFAULT_FILES = [
     'script/conversations.js',
     'script/dayevents.js',
     'script/eastereggs.js',
+    'script/dance.js',
     'script/save.js',
     'script/ending.js',
     'script/goals.js',

@@ -641,6 +641,10 @@ var Lore = {
             "Heroes keep writing Elbereth everywhere. You could #elbereth too, if you wanted.",
             "I bet if you typed #elbereth the floor would feel very safe.",
         ],
+        dance: [
+            "Rumour says there's a secret party somewhere down here. If you find it, #dance!",
+            "I once saw a janitor #dance so hard the slime applauded. It was beautiful.",
+        ],
         quit: [
             "Ever tried to quit? Press Q. Go on. The union has opinions.",
             "Someone once tried to #quit mid-shift. Legendary.",
